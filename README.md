@@ -76,7 +76,8 @@ supabase db push
 - [x] Fee rules scoped to destination + supplier; CSV template + `pnpm import-rules`
 - [ ] LLM extraction (replace stub in `apps/web/app/api/xray/route.ts`)
 - [ ] Real, sourced fee rules in `data/fee-rules/fee-rules.csv` (see its README)
-- [ ] Run on production via SQL Editor: `20261030000200_merge_quote_select_policies.sql`, `20261030000500_retention_cron.sql`
+- [x] All migrations applied to production (nightly purge job scheduled at 03:17 UTC)
+- [x] Deployed on Vercel (London) and tested end to end: X-ray → save → share
 - [ ] Privacy page: add company number, registered office, contact email
 - [ ] Duffel integration for live flight prices
 
