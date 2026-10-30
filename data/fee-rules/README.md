@@ -24,6 +24,7 @@ A rule that can't be backed up is worse than no rule: it breaks the whole promis
 | `source_note` | yes | One line: what the page says, and the date you checked it | `Gov page, checked 30 Oct 2026` |
 | `valid_from` | yes | `YYYY-MM-DD` when the figure starts | `2026-11-01` |
 | `valid_to` | no | `YYYY-MM-DD` when it ends, if known | |
+| `covers` | no | If this fee is for something a package might already include: `hold_bag`, `cabin_bag`, `seats` or `transfers`. The fee is then skipped when the family ticks it as included. | `hold_bag` |
 
 ## Rules of thumb
 
@@ -31,3 +32,5 @@ A rule that can't be backed up is worse than no rule: it breaks the whole promis
 - Prices that vary (e.g. a hold bag costs £25–£60): use a typical figure, lower the `confidence`, explain in `source_note`.
 - One row per rule. If an airline charges different bag prices by route, start with the most common one.
 - Don't invent `region` boundaries yet — map areas come in Phase 3.
+- No £0 rows. "Not required" or "included" facts are not fees — put them in research notes, or use `covers`.
+- Any bag, seat or transfer fee **must** have `covers` filled in, or we'll double-charge package holidays.

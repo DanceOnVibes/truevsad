@@ -1,4 +1,5 @@
-import { formatGBP, type CostCategory, type CostLine } from "@truevsad/true-cost";
+import { formatGBP, type CostCategory, type CostLine, type Inclusion } from "@truevsad/true-cost";
+import { INCLUSION_LABELS } from "@/lib/supplier-defaults";
 
 export const CATEGORY_LABELS: Record<CostCategory, string> = {
   supplier: "Flight + stay",
@@ -16,11 +17,13 @@ export interface ReceiptViewProps {
   confidence: number;
   usedDemoRules: boolean;
   lines: CostLine[];
+  /** What the deal already includes — shown so families see why no fee was added. */
+  includes?: Inclusion[];
 }
 
 /** The Receipt. Used on the X-ray page and on shared /r/[slug] pages. */
 export function ReceiptView(props: ReceiptViewProps) {
-  const { advertisedPence, trueCostPence, gapPence, confidence, usedDemoRules, lines } = props;
+  const { advertisedPence, trueCostPence, gapPence, confidence, usedDemoRules, lines, includes } = props;
   const gapRatio = advertisedPence > 0 ? gapPence / advertisedPence : 0;
 
   return (
@@ -73,6 +76,12 @@ export function ReceiptView(props: ReceiptViewProps) {
           </tr>
         </tbody>
       </table>
+      {includes && includes.length > 0 && (
+        <p className="hint">
+          Already included in the deal, so not charged again:{" "}
+          {includes.map((i) => INCLUSION_LABELS[i]).join(", ")}.
+        </p>
+      )}
     </>
   );
 }

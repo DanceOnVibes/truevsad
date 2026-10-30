@@ -83,3 +83,17 @@ describe("ruleApplies", () => {
     expect(ruleApplies(ej, { supplierName: "Jet2" })).toBe(false);
   });
 });
+
+describe("inclusions", () => {
+  const bag: FeeRule = {
+    id: "bag", category: "party_extra", label: "Hold bag", unit: "per_person",
+    amount: { kind: "fixed", pence: 5000 }, confidence: 0.7, covers: "hold_bag",
+  };
+  it("skips a fee the deal already includes", () => {
+    expect(ruleApplies(bag, { includes: ["hold_bag", "transfers"] })).toBe(false);
+  });
+  it("still charges when it is not included", () => {
+    expect(ruleApplies(bag, { includes: ["transfers"] })).toBe(true);
+    expect(ruleApplies(bag, {})).toBe(true);
+  });
+});

@@ -3,6 +3,7 @@ import type {
   CostCategory,
   CostLine,
   FeeRule,
+  Inclusion,
   LineSource,
   Offer,
   Party,
@@ -30,6 +31,7 @@ interface FeeRuleRow {
   confidence: number | string;
   regions: string[] | null;
   supplier_name: string | null;
+  covers: Inclusion | null;
 }
 
 /**
@@ -45,7 +47,7 @@ export async function loadFeeRules(): Promise<FeeRule[]> {
   const { data, error } = await db
     .from("fee_rule")
     .select(
-      "id, category, label, unit, amount_pence, amount_bp, min_age, max_age, confidence, regions, supplier_name",
+      "id, category, label, unit, amount_pence, amount_bp, min_age, max_age, confidence, regions, supplier_name, covers",
     )
     .eq("is_active", true)
     .lte("valid_from", today)
@@ -67,6 +69,7 @@ export async function loadFeeRules(): Promise<FeeRule[]> {
     confidence: Number(r.confidence),
     regions: r.regions ?? undefined,
     supplierName: r.supplier_name ?? undefined,
+    covers: r.covers ?? undefined,
   }));
 }
 
@@ -151,6 +154,7 @@ export interface PublicReceipt {
   createdAt: string;
   nights: number;
   destination: string | null;
+  includes: Inclusion[];
   adults: number;
   children: number;
   lines: CostLine[];
@@ -174,7 +178,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
   const { data: q } = await db
     .from("true_cost_quote")
     .select(
-      "id, advertised_pence, true_cost_pence, gap_pence, confidence, used_demo_rules, created_at, offer:offer_id (nights, destination), party:party_id (adults, child_ages)",
+      "id, advertised_pence, true_cost_pence, gap_pence, confidence, used_demo_rules, created_at, offer:offer_id (nights, destination, includes), party:party_id (adults, child_ages)",
     )
     .eq("share_slug", slug)
     .eq("is_public", true)
@@ -188,7 +192,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
     .order("position");
 
   const offer = (Array.isArray(q.offer) ? q.offer[0] : q.offer) as
-    | { nights: number; destination: string | null }
+    | { nights: number; destination: string | null; includes: Inclusion[] | null }
     | null;
   const party = (Array.isArray(q.party) ? q.party[0] : q.party) as
     | { adults: number; child_ages: number[] }
@@ -203,6 +207,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
     createdAt: q.created_at as string,
     nights: offer?.nights ?? 0,
     destination: offer?.destination ?? null,
+    includes: offer?.includes ?? [],
     adults: party?.adults ?? 0,
     children: party?.child_ages?.length ?? 0,
     lines: ((lines ?? []) as CostLineRow[]).map((l) => ({

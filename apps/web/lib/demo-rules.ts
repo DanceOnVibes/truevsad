@@ -11,6 +11,7 @@ import type { FeeRule } from "@truevsad/true-cost";
 export const DEMO_RULES: FeeRule[] = [
   {
     id: "demo-hold-bag",
+    covers: "hold_bag",
     category: "party_extra",
     label: "Hold bag, return (demo)",
     unit: "per_person",
@@ -21,6 +22,7 @@ export const DEMO_RULES: FeeRule[] = [
   },
   {
     id: "demo-seats-together",
+    covers: "seats",
     category: "party_extra",
     label: "Seats together, return (demo)",
     unit: "per_person",

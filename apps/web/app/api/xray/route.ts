@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import {
   calculateTrueCost,
+  INCLUSIONS,
   PartyValidationError,
   selectRules,
+  type Inclusion,
   toOutwardPostcode,
   type HeadlineBasis,
   type Offer,
@@ -162,6 +164,9 @@ function parseOffer(raw: unknown): Offer | string {
     nights,
     destination: typeof raw.destination === "string" ? raw.destination.slice(0, 120) : undefined,
     supplierName: typeof raw.supplierName === "string" ? raw.supplierName.slice(0, 120) : undefined,
+    includes: Array.isArray(raw.includes)
+      ? [...new Set(raw.includes.filter((x): x is Inclusion => INCLUSIONS.includes(x as Inclusion)))]
+      : [],
   };
 }
 

@@ -45,6 +45,11 @@ export interface Party {
 
 export type HeadlineBasis = "per_person" | "total";
 
+/** Things a deal can already include, so we never charge for them twice. */
+export type Inclusion = "hold_bag" | "cabin_bag" | "seats" | "transfers";
+
+export const INCLUSIONS: readonly Inclusion[] = ["hold_bag", "cabin_bag", "seats", "transfers"] as const;
+
 /** What the advert says. Confirmed by the user before we price it. */
 export interface Offer {
   headlinePence: Pence;
@@ -55,6 +60,8 @@ export interface Offer {
   supplierName?: string;
   destination?: string;
   departureAirport?: string;
+  /** What the family confirmed the deal already includes. */
+  includes?: Inclusion[];
   /**
    * Itemised supplier charges if the advert shows them.
    * If empty, the advertised whole-party price is used as the supplier base.
@@ -94,6 +101,8 @@ export interface FeeRule {
   regions?: string[];
   /** Only for this supplier (matched against Offer.supplierName). Empty = every supplier. */
   supplierName?: string;
+  /** Skip this rule when the deal already includes this item (e.g. a bag fee covers "hold_bag"). */
+  covers?: Inclusion;
 }
 
 /** A cost line before the engine has stamped it. */

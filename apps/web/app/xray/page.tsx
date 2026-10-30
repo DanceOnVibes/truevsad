@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { TrueCostResult } from "@truevsad/true-cost";
+import { INCLUSIONS, type Inclusion, type TrueCostResult } from "@truevsad/true-cost";
+import { INCLUSION_LABELS, supplierDefaults } from "@/lib/supplier-defaults";
 import { ReceiptView } from "@/components/ReceiptView";
 
 type Step = "paste" | "confirm" | "receipt";
@@ -23,6 +24,20 @@ export default function XrayPage() {
   const [nights, setNights] = useState("7");
   const [destination, setDestination] = useState("");
   const [supplier, setSupplier] = useState("");
+  const [includes, setIncludes] = useState<Inclusion[]>([]);
+  const [includesTouched, setIncludesTouched] = useState(false);
+  const defaults = supplierDefaults(supplier);
+
+  function changeSupplier(value: string) {
+    setSupplier(value);
+    // Pre-tick from the seller's usual package — but never overwrite the family's own choices.
+    if (!includesTouched) setIncludes(supplierDefaults(value)?.includes ?? []);
+  }
+
+  function toggleInclude(item: Inclusion) {
+    setIncludesTouched(true);
+    setIncludes((cur) => (cur.includes(item) ? cur.filter((x) => x !== item) : [...cur, item]));
+  }
   const [adults, setAdults] = useState("2");
   const [childAges, setChildAges] = useState("");
   const [postcode, setPostcode] = useState("");
@@ -54,7 +69,7 @@ export default function XrayPage() {
       if (d.headlineBasis) setBasis(d.headlineBasis);
       if (d.nights) setNights(String(d.nights));
       if (d.destination) setDestination(d.destination);
-      if (d.supplierName) setSupplier(d.supplierName);
+      if (d.supplierName) changeSupplier(d.supplierName);
       setNotes(data.notes ?? []);
       setStep("confirm");
     } catch (e) {
@@ -85,6 +100,7 @@ export default function XrayPage() {
           nights: Number(nights),
           destination: destination || undefined,
           supplierName: supplier || undefined,
+          includes,
         },
       });
       setResult(data.result);
@@ -209,11 +225,30 @@ export default function XrayPage() {
                 id="supplier"
                 placeholder="e.g. easyJet holidays"
                 value={supplier}
-                onChange={(e) => setSupplier(e.target.value)}
+                onChange={(e) => changeSupplier(e.target.value)}
               />
             </div>
           </div>
           <p className="hint">These help us add the right local taxes and fees.</p>
+
+          <fieldset className="includes">
+            <legend>What does this deal already include?</legend>
+            {INCLUSIONS.map((item) => (
+              <label key={item} className="check">
+                <input
+                  type="checkbox"
+                  checked={includes.includes(item)}
+                  onChange={() => toggleInclude(item)}
+                />{" "}
+                {INCLUSION_LABELS[item]}
+              </label>
+            ))}
+            <p className="hint">
+              {defaults && !includesTouched
+                ? `Pre-ticked: ${defaults.note}. Check your deal and change anything that's different.`
+                : "Tick only what your deal clearly says is included. We won't charge for those."}
+            </p>
+          </fieldset>
 
           <h3>Who&apos;s going</h3>
           <div className="row">
@@ -241,7 +276,7 @@ export default function XrayPage() {
 
       {step === "receipt" && result && (
         <div className="card">
-          <ReceiptView {...result} lines={result.receipt.lines} />
+          <ReceiptView {...result} lines={result.receipt.lines} includes={includes} />
 
           {quoteId ? (
             shareUrl ? (

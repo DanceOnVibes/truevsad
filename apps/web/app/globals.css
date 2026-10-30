@@ -98,3 +98,8 @@ table.receipt tr.total td { font-weight: 700; border-bottom: 0; }
 }
 .site-footer div { margin-top: 4px; }
 main ul { padding-left: 20px; }
+
+fieldset.includes { border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px 4px; margin: 16px 0 0; }
+fieldset.includes legend { font-weight: 600; padding: 0 4px; }
+label.check { display: flex; align-items: center; gap: 8px; font-weight: 400; margin: 8px 0; }
+label.check input { width: auto; }

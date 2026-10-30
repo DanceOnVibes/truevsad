@@ -74,6 +74,7 @@ supabase db push
 - [x] Fee rules load from `fee_rule` (demo rules only while the table is empty)
 - [x] Rate limiting (hashed visitor id, no raw IPs), privacy page, security headers, robots/sitemap
 - [x] Fee rules scoped to destination + supplier; CSV template + `pnpm import-rules`
+- [x] "What's included" step: package inclusions (bags, transfers, seats) are never charged twice
 - [ ] LLM extraction (replace stub in `apps/web/app/api/xray/route.ts`)
 - [ ] Real, sourced fee rules in `data/fee-rules/fee-rules.csv` (see its README)
 - [x] All migrations applied to production (nightly purge job scheduled at 03:17 UTC)

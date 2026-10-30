@@ -4,14 +4,14 @@ import type { FeeRule, Offer } from "./types";
 function normalise(s: string): string {
   return s
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
 }
 
 /** Whole-word match: "canaria" does not match "canarias", "rome" does not match "jerome". */
-function mentions(haystack: string, needle: string): boolean {
+export function mentions(haystack: string, needle: string): boolean {
   const n = normalise(needle);
   return n.length > 0 && ` ${normalise(haystack)} `.includes(` ${n} `);
 }
@@ -22,7 +22,12 @@ function mentions(haystack: string, needle: string): boolean {
  * - A scoped rule only applies when the offer clearly names that place/supplier.
  *   If we don't know the destination, scoped rules are skipped rather than guessed.
  */
-export function ruleApplies(rule: FeeRule, offer: Pick<Offer, "destination" | "supplierName">): boolean {
+export function ruleApplies(
+  rule: FeeRule,
+  offer: Pick<Offer, "destination" | "supplierName" | "includes">,
+): boolean {
+  // Never charge for something the deal already includes.
+  if (rule.covers && offer.includes?.includes(rule.covers)) return false;
   if (rule.regions && rule.regions.length > 0) {
     if (!offer.destination) return false;
     if (!rule.regions.some((r) => mentions(offer.destination!, r))) return false;
@@ -36,7 +41,7 @@ export function ruleApplies(rule: FeeRule, offer: Pick<Offer, "destination" | "s
 
 export function selectRules(
   rules: FeeRule[],
-  offer: Pick<Offer, "destination" | "supplierName">,
+  offer: Pick<Offer, "destination" | "supplierName" | "includes">,
 ): FeeRule[] {
   return rules.filter((r) => ruleApplies(r, offer));
 }
