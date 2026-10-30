@@ -178,8 +178,8 @@ function parseOffer(raw: unknown): Offer | string {
     headlineBasis: basis,
     currency: typeof raw.currency === "string" ? raw.currency.toUpperCase().slice(0, 3) : "GBP",
     nights,
-    destination: typeof raw.destination === "string" ? raw.destination.slice(0, 120) : undefined,
-    supplierName: typeof raw.supplierName === "string" ? raw.supplierName.slice(0, 120) : undefined,
+    destination: tidy(raw.destination),
+    supplierName: tidy(raw.supplierName),
     includes: Array.isArray(raw.includes)
       ? [...new Set(raw.includes.filter((x): x is Inclusion => INCLUSIONS.includes(x as Inclusion)))]
       : [],
@@ -224,6 +224,13 @@ function normaliseLink(raw: unknown): string | undefined {
   } catch {
     return undefined;
   }
+}
+
+/** Trim, collapse spaces, cap length; empty becomes undefined. */
+function tidy(v: unknown, max = 120): string | undefined {
+  if (typeof v !== "string") return undefined;
+  const t = v.replace(/\s+/g, " ").trim().slice(0, max);
+  return t || undefined;
 }
 
 function isObject(v: unknown): v is Record<string, unknown> {
