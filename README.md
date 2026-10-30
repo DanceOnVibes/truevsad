@@ -75,11 +75,11 @@ supabase db push
 - [x] Rate limiting (hashed visitor id, no raw IPs), privacy page, security headers, robots/sitemap
 - [x] Fee rules scoped to destination + supplier; CSV template + `pnpm import-rules`
 - [x] "What's included" step: package inclusions (bags, transfers, seats) are never charged twice
-- [ ] LLM extraction (replace stub in `apps/web/app/api/xray/route.ts`)
+- [ ] AI extraction with Google Vertex AI, UK region (replace stub in `apps/web/app/api/xray/route.ts`)
 - [ ] Real, sourced fee rules in `data/fee-rules/fee-rules.csv` (see its README)
 - [x] All migrations applied to production (nightly purge job scheduled at 03:17 UTC)
 - [x] Deployed on Vercel (London) and tested end to end: X-ray → save → share
-- [ ] Privacy page: add company number, registered office, contact email
+- [x] Privacy page and footer: company number, ICO registration, registered office, contact emails, security.txt
 - [ ] Duffel integration for live flight prices
 
 > The X-ray currently uses **demo** fee rules. They are placeholders, not real prices, and the UI says so.

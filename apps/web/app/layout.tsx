@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { COMPANY, EMAILS } from "@/lib/company";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,7 +19,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Link href="/">TrueVsAd</Link> · <Link href="/xray">Deal X-ray</Link> ·{" "}
           <Link href="/privacy">Privacy</Link>
           <div>We never take payment. Rankings ignore commission.</div>
-          <div>© {new Date().getFullYear()} DanceOnVibes Limited</div>
+          <div>
+            Contact: <a href={`mailto:${EMAILS.hello}`}>{EMAILS.hello}</a>
+          </div>
+          <div>
+            © {new Date().getFullYear()} {COMPANY.name} · Registered in England and Wales, company
+            no. {COMPANY.number} · {COMPANY.address}
+          </div>
         </footer>
       </body>
     </html>

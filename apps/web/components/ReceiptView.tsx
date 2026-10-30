@@ -1,4 +1,5 @@
 import { formatGBP, type CostCategory, type CostLine, type Inclusion } from "@truevsad/true-cost";
+import { EMAILS } from "@/lib/company";
 import { INCLUSION_LABELS } from "@/lib/supplier-defaults";
 
 export const CATEGORY_LABELS: Record<CostCategory, string> = {
@@ -82,6 +83,11 @@ export function ReceiptView(props: ReceiptViewProps) {
           {includes.map((i) => INCLUSION_LABELS[i]).join(", ")}.
         </p>
       )}
+      <p className="hint">
+        Spotted a figure that&apos;s wrong? Tell us at{" "}
+        <a href={`mailto:${EMAILS.corrections}`}>{EMAILS.corrections}</a> and we&apos;ll fix it
+        for everyone.
+      </p>
     </>
   );
 }

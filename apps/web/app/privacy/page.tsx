@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { COMPANY, EMAILS } from "@/lib/company";
 
 export const metadata: Metadata = {
   title: "Privacy — TrueVsAd",
@@ -18,8 +19,13 @@ export default function PrivacyPage() {
       <div className="card">
         <h2 style={{ marginTop: 0 }}>Who we are</h2>
         <p>
-          TrueVsAd is run by DanceOnVibes Limited, a company registered in England and Wales.
-          {/* TODO(Adalbert): add company number, registered office and a contact email. */}
+          TrueVsAd is operated by {COMPANY.name}, {COMPANY.type} (company number {COMPANY.number}).
+          We are registered with the Information Commissioner&apos;s Office (registration{" "}
+          {COMPANY.ico}).
+        </p>
+        <p>Registered office: {COMPANY.address}.</p>
+        <p>
+          Questions about your data: <a href={`mailto:${EMAILS.privacy}`}>{EMAILS.privacy}</a>
         </p>
 
         <h2>What we store when you X-ray a deal</h2>
@@ -71,8 +77,10 @@ export default function PrivacyPage() {
 
         <h2>Your rights</h2>
         <p>
-          You can ask us what we hold, or ask us to delete a receipt — send us its share link. You
-          can also complain to the Information Commissioner&apos;s Office (ico.org.uk).
+          You can ask us what we hold, or ask us to delete a receipt: email{" "}
+          <a href={`mailto:${EMAILS.privacy}`}>{EMAILS.privacy}</a> with its share link. We reply
+          within one month. You can also complain to the Information Commissioner&apos;s Office
+          (ico.org.uk).
         </p>
 
         <p className="hint">Last updated 30 October 2026.</p>
