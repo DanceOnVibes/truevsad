@@ -15,18 +15,62 @@ interface ServiceAccountKey {
 
 let cached: { token: string; expiresAt: number } | null = null;
 
-function readKey(): ServiceAccountKey | null {
+/** Normalise common copy-paste damage: stray quotes, base64, double-escaped newlines. */
+function rawKey(): { raw: string | null; format: "missing" | "json" | "base64" | "quoted-json" } {
   let raw = process.env.GCP_SERVICE_ACCOUNT_KEY?.trim();
+  if (!raw) return { raw: null, format: "missing" };
+  if ((raw.startsWith("'") && raw.endsWith("'")) || (raw.startsWith('"{') && raw.endsWith('}"'))) {
+    return { raw: raw.slice(1, -1), format: "quoted-json" };
+  }
+  if (raw.startsWith("{")) return { raw, format: "json" };
+  return { raw: Buffer.from(raw, "base64").toString("utf8"), format: "base64" };
+}
+
+function readKey(): ServiceAccountKey | null {
+  const { raw } = rawKey();
   if (!raw) return null;
-  // Accept the key as plain JSON (one line) or base64-encoded JSON.
-  if (!raw.startsWith("{")) raw = Buffer.from(raw, "base64").toString("utf8");
   try {
     const key = JSON.parse(raw) as ServiceAccountKey;
-    return key.client_email && key.private_key ? key : null;
+    if (!key.client_email || !key.private_key) return null;
+    // Some dashboards double-escape newlines; PEM needs real ones.
+    key.private_key = key.private_key.replace(/\\n/g, "\n");
+    return key;
   } catch {
     console.error("GCP_SERVICE_ACCOUNT_KEY is not valid JSON");
     return null;
   }
+}
+
+/** Safe-to-show diagnostics. Never returns any part of the private key. */
+export function gcpDiagnostics() {
+  const { raw, format } = rawKey();
+  let parses = false;
+  let hasEmail = false;
+  let hasPrivateKey = false;
+  let serviceAccountDomain: string | null = null;
+  if (raw) {
+    try {
+      const k = JSON.parse(raw) as Partial<ServiceAccountKey>;
+      parses = true;
+      hasEmail = Boolean(k.client_email);
+      hasPrivateKey = Boolean(k.private_key?.includes("BEGIN PRIVATE KEY"));
+      serviceAccountDomain = k.client_email?.split("@")[1] ?? null;
+    } catch {
+      /* parses stays false */
+    }
+  }
+  return {
+    projectSet: Boolean(process.env.GOOGLE_CLOUD_PROJECT),
+    project: process.env.GOOGLE_CLOUD_PROJECT ?? null,
+    location: process.env.GOOGLE_CLOUD_LOCATION || "europe-west2 (default)",
+    keySet: raw !== null,
+    keyLength: process.env.GCP_SERVICE_ACCOUNT_KEY?.length ?? 0,
+    keyFormat: format,
+    keyParsesAsJson: parses,
+    keyHasClientEmail: hasEmail,
+    keyHasPrivateKey: hasPrivateKey,
+    serviceAccountDomain,
+  };
 }
 
 export function gcpConfigured(): boolean {

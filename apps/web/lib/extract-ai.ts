@@ -169,3 +169,35 @@ function clean(json: string): DraftOffer | null {
     includes: includes && includes.length ? includes : undefined,
   };
 }
+
+/** Health check: can we get a token, and which models answer in this region? Tiny prompt, ~no cost. */
+export async function probeModels(): Promise<{ token: boolean; models: Record<string, number | string> }> {
+  const out: { token: boolean; models: Record<string, number | string> } = { token: false, models: {} };
+  if (!aiConfigured()) return out;
+  const token = await getAccessToken().catch(() => null);
+  out.token = Boolean(token);
+  if (!token) return out;
+  const project = process.env.GOOGLE_CLOUD_PROJECT!;
+  const location = process.env.GOOGLE_CLOUD_LOCATION || "europe-west2";
+  const models = (process.env.GEMINI_MODELS ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  for (const model of models.length ? models : DEFAULT_MODELS) {
+    const url =
+      `https://${location}-aiplatform.googleapis.com/v1/projects/${project}` +
+      `/locations/${location}/publishers/google/models/${model}:generateContent`;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: "Reply with OK." }] }],
+          generationConfig: { maxOutputTokens: 5, temperature: 0 },
+        }),
+        signal: AbortSignal.timeout(15_000),
+      });
+      out.models[model] = res.status;
+    } catch (err) {
+      out.models[model] = (err as Error).name;
+    }
+  }
+  return out;
+}
