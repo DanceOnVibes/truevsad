@@ -60,9 +60,11 @@ export function gcpDiagnostics() {
     }
   }
   return {
+    // NEVER echo raw env values here — this endpoint is public.
     projectSet: Boolean(process.env.GOOGLE_CLOUD_PROJECT),
-    project: process.env.GOOGLE_CLOUD_PROJECT ?? null,
-    location: process.env.GOOGLE_CLOUD_LOCATION || "europe-west2 (default)",
+    projectLooksValid: /^[a-z][a-z0-9-]{4,28}[a-z0-9]$/.test(process.env.GOOGLE_CLOUD_PROJECT ?? ""),
+    projectLength: process.env.GOOGLE_CLOUD_PROJECT?.length ?? 0,
+    locationLooksValid: /^[a-z]+-[a-z]+\d$/.test(process.env.GOOGLE_CLOUD_LOCATION || "europe-west2"),
     keySet: raw !== null,
     keyLength: process.env.GCP_SERVICE_ACCOUNT_KEY?.length ?? 0,
     keyFormat: format,
