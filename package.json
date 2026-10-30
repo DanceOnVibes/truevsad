@@ -1,0 +1,17 @@
+{
+  "name": "truevsad",
+  "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @truevsad/web dev",
+    "build": "pnpm --filter @truevsad/web build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

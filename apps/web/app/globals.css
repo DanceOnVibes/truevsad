@@ -1,0 +1,89 @@
+:root {
+  --bg: #fafaf7;
+  --fg: #16181d;
+  --muted: #5d6470;
+  --line: #e2e2dc;
+  --card: #ffffff;
+  --accent: #0b6e4f;
+  --warn-bg: #fff4d6;
+  --warn-fg: #6b4e00;
+  --gap: #b42318;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111317;
+    --fg: #ecedef;
+    --muted: #9aa1ad;
+    --line: #2a2e35;
+    --card: #181b20;
+    --accent: #4cc39a;
+    --warn-bg: #3a2f10;
+    --warn-fg: #f3d27a;
+    --gap: #ff7b6b;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+}
+
+main { max-width: 720px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 1.9rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+p.lead { color: var(--muted); margin-top: 0; }
+a { color: var(--accent); }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 16px 0;
+}
+
+label { display: block; font-weight: 600; margin: 12px 0 4px; }
+input, textarea, select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+}
+textarea { min-height: 110px; resize: vertical; }
+.row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+.hint { color: var(--muted); font-size: 0.85rem; margin: 4px 0 0; }
+
+button {
+  margin-top: 16px;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button.secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+
+.warn { background: var(--warn-bg); color: var(--warn-fg); border-radius: 8px; padding: 10px 12px; font-size: 0.9rem; }
+.error { color: var(--gap); font-weight: 600; }
+
+.headline { display: flex; gap: 16px; flex-wrap: wrap; align-items: baseline; }
+.headline .num { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.headline .gap { color: var(--gap); }
+
+table.receipt { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+table.receipt td { padding: 8px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.receipt td.amt { text-align: right; white-space: nowrap; padding-left: 12px; }
+table.receipt .working { color: var(--muted); font-size: 0.8rem; }
+table.receipt tr.total td { font-weight: 700; border-bottom: 0; }
