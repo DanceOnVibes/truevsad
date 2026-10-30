@@ -75,7 +75,8 @@ supabase db push
 - [x] Rate limiting (hashed visitor id, no raw IPs), privacy page, security headers, robots/sitemap
 - [x] Fee rules scoped to destination + supplier; CSV template + `pnpm import-rules`
 - [x] "What's included" step: package inclusions (bags, transfers, seats) are never charged twice
-- [ ] AI extraction with Google Vertex AI, UK region (replace stub in `apps/web/app/api/xray/route.ts`)
+- [x] AI reader: Gemini on Google Cloud Agent Platform in London (text + screenshots), manual fallback, £10/month spend cap
+- [ ] Confirm in Vercel logs which Gemini model London serves (`AI reader: used …`)
 - [ ] Real, sourced fee rules in `data/fee-rules/fee-rules.csv` (see its README)
 - [x] All migrations applied to production (nightly purge job scheduled at 03:17 UTC)
 - [x] Deployed on Vercel (London) and tested end to end: X-ray → save → share

@@ -41,6 +41,15 @@ export default function PrivacyPage() {
           passport details or payment details. We never take payment.
         </p>
 
+        <h2>Reading your deal</h2>
+        <p>
+          When you paste deal text or a screenshot, it is sent to Google Cloud (Gemini on Agent
+          Platform, run in London) only to pull out the deal details: price, nights, destination,
+          seller and what&apos;s included. We don&apos;t keep the text or the screenshot — only the
+          details you confirm on the next screen are saved. Please crop out names and booking
+          references before uploading a screenshot.
+        </p>
+
         <h2>Why</h2>
         <p>
           To work out the true price you asked for, and to let you share the receipt if you choose
@@ -72,7 +81,8 @@ export default function PrivacyPage() {
         <h2>Where your data lives</h2>
         <p>
           Our database is hosted by Supabase in London. The website runs on Vercel, with our
-          servers in London; Vercel may keep short-lived technical logs of requests.
+          servers in London; Vercel may keep short-lived technical logs of requests. Deal reading
+          runs on Google Cloud in London.
         </p>
 
         <h2>Your rights</h2>

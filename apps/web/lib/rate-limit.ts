@@ -5,7 +5,7 @@ export type RateAction = "extract" | "quote" | "share";
 
 /** Requests allowed per visitor per hour. Generous for real families, tight for bots. */
 const LIMITS: Record<RateAction, number> = {
-  extract: 60,
+  extract: 20, // AI calls cost money — keep this tighter
   quote: 30,
   share: 30,
 };

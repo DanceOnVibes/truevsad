@@ -6,12 +6,12 @@ import {
   selectRules,
   type Inclusion,
   toOutwardPostcode,
-  type HeadlineBasis,
   type Offer,
   type Party,
 } from "@truevsad/true-cost";
 import { loadFeeRules, saveQuote, shareQuote, type SourceKind } from "@/lib/quotes";
 import { allowRequest } from "@/lib/rate-limit";
+import { aiConfigured, extractWithAi, type DraftOffer } from "@/lib/extract-ai";
 
 // Run in London, next to Supabase London. Node runtime (not edge) so it pins to lhr1.
 export const runtime = "nodejs";
@@ -23,8 +23,8 @@ export const dynamic = "force-dynamic";
  *
  * Two steps, so the user always confirms before we price anything:
  *
- *   { "step": "extract", "text"?: string, "url"?: string, "hasScreenshot"?: boolean }
- *     → a DRAFT offer for the user to check and correct.
+ *   { "step": "extract", "text"?: string, "url"?: string, "image"?: { mimeType, base64 } }
+ *     → a DRAFT offer (read by Gemini in London when configured) for the user to check.
  *
  *   { "step": "quote", "party": Party, "offer": Offer, "sourceKind", "sourceUrl"? }
  *     → TrueCost result + itemised Receipt. Saved PRIVATELY; returns quoteId.
@@ -62,39 +62,55 @@ export async function POST(req: Request) {
 }
 
 // ---------------------------------------------------------------------------
-// Step 1 — extract (STUB)
+// Step 1 — extract
 // ---------------------------------------------------------------------------
 
-function extract(body: Record<string, unknown>) {
-  const text = typeof body.text === "string" ? body.text.slice(0, 20_000) : "";
-  const url = typeof body.url === "string" ? body.url.slice(0, 2_000) : "";
-  const hasScreenshot = body.hasScreenshot === true;
+const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp"];
+const MAX_IMAGE_BASE64 = 3_000_000; // ~2.2 MB image; the browser shrinks screenshots first
 
-  if (!text && !url && !hasScreenshot) {
+async function extract(body: Record<string, unknown>) {
+  const text = typeof body.text === "string" ? body.text.slice(0, 20_000) : "";
+  const url = normaliseLink(body.url);
+
+  let image: { mimeType: string; base64: string } | undefined;
+  if (isObject(body.image)) {
+    const mimeType = String(body.image.mimeType ?? "");
+    const base64 = String(body.image.base64 ?? "");
+    if (!IMAGE_TYPES.includes(mimeType)) return bad("Screenshots must be PNG, JPEG or WebP.");
+    if (base64.length > MAX_IMAGE_BASE64 || !/^[A-Za-z0-9+/=]+$/.test(base64)) {
+      return bad("That screenshot is too large. Try cropping it to just the deal.");
+    }
+    image = { mimeType, base64 };
+  }
+
+  if (!text && !url && !image) {
     return bad("Paste a link, some deal text, or a screenshot.");
   }
 
-  // TODO(llm): replace this naive parser with the LLM extraction step.
-  // It must return the same DraftOffer shape and never fetch `url`.
-  const draft = naiveExtract(text);
+  const notes: string[] = [];
+  let draft: DraftOffer | null = null;
 
-  const notes: string[] = ["Stub extractor — please check every field before continuing."];
-  if (url && !text) {
-    notes.push("We don't open links ourselves. Paste the deal text so we can read the details.");
-  }
-  if (hasScreenshot) {
-    notes.push("Reading screenshots arrives with the AI extraction step. Type the details for now.");
+  // HARD RULE: we never fetch `url`. The AI only sees text/screenshot the family gave us.
+  if ((text || image) && aiConfigured()) {
+    draft = await extractWithAi({ text: text || undefined, image });
+    if (draft) notes.push("Read by AI — please check every field before continuing.");
   }
 
-  return NextResponse.json({ draft: { ...draft, sourceUrl: url || undefined }, notes });
-}
+  if (!draft) {
+    draft = naiveExtract(text);
+    if (aiConfigured() && (text || image)) {
+      notes.push("Our AI reader is unavailable right now, so we've filled in what we could. Please check and complete the details.");
+    } else {
+      notes.push("Please check every field before continuing.");
+    }
+    if (image && !text) notes.push("We couldn't read the screenshot this time. Type the details below.");
+  }
 
-interface DraftOffer {
-  headlinePence?: number;
-  headlineBasis: HeadlineBasis;
-  currency: string;
-  nights?: number;
-  destination?: string;
+  if (url && !text && !image) {
+    notes.push("We don't open links ourselves. Paste the deal text or a screenshot so we can read the details.");
+  }
+
+  return NextResponse.json({ draft: { ...draft, sourceUrl: url }, notes });
 }
 
 function naiveExtract(text: string): DraftOffer {

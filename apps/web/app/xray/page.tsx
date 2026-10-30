@@ -7,6 +7,21 @@ import { ReceiptView } from "@/components/ReceiptView";
 
 type Step = "paste" | "confirm" | "receipt";
 
+/**
+ * Shrink a screenshot in the browser before upload (max 1600px, JPEG) so it's fast,
+ * cheap to read and well under the server's size limit.
+ */
+async function shrinkImage(file: File): Promise<{ mimeType: string; base64: string }> {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+  return { mimeType: "image/jpeg", base64: dataUrl.split(",")[1]! };
+}
+
 export default function XrayPage() {
   const [step, setStep] = useState<Step>("paste");
   const [busy, setBusy] = useState(false);
@@ -63,13 +78,21 @@ export default function XrayPage() {
     setBusy(true);
     setError(null);
     try {
-      const data = await post({ step: "extract", url, text, hasScreenshot: !!screenshot });
+      const image = screenshot ? await shrinkImage(screenshot) : undefined;
+      const data = await post({ step: "extract", url, text, image });
       const d = data.draft ?? {};
       if (d.headlinePence) setPrice((d.headlinePence / 100).toFixed(2));
       if (d.headlineBasis) setBasis(d.headlineBasis);
       if (d.nights) setNights(String(d.nights));
       if (d.destination) setDestination(d.destination);
       if (d.supplierName) changeSupplier(d.supplierName);
+      if (d.adults) setAdults(String(d.adults));
+      if (Array.isArray(d.childAges) && d.childAges.length) setChildAges(d.childAges.join(", "));
+      if (Array.isArray(d.includes) && d.includes.length) {
+        // The deal itself said these are included — that beats the seller's usual defaults.
+        setIncludes(d.includes);
+        setIncludesTouched(true);
+      }
       setNotes(data.notes ?? []);
       setStep("confirm");
     } catch (e) {
@@ -177,6 +200,10 @@ export default function XrayPage() {
             accept="image/*"
             onChange={(e) => setScreenshot(e.target.files?.[0] ?? null)}
           />
+          <p className="hint">
+            Tip: crop out names and booking references first. We only read the deal details and
+            never keep the screenshot.
+          </p>
 
           <button onClick={onExtract} disabled={busy || (!url && !text && !screenshot)}>
             {busy ? "Reading…" : "Read the deal"}
