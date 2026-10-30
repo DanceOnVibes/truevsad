@@ -10,6 +10,7 @@
     "test": "echo \"no web tests yet\""
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.58.0",
     "@truevsad/true-cost": "workspace:*",
     "next": "^16.0.0",
     "react": "^19.2.0",

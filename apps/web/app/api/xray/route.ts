@@ -7,7 +7,7 @@ import {
   type Offer,
   type Party,
 } from "@truevsad/true-cost";
-import { DEMO_RULES } from "@/lib/demo-rules";
+import { loadFeeRules, saveQuote, shareQuote, type SourceKind } from "@/lib/quotes";
 
 // Run in London, next to Supabase London. Node runtime (not edge) so it pins to lhr1.
 export const runtime = "nodejs";
@@ -22,8 +22,11 @@ export const dynamic = "force-dynamic";
  *   { "step": "extract", "text"?: string, "url"?: string, "hasScreenshot"?: boolean }
  *     → a DRAFT offer for the user to check and correct.
  *
- *   { "step": "quote", "party": Party, "offer": Offer }
- *     → TrueCost result + itemised Receipt.
+ *   { "step": "quote", "party": Party, "offer": Offer, "sourceKind", "sourceUrl"? }
+ *     → TrueCost result + itemised Receipt. Saved PRIVATELY; returns quoteId.
+ *
+ *   { "step": "share", "quoteId": string }
+ *     → makes that quote public and returns a random share slug (/r/[slug]).
  *
  * HARD RULE: we never fetch the URL server-side (no scraping of airlines/OTAs).
  * The link is kept as a reference only; details come from the text or screenshot
@@ -40,7 +43,8 @@ export async function POST(req: Request) {
 
   if (body.step === "extract") return extract(body);
   if (body.step === "quote") return quote(body);
-  return bad('Unknown step. Use "extract" or "quote".');
+  if (body.step === "share") return share(body);
+  return bad('Unknown step. Use "extract", "quote" or "share".');
 }
 
 // ---------------------------------------------------------------------------
@@ -96,17 +100,25 @@ function naiveExtract(text: string): DraftOffer {
 // Step 2 — quote
 // ---------------------------------------------------------------------------
 
-function quote(body: Record<string, unknown>) {
+async function quote(body: Record<string, unknown>) {
   const party = parseParty(body.party);
   if (typeof party === "string") return bad(party);
   const offer = parseOffer(body.offer);
   if (typeof offer === "string") return bad(offer);
 
+  const sourceKind: SourceKind =
+    body.sourceKind === "link" || body.sourceKind === "screenshot" ? body.sourceKind : "text";
+  const sourceUrl =
+    typeof body.sourceUrl === "string" && /^https?:\/\//i.test(body.sourceUrl)
+      ? body.sourceUrl.slice(0, 2000)
+      : undefined;
+
   try {
-    // TODO(db): load active fee_rule rows from Supabase for this destination/supplier.
-    const result = calculateTrueCost({ party, offer, rules: DEMO_RULES });
-    // TODO(db): persist party/offer/quote/cost_lines and return a share slug.
-    return NextResponse.json({ result });
+    const rules = await loadFeeRules();
+    const result = calculateTrueCost({ party, offer, rules });
+    // Saving must never block the answer: if it fails, the user still gets the price.
+    const quoteId = await saveQuote({ party, offer, result, sourceKind, sourceUrl });
+    return NextResponse.json({ result, quoteId });
   } catch (err) {
     if (err instanceof PartyValidationError) return bad(err.message);
     return bad(err instanceof Error ? err.message : "Could not price this deal.");
@@ -142,6 +154,24 @@ function parseOffer(raw: unknown): Offer | string {
     destination: typeof raw.destination === "string" ? raw.destination.slice(0, 120) : undefined,
     supplierName: typeof raw.supplierName === "string" ? raw.supplierName.slice(0, 120) : undefined,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Step 3 — share
+// ---------------------------------------------------------------------------
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function share(body: Record<string, unknown>) {
+  // The quote id is an unguessable UUID only ever sent to the browser that created the quote.
+  if (typeof body.quoteId !== "string" || !UUID.test(body.quoteId)) {
+    return bad("Missing quote.");
+  }
+  const slug = await shareQuote(body.quoteId);
+  if (!slug) {
+    return NextResponse.json({ error: "Could not create a share link right now." }, { status: 503 });
+  }
+  return NextResponse.json({ slug, path: `/r/${slug}` });
 }
 
 // ---------------------------------------------------------------------------

@@ -1,18 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { formatGBP, type CostCategory, type TrueCostResult } from "@truevsad/true-cost";
+import type { TrueCostResult } from "@truevsad/true-cost";
+import { ReceiptView } from "@/components/ReceiptView";
 
 type Step = "paste" | "confirm" | "receipt";
-
-const CATEGORY_LABELS: Record<CostCategory, string> = {
-  supplier: "Flight + stay",
-  party_extra: "Party extras",
-  levy: "Taxes & levies",
-  entry_doc: "Entry documents",
-  door_to_door: "Door to door",
-  payment_fx: "Payment & FX",
-};
 
 export default function XrayPage() {
   const [step, setStep] = useState<Step>("paste");
@@ -36,6 +28,9 @@ export default function XrayPage() {
 
   // Step 3 — receipt
   const [result, setResult] = useState<TrueCostResult | null>(null);
+  const [quoteId, setQuoteId] = useState<string | null>(null);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   async function post(payload: unknown) {
     const res = await fetch("/api/xray", {
@@ -78,6 +73,8 @@ export default function XrayPage() {
         .map(Number);
       const data = await post({
         step: "quote",
+        sourceKind: text ? "text" : screenshot ? "screenshot" : "link",
+        sourceUrl: url || undefined,
         party: { adults: Number(adults), childAges: ages, outwardPostcode: postcode },
         offer: {
           headlinePence: Math.round(parseFloat(price) * 100),
@@ -88,11 +85,42 @@ export default function XrayPage() {
         },
       });
       setResult(data.result);
+      setQuoteId(data.quoteId ?? null);
+      setShareUrl(null);
+      setCopied(false);
       setStep("receipt");
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function onShare() {
+    if (!quoteId) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const data = await post({ step: "share", quoteId });
+      const link = `${window.location.origin}${data.path}`;
+      setShareUrl(link);
+      if (navigator.share) {
+        await navigator.share({ title: "The true price of this holiday", url: link }).catch(() => {});
+      }
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onCopy() {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+    } catch {
+      setCopied(false);
     }
   }
 
@@ -191,56 +219,27 @@ export default function XrayPage() {
 
       {step === "receipt" && result && (
         <div className="card">
-          {result.usedDemoRules && (
-            <p className="warn">
-              Demo figures — extras below are placeholders, not real prices yet. Do not use this to
-              make a booking decision.
-            </p>
-          )}
+          <ReceiptView {...result} lines={result.receipt.lines} />
 
-          <div className="headline">
-            <div>
-              <div className="hint">Advertised</div>
-              <div className="num">{formatGBP(result.advertisedPence)}</div>
-            </div>
-            <div className="num">→</div>
-            <div>
-              <div className="hint">True all-in</div>
-              <div className="num">{formatGBP(result.trueCostPence)}</div>
-            </div>
-            <div>
-              <div className="hint">Gap</div>
-              <div className="num gap">
-                {result.gapPence > 0 ? "+" : ""}
-                {formatGBP(result.gapPence)} ({Math.round(result.gapRatio * 100)}%)
+          {quoteId ? (
+            shareUrl ? (
+              <div>
+                <label htmlFor="share">Share link</label>
+                <input id="share" readOnly value={shareUrl} onFocus={(e) => e.target.select()} />
+                <button onClick={onCopy}>{copied ? "Copied ✓" : "Copy link"}</button>
+                <p className="hint">
+                  Anyone with this link can see the receipt. It shows the party size, but never
+                  your postcode, ages or the deal link.
+                </p>
               </div>
-            </div>
-          </div>
-          <p className="hint">Confidence: {Math.round(result.confidence * 100)}%</p>
-
-          <h3>Receipt</h3>
-          <table className="receipt">
-            <tbody>
-              {result.receipt.lines.map((l, i) => (
-                <tr key={i}>
-                  <td>
-                    {l.label}
-                    <div className="working">
-                      {CATEGORY_LABELS[l.category]}
-                      {l.working ? ` · ${l.working}` : ""}
-                    </div>
-                  </td>
-                  <td className="amt">{formatGBP(l.amountPence)}</td>
-                </tr>
-              ))}
-              <tr className="total">
-                <td>True all-in price</td>
-                <td className="amt">{formatGBP(result.trueCostPence)}</td>
-              </tr>
-            </tbody>
-          </table>
-
-          <p className="hint">Shareable receipt link coming soon.</p>
+            ) : (
+              <button onClick={onShare} disabled={busy}>
+                {busy ? "Making link…" : "Share this receipt"}
+              </button>
+            )
+          ) : (
+            <p className="hint">Sharing isn&apos;t available right now.</p>
+          )}{" "}
           <button className="secondary" onClick={() => setStep("confirm")}>Edit details</button>
         </div>
       )}
