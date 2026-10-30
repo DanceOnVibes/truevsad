@@ -16,8 +16,10 @@ interface ServiceAccountKey {
 let cached: { token: string; expiresAt: number } | null = null;
 
 function readKey(): ServiceAccountKey | null {
-  const raw = process.env.GCP_SERVICE_ACCOUNT_KEY;
+  let raw = process.env.GCP_SERVICE_ACCOUNT_KEY?.trim();
   if (!raw) return null;
+  // Accept the key as plain JSON (one line) or base64-encoded JSON.
+  if (!raw.startsWith("{")) raw = Buffer.from(raw, "base64").toString("utf8");
   try {
     const key = JSON.parse(raw) as ServiceAccountKey;
     return key.client_email && key.private_key ? key : null;
