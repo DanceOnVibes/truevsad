@@ -120,10 +120,7 @@ async function quote(body: Record<string, unknown>) {
 
   const sourceKind: SourceKind =
     body.sourceKind === "link" || body.sourceKind === "screenshot" ? body.sourceKind : "text";
-  const sourceUrl =
-    typeof body.sourceUrl === "string" && /^https?:\/\//i.test(body.sourceUrl)
-      ? body.sourceUrl.slice(0, 2000)
-      : undefined;
+  const sourceUrl = normaliseLink(body.sourceUrl);
 
   try {
     const rules = selectRules(await loadFeeRules(), offer);
@@ -187,6 +184,26 @@ async function share(body: Record<string, unknown>) {
 }
 
 // ---------------------------------------------------------------------------
+
+/**
+ * Accepts "https://site.com/x" and also "site.com/x" or "www.site.com/x" (adds https://).
+ * Stored as a reference only — we never fetch it.
+ */
+function normaliseLink(raw: unknown): string | undefined {
+  if (typeof raw !== "string") return undefined;
+  let s = raw.trim();
+  if (!s) return undefined;
+  if (!/^https?:\/\//i.test(s)) {
+    if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+(\/|$|\?)/i.test(s)) return undefined;
+    s = `https://${s}`;
+  }
+  try {
+    const u = new URL(s);
+    return u.protocol === "https:" || u.protocol === "http:" ? u.toString().slice(0, 2000) : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 function isObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
