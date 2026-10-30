@@ -9,7 +9,8 @@
     "dev": "pnpm --filter @truevsad/web dev",
     "build": "pnpm --filter @truevsad/web build",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "import-rules": "node scripts/import-fee-rules.mjs"
   },
   "devDependencies": {
     "typescript": "^5.9.0"

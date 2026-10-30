@@ -72,9 +72,12 @@ supabase db push
 - [x] Mono-repo, engine, migration, Deal X-ray UI + API stub, CI
 - [x] Quotes saved privately to Supabase; "Share" creates a random `/r/[slug]` link
 - [x] Fee rules load from `fee_rule` (demo rules only while the table is empty)
+- [x] Rate limiting (hashed visitor id, no raw IPs), privacy page, security headers, robots/sitemap
+- [x] Fee rules scoped to destination + supplier; CSV template + `pnpm import-rules`
 - [ ] LLM extraction (replace stub in `apps/web/app/api/xray/route.ts`)
-- [ ] Real, sourced `fee_rule` data
-- [ ] Run `supabase/migrations/20261030000200_merge_quote_select_policies.sql` on production
+- [ ] Real, sourced fee rules in `data/fee-rules/fee-rules.csv` (see its README)
+- [ ] Run on production via SQL Editor: `20261030000200_merge_quote_select_policies.sql`, `20261030000500_retention_cron.sql`
+- [ ] Privacy page: add company number, registered office, contact email
 - [ ] Duffel integration for live flight prices
 
 > The X-ray currently uses **demo** fee rules. They are placeholders, not real prices, and the UI says so.

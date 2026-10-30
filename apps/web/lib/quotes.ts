@@ -28,13 +28,14 @@ interface FeeRuleRow {
   min_age: number | null;
   max_age: number | null;
   confidence: number | string;
+  regions: string[] | null;
+  supplier_name: string | null;
 }
 
 /**
  * Active fee rules from the database. Falls back to DEMO_RULES (clearly flagged)
  * until real, sourced rules are added — or if the database can't be reached.
- *
- * TODO: filter by destination_area / supplier once rules are scoped.
+ * The caller narrows them to the offer with selectRules().
  */
 export async function loadFeeRules(): Promise<FeeRule[]> {
   const db = supabaseAdmin();
@@ -43,7 +44,9 @@ export async function loadFeeRules(): Promise<FeeRule[]> {
   const today = new Date().toISOString().slice(0, 10);
   const { data, error } = await db
     .from("fee_rule")
-    .select("id, category, label, unit, amount_pence, amount_bp, min_age, max_age, confidence")
+    .select(
+      "id, category, label, unit, amount_pence, amount_bp, min_age, max_age, confidence, regions, supplier_name",
+    )
     .eq("is_active", true)
     .lte("valid_from", today)
     .or(`valid_to.is.null,valid_to.gte.${today}`);
@@ -62,6 +65,8 @@ export async function loadFeeRules(): Promise<FeeRule[]> {
     minAge: r.min_age ?? undefined,
     maxAge: r.max_age ?? undefined,
     confidence: Number(r.confidence),
+    regions: r.regions ?? undefined,
+    supplierName: r.supplier_name ?? undefined,
   }));
 }
 

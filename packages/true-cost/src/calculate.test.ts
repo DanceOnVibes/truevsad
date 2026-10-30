@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculateTrueCost, toOutwardPostcode, type FeeRule } from "./index";
+import { calculateTrueCost, ruleApplies, toOutwardPostcode, type FeeRule } from "./index";
 
 const family = { adults: 2, childAges: [7, 1], outwardPostcode: "SE11" };
 
@@ -55,5 +55,31 @@ describe("toOutwardPostcode", () => {
     expect(toOutwardPostcode("SW1A1AA")).toBe("SW1A");
     expect(toOutwardPostcode("M1")).toBe("M1");
     expect(toOutwardPostcode("nonsense")).toBeUndefined();
+  });
+});
+
+describe("ruleApplies", () => {
+  const base: FeeRule = {
+    id: "t", category: "levy", label: "Tax", unit: "per_party",
+    amount: { kind: "fixed", pence: 100 }, confidence: 0.9,
+  };
+  const canary = { ...base, regions: ["Canary Islands", "Tenerife", "Gran Canaria"] };
+
+  it("applies unscoped rules everywhere", () => {
+    expect(ruleApplies(base, {})).toBe(true);
+  });
+  it("matches scoped rules on whole words, ignoring case and accents", () => {
+    expect(ruleApplies(canary, { destination: "Costa Adeje, TENERIFE" })).toBe(true);
+    expect(ruleApplies(canary, { destination: "Gran Canária (Maspalomas)" })).toBe(true);
+    expect(ruleApplies(canary, { destination: "Paris" })).toBe(false);
+    expect(ruleApplies(canary, { destination: "Tenerifeish" })).toBe(false);
+  });
+  it("skips scoped rules when the destination is unknown", () => {
+    expect(ruleApplies(canary, {})).toBe(false);
+  });
+  it("matches supplier-only rules", () => {
+    const ej = { ...base, supplierName: "easyJet" };
+    expect(ruleApplies(ej, { supplierName: "easyJet holidays" })).toBe(true);
+    expect(ruleApplies(ej, { supplierName: "Jet2" })).toBe(false);
   });
 });

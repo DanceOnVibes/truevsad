@@ -2,12 +2,14 @@ import { NextResponse } from "next/server";
 import {
   calculateTrueCost,
   PartyValidationError,
+  selectRules,
   toOutwardPostcode,
   type HeadlineBasis,
   type Offer,
   type Party,
 } from "@truevsad/true-cost";
 import { loadFeeRules, saveQuote, shareQuote, type SourceKind } from "@/lib/quotes";
+import { allowRequest } from "@/lib/rate-limit";
 
 // Run in London, next to Supabase London. Node runtime (not edge) so it pins to lhr1.
 export const runtime = "nodejs";
@@ -41,10 +43,20 @@ export async function POST(req: Request) {
   }
   if (!isObject(body)) return bad("Request body must be a JSON object.");
 
-  if (body.step === "extract") return extract(body);
-  if (body.step === "quote") return quote(body);
-  if (body.step === "share") return share(body);
-  return bad('Unknown step. Use "extract", "quote" or "share".');
+  const step = body.step;
+  if (step !== "extract" && step !== "quote" && step !== "share") {
+    return bad('Unknown step. Use "extract", "quote" or "share".');
+  }
+  if (!(await allowRequest(req, step))) {
+    return NextResponse.json(
+      { error: "Too many requests. Please wait a little and try again." },
+      { status: 429, headers: { "Retry-After": "600" } },
+    );
+  }
+
+  if (step === "extract") return extract(body);
+  if (step === "quote") return quote(body);
+  return share(body);
 }
 
 // ---------------------------------------------------------------------------
@@ -114,7 +126,7 @@ async function quote(body: Record<string, unknown>) {
       : undefined;
 
   try {
-    const rules = await loadFeeRules();
+    const rules = selectRules(await loadFeeRules(), offer);
     const result = calculateTrueCost({ party, offer, rules });
     // Saving must never block the answer: if it fails, the user still gets the price.
     const quoteId = await saveQuote({ party, offer, result, sourceKind, sourceUrl });

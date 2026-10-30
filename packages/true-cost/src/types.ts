@@ -90,6 +90,10 @@ export interface FeeRule {
   confidence: number;
   /** True for placeholder rules that are NOT real-world figures. */
   demo?: boolean;
+  /** Place names this rule is limited to (matched against Offer.destination). Empty = everywhere. */
+  regions?: string[];
+  /** Only for this supplier (matched against Offer.supplierName). Empty = every supplier. */
+  supplierName?: string;
 }
 
 /** A cost line before the engine has stamped it. */

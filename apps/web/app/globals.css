@@ -87,3 +87,14 @@ table.receipt td { padding: 8px 0; border-bottom: 1px solid var(--line); vertica
 table.receipt td.amt { text-align: right; white-space: nowrap; padding-left: 12px; }
 table.receipt .working { color: var(--muted); font-size: 0.8rem; }
 table.receipt tr.total td { font-weight: 700; border-bottom: 0; }
+
+.site-footer {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.site-footer div { margin-top: 4px; }
+main ul { padding-left: 20px; }

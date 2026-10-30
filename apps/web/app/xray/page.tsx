@@ -22,6 +22,7 @@ export default function XrayPage() {
   const [basis, setBasis] = useState<"per_person" | "total">("per_person");
   const [nights, setNights] = useState("7");
   const [destination, setDestination] = useState("");
+  const [supplier, setSupplier] = useState("");
   const [adults, setAdults] = useState("2");
   const [childAges, setChildAges] = useState("");
   const [postcode, setPostcode] = useState("");
@@ -53,6 +54,7 @@ export default function XrayPage() {
       if (d.headlineBasis) setBasis(d.headlineBasis);
       if (d.nights) setNights(String(d.nights));
       if (d.destination) setDestination(d.destination);
+      if (d.supplierName) setSupplier(d.supplierName);
       setNotes(data.notes ?? []);
       setStep("confirm");
     } catch (e) {
@@ -82,6 +84,7 @@ export default function XrayPage() {
           currency: "GBP",
           nights: Number(nights),
           destination: destination || undefined,
+          supplierName: supplier || undefined,
         },
       });
       setResult(data.result);
@@ -190,8 +193,27 @@ export default function XrayPage() {
             </div>
           </div>
 
-          <label htmlFor="dest">Destination</label>
-          <input id="dest" value={destination} onChange={(e) => setDestination(e.target.value)} />
+          <div className="row">
+            <div>
+              <label htmlFor="dest">Destination</label>
+              <input
+                id="dest"
+                placeholder="e.g. Tenerife"
+                value={destination}
+                onChange={(e) => setDestination(e.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="supplier">Holiday company or airline</label>
+              <input
+                id="supplier"
+                placeholder="e.g. easyJet holidays"
+                value={supplier}
+                onChange={(e) => setSupplier(e.target.value)}
+              />
+            </div>
+          </div>
+          <p className="hint">These help us add the right local taxes and fees.</p>
 
           <h3>Who&apos;s going</h3>
           <div className="row">
