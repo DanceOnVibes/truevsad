@@ -1,5 +1,4 @@
--- NOT YET APPLIED to production (it contains deletes, so it needs a manual run):
--- paste it into the Supabase SQL Editor once.
+-- Applied to production by hand in the SQL Editor on 31 Oct 2026 (it contains deletes).
 
 -- ---------------------------------------------------------------------------
 -- Retention: also drop place snapshots older than 90 days (they're refetched on demand)
