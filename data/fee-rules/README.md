@@ -26,6 +26,8 @@ A rule that can't be backed up is worse than no rule: it breaks the whole promis
 | `valid_to` | no | `YYYY-MM-DD` when it ends, if known | |
 | `covers` | no | If this fee is for something a package might already include: `hold_bag`, `cabin_bag`, `seats` or `transfers`. The fee is then skipped when the family ticks it as included. | `hold_bag` |
 | `max_nights` | no | Per-night taxes that stop after a number of nights (Catalonia: first 7 only) | `7` |
+| `months` | no | Travel months this rate applies to: `5-10` (May–Oct), `11-4` (Nov–Apr) or `1\|2\|12`. Blank = all year | `5-10` |
+| `exclusive_group` | no | Rules in the same group never stack; the one listing the fewest places wins (e.g. Barcelona beats rest of Catalonia) | `catalonia_tax` |
 
 ## Rules of thumb
 
@@ -38,3 +40,16 @@ A rule that can't be backed up is worse than no rule: it breaks the whole promis
 - An airline's own fee beats the generic "typical" fee for the same item: if both apply, only the airline's is used.
 - Two rules must never match the same place for the same tax (e.g. a "Barcelona" row and a "rest of Catalonia" row that also lists Barcelona). That charges the tax twice.
 - We don't know travel dates yet, so seasonal taxes use the summer rate, and the label says so.
+
+## Parked: paid cabin bags
+
+`parked-cabin-bags.csv` holds sourced paid cabin-bag fees (Ryanair, easyJet, Wizz Air) that are **not imported**.
+A family that pays for hold bags rarely also pays for a large cabin bag, and the engine can't yet model
+"one or the other", so adding both would overstate the true price. Bring them back once the X-ray asks
+what luggage the family needs.
+
+## Assumptions to review
+
+- One hold bag per person aged 2+ (families often share; may overstate).
+- Seats: charged per adult. UK airlines seat children under 12 next to an adult free.
+- One room per party for per-room fees (e.g. Greece).

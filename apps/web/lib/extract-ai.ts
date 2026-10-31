@@ -22,6 +22,7 @@ export interface DraftOffer {
   childAges?: number[];
   includes?: Inclusion[];
   excludesTaxesAndFees?: boolean;
+  departDate?: string;
 }
 
 export interface AiInput {
@@ -57,6 +58,10 @@ const SCHEMA = {
       type: "ARRAY",
       items: { type: "STRING", enum: [...INCLUSIONS] },
       description: "Only items the deal EXPLICITLY says are included.",
+    },
+    departDate: {
+      type: "STRING",
+      description: "Outbound flight / check-in date as YYYY-MM-DD, only if a specific date is shown.",
     },
     excludesTaxesAndFees: {
       type: "BOOLEAN",
@@ -184,6 +189,7 @@ function clean(json: string): DraftOffer | null {
     childAges: ages && ages.length ? ages : undefined,
     includes: includes && includes.length ? includes : undefined,
     excludesTaxesAndFees: r.excludesTaxesAndFees === true ? true : undefined,
+    departDate: typeof r.departDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(r.departDate) ? r.departDate : undefined,
   };
 }
 

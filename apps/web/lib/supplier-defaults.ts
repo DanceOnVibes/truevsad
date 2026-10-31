@@ -4,8 +4,8 @@ import type { Inclusion } from "@truevsad/true-cost";
  * What a seller's packages USUALLY include. Used only to PRE-TICK the boxes on the
  * confirm step — the family always confirms against their own deal.
  *
- * Source: Grok research 30 Oct 2026 (Output 2). Not yet verified against each seller's
- * own terms page — re-check before launch.
+ * Sources: Grok research 30 Oct 2026 and second research pass 31 Oct 2026 (jet2holidays.com
+ * in-resort fees, easyjet.com/en/holidays, tui.co.uk luggage allowance). Re-check before launch.
  *
  * Patterns are deliberately narrow: "Jet2holidays" packages include bags, but a
  * Jet2.com flight-only booking does NOT, so plain "Jet2" doesn't match.
@@ -13,8 +13,8 @@ import type { Inclusion } from "@truevsad/true-cost";
 const DEFAULTS: { pattern: RegExp; includes: Inclusion[]; note: string }[] = [
   {
     pattern: /jet2\s*holidays/i,
-    includes: ["hold_bag", "cabin_bag", "transfers"],
-    note: "Jet2holidays packages usually include a 22kg bag, cabin bag and transfers",
+    includes: ["hold_bag", "cabin_bag", "seats", "transfers"],
+    note: "Jet2holidays packages usually include a 22kg bag, cabin bag, allocated seats and transfers",
   },
   {
     pattern: /\btui\b/i,
@@ -23,8 +23,8 @@ const DEFAULTS: { pattern: RegExp; includes: Inclusion[]; note: string }[] = [
   },
   {
     pattern: /easy\s*jet\s*holidays/i,
-    includes: ["hold_bag"],
-    note: "easyJet holidays packages usually include a 23kg hold bag",
+    includes: ["hold_bag", "transfers"],
+    note: "easyJet holidays beach packages usually include a 23kg hold bag and transfers",
   },
 ];
 

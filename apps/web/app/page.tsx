@@ -14,6 +14,16 @@ export default function Home() {
         <p>Paste a holiday deal and see what it really costs.</p>
         <Link href="/xray">Open Deal X-ray →</Link>
       </div>
+      <div className="card">
+        <h2 style={{ marginTop: 0 }}>School Window</h2>
+        <p>See your council&apos;s school holidays, the quieter weeks either side, and what a trip would miss.</p>
+        <Link href="/school-window">Open School Window →</Link>
+      </div>
+      <div className="card">
+        <h2 style={{ marginTop: 0 }}>Visit before you book</h2>
+        <p>Is the resort right for your group? Playgrounds, beaches, nightlife and essentials nearby.</p>
+        <Link href="/visit">Check a place →</Link>
+      </div>
       <p className="hint">
         We never take payment and our ranking ignores commission. You always book directly with the
         supplier.

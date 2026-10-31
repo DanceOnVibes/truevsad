@@ -1,21 +1,23 @@
 import { createHmac } from "node:crypto";
 import { supabaseAdmin } from "./supabase-admin";
 
-export type RateAction = "extract" | "quote" | "share";
+export type RateAction = "extract" | "quote" | "share" | "split" | "visit";
 
 /** Requests allowed per visitor per hour. Generous for real families, tight for bots. */
 const LIMITS: Record<RateAction, number> = {
   extract: 20, // AI calls cost money — keep this tighter
   quote: 30,
   share: 30,
+  split: 60,
+  visit: 20, // each new place makes two calls to OpenStreetMap's free services — be a good neighbour
 };
 const WINDOW_SECONDS = 60 * 60;
 
 /** Best-effort client IP. On Vercel the first x-forwarded-for entry is the visitor. */
-function clientIp(req: Request): string {
-  const fwd = req.headers.get("x-forwarded-for");
+function clientIp(headers: Headers): string {
+  const fwd = headers.get("x-forwarded-for");
   if (fwd) return fwd.split(",")[0]!.trim();
-  return req.headers.get("x-real-ip") ?? "unknown";
+  return headers.get("x-real-ip") ?? "unknown";
 }
 
 /**
@@ -33,8 +35,13 @@ function visitorKey(ip: string): string | null {
  * Fails OPEN: if the database is unreachable, real users are never blocked.
  */
 export async function allowRequest(req: Request, action: RateAction): Promise<boolean> {
+  return allowHeaders(req.headers, action);
+}
+
+/** Same as allowRequest, for server components (pass `await headers()`). */
+export async function allowHeaders(headers: Headers, action: RateAction): Promise<boolean> {
   const db = supabaseAdmin();
-  const key = visitorKey(clientIp(req));
+  const key = visitorKey(clientIp(headers));
   if (!db || !key) return true;
 
   const { data, error } = await db.rpc("hit_rate_limit", {

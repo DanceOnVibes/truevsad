@@ -4,6 +4,7 @@ import { useState } from "react";
 import { INCLUSIONS, type Inclusion, type TrueCostResult } from "@truevsad/true-cost";
 import { INCLUSION_LABELS, supplierDefaults } from "@/lib/supplier-defaults";
 import { ReceiptView } from "@/components/ReceiptView";
+import { FairSharePanel } from "@/components/FairSharePanel";
 
 type Step = "paste" | "confirm" | "receipt";
 
@@ -38,6 +39,7 @@ export default function XrayPage() {
   const [basis, setBasis] = useState<"per_person" | "total">("per_person");
   const [excludesFees, setExcludesFees] = useState(false);
   const [nights, setNights] = useState("7");
+  const [departDate, setDepartDate] = useState("");
   const [destination, setDestination] = useState("");
   const [supplier, setSupplier] = useState("");
   const [includes, setIncludes] = useState<Inclusion[]>([]);
@@ -63,6 +65,10 @@ export default function XrayPage() {
   const [quoteId, setQuoteId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [quoted, setQuoted] = useState<{
+    offer: Record<string, unknown>;
+    party: { adults: number; childAges: number[] };
+  } | null>(null);
 
   async function post(payload: unknown) {
     const res = await fetch("/api/xray", {
@@ -86,6 +92,7 @@ export default function XrayPage() {
       if (d.headlineBasis) setBasis(d.headlineBasis);
       setExcludesFees(d.excludesTaxesAndFees === true);
       if (d.nights) setNights(String(d.nights));
+      if (d.departDate) setDepartDate(d.departDate);
       if (d.destination) setDestination(d.destination);
       if (d.supplierName) changeSupplier(d.supplierName);
       if (d.adults) setAdults(String(d.adults));
@@ -113,22 +120,25 @@ export default function XrayPage() {
         .map((s) => s.trim())
         .filter(Boolean)
         .map(Number);
+      const offer = {
+        headlinePence: Math.round(parseFloat(price) * 100),
+        headlineBasis: basis,
+        currency: "GBP",
+        nights: Number(nights),
+        destination: destination || undefined,
+        supplierName: supplier || undefined,
+        includes,
+        excludesTaxesAndFees: excludesFees,
+        departDate: departDate || undefined,
+      };
       const data = await post({
         step: "quote",
         sourceKind: text ? "text" : screenshot ? "screenshot" : "link",
         sourceUrl: url || undefined,
         party: { adults: Number(adults), childAges: ages, outwardPostcode: postcode },
-        offer: {
-          headlinePence: Math.round(parseFloat(price) * 100),
-          headlineBasis: basis,
-          currency: "GBP",
-          nights: Number(nights),
-          destination: destination || undefined,
-          supplierName: supplier || undefined,
-          includes,
-          excludesTaxesAndFees: excludesFees,
-        },
+        offer,
       });
+      setQuoted({ offer, party: { adults: Number(adults), childAges: ages } });
       setResult(data.result);
       setQuoteId(data.quoteId ?? null);
       setShareUrl(null);
@@ -237,6 +247,10 @@ export default function XrayPage() {
               <label htmlFor="nights">Nights</label>
               <input id="nights" inputMode="numeric" value={nights} onChange={(e) => setNights(e.target.value)} />
             </div>
+            <div>
+              <label htmlFor="depart">Travel date (optional)</label>
+              <input id="depart" type="date" value={departDate} onChange={(e) => setDepartDate(e.target.value)} />
+            </div>
           </div>
 
           <label className="check">
@@ -342,6 +356,24 @@ export default function XrayPage() {
             <p className="hint">Sharing isn&apos;t available right now.</p>
           )}{" "}
           <button className="secondary" onClick={() => setStep("confirm")}>Edit details</button>
+
+          {quoted && <FairSharePanel offer={quoted.offer} party={quoted.party} />}
+
+          <p className="hint" style={{ marginTop: 16 }}>
+            {destination && (
+              <>
+                <a href={`/visit?q=${encodeURIComponent(destination)}`}>Is {destination.split(",")[0]} right for your group? →</a>
+                <br />
+              </>
+            )}
+            <a
+              href={`/school-window?${new URLSearchParams(
+                departDate ? { date: departDate, nights } : { nights },
+              ).toString()}`}
+            >
+              Check these dates against your school holidays →
+            </a>
+          </p>
         </div>
       )}
     </main>

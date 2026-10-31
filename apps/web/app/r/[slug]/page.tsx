@@ -46,6 +46,13 @@ export default async function SharedReceiptPage({ params }: { params: Params }) 
           year: "numeric",
         })}
       </p>
+      {!r.usedDemoRules && r.todayTrueCostPence !== null && Math.abs(r.todayTrueCostPence - r.trueCostPence) >= 100 && (
+        <p className="warn">
+          Taxes or fees have changed since this was priced. With today&apos;s figures the same deal
+          comes to <strong>{formatGBP(r.todayTrueCostPence)}</strong> (was {formatGBP(r.trueCostPence)}).
+          The advertised price itself may have changed too, so check the deal.
+        </p>
+      )}
       <div className="card">
         <ReceiptView {...r} />
       </div>

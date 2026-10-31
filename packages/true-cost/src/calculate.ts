@@ -11,7 +11,7 @@ import {
   type TrueCostResult,
 } from "./types";
 
-export const ENGINE_VERSION = "0.2.0";
+export const ENGINE_VERSION = "0.3.0";
 
 /**
  * TrueCost = supplier lines + party extras + levies + entry docs + door-to-door + payment/FX
@@ -69,6 +69,11 @@ export function calculateTrueCost(input: TrueCostInput): TrueCostResult {
   ) as Record<CostCategory, Pence>;
 
   const trueCostPence = lines.reduce((sum, l) => sum + l.amountPence, 0);
+
+  const notes: string[] = [];
+  if (!offer.departDate && rules.some((r) => r.months && r.months.length > 0)) {
+    notes.push("No travel date given, so seasonal taxes use summer rates. Add the date for a closer figure.");
+  }
   const gapPence = trueCostPence - advertisedPence;
 
   return {
@@ -79,6 +84,7 @@ export function calculateTrueCost(input: TrueCostInput): TrueCostResult {
     receipt: { lines, subtotals },
     confidence: weightedConfidence(lines),
     usedDemoRules: rules.some((r) => r.demo),
+    notes,
     engineVersion: ENGINE_VERSION,
   };
 }

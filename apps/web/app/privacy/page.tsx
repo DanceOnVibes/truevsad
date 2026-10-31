@@ -32,7 +32,7 @@ export default function PrivacyPage() {
         <ul>
           <li>Number of adults and the <strong>ages</strong> of any children (never dates of birth).</li>
           <li>The <strong>first half</strong> of your postcode only (e.g. SE11), if you give it.</li>
-          <li>The deal details you confirm: price, nights, destination, supplier.</li>
+          <li>The deal details you confirm: price, nights, travel date (if you give it), destination, supplier.</li>
           <li>The link to the deal, if you paste one. We never open it ourselves.</li>
           <li>The price breakdown we worked out.</li>
         </ul>
@@ -47,7 +47,26 @@ export default function PrivacyPage() {
           Platform, run in London) only to pull out the deal details: price, nights, destination,
           seller and what&apos;s included. We don&apos;t keep the text or the screenshot — only the
           details you confirm on the next screen are saved. Please crop out names and booking
-          references before uploading a screenshot.
+          references before uploading a screenshot. If you paste a link, we also pass on the place
+          words from its address (e.g. &ldquo;spain tarragona&rdquo;) to help read the destination;
+          we still never open the link.
+        </p>
+
+        <h2>Visit before you book</h2>
+        <p>
+          When you check a place, we send only the place name you typed to OpenStreetMap&apos;s free
+          services (Nominatim and Overpass) to find it and count what&apos;s nearby. We keep that
+          result, which has nothing about you in it, so the next person doesn&apos;t have to wait.
+          The map on that page loads from openstreetmap.org in your browser, so OpenStreetMap sees
+          your IP address, as with any website. The Street View and Google Maps links open Google
+          only if you click them.
+        </p>
+
+        <h2>School Window and splitting a price</h2>
+        <p>
+          Checking a date against your council&apos;s school holidays, or splitting a price between
+          families, is worked out on the spot. We don&apos;t save which council you chose, your dates
+          or the split.
         </p>
 
         <h2>Why</h2>

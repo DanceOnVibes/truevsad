@@ -32,7 +32,7 @@ All money is integer pence. The engine (`packages/true-cost`) is a pure function
 ## Repo layout
 
 ```
-apps/web               Next.js (App Router) — site + /api/xray
+apps/web               Next.js (App Router) — /xray, /school-window, /visit, /r/[slug], /api/xray
 packages/true-cost     Shared TypeScript engine: calculateTrueCost()
 supabase/migrations    Postgres + PostGIS schema with Row Level Security
 ```
@@ -81,9 +81,17 @@ supabase db push
 - [x] Place words read from the deal link's address (never opened) so the AI fills in town and country
 - [x] First real, sourced fee rules (Balearics, Catalonia, Greece, ESTA, Ryanair/easyJet/typical hold bags) — checked against official/secondary sources 31 Oct 2026
 - [x] Engine: per-room-per-night fees, night caps (e.g. Catalonia's 7 nights), airline-specific fee beats the generic one
-- [ ] More fee rules: Portugal, Italy, Croatia, Turkey, Malta, Cyprus, Amsterdam, Paris; seats and cabin bags; Jet2/TUI/Wizz/BA
-- [ ] Travel month on the confirm step, so seasonal taxes use the right rate
-- [x] All migrations applied to production, up to 0900 (nightly purge job scheduled at 03:17 UTC)
+- [x] Fee rules round 2 (30 rows): Balearics, Catalonia/Barcelona, Mogán, Greece, Croatia, Lisbon, Porto, Algarve, Rome, Florence, Venice, Malta; Ryanair/easyJet/TUI/Wizz/BA bags and seats; ESTA, Canada eTA, Egypt, Cape Verde. Load after merge
+- [ ] Paris, Amsterdam (% of room), Turkey (% of room), Bulgaria; paid cabin bags parked (see data/fee-rules/README.md)
+- [x] Travel date on the X-ray (AI reads it too); seasonal fee rates by month (summer assumed without a date, and the receipt says so)
+- [x] School Window core: `school_holiday` table, `pnpm import-holidays`, /school-window (holidays, shoulder weeks, trip check)
+- [x] School Window data 2026-27: Lambeth, Southwark, Wandsworth, Lewisham, Birmingham (loaded)
+- [ ] More councils and 2027-28 dates
+- [x] Visit Before You Book core: /visit with OpenStreetMap counts (cached 30 days in London), families / couples / groups traffic lights
+- [x] Fair Share: split a deal between families on the receipt (never saved)
+- [x] Watch groundwork: shared receipts re-price with today's fee rules and flag changes
+- [ ] Watch alerts (needs accounts + email), search across deals (needs a click-out inventory, never scraping)
+- [x] All migrations applied to production, up to 1200 (except 1100, which needs a manual run) (nightly purge job scheduled at 03:17 UTC)
 - [x] Deployed on Vercel (London) and tested end to end: X-ray → save → share
 - [x] Privacy page and footer: company number, ICO registration, registered office, contact emails, security.txt
 - [ ] Duffel integration for live flight prices
