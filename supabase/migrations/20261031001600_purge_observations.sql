@@ -1,6 +1,5 @@
--- NOT YET APPLIED (contains deletes, so it needs a manual run in the Supabase SQL Editor).
--- Keeps the 2-year promise for anonymous price statistics. Nothing is old enough to delete
--- until late 2028, so this only needs running before then.
+-- Applied to production by hand in the SQL Editor on 31 Oct 2026 (it contains deletes).
+-- Keeps the 2-year promise for anonymous price statistics.
 
 create or replace function public.purge_old_data()
 returns void

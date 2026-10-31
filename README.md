@@ -96,7 +96,7 @@ supabase db push
 - [x] /fees: every fee rule in use, with source, date checked and how sure we are
 - [x] "Kids go free" check: AI reads the claim; the receipt shows what each child still costs in extras
 - [ ] Watch alerts (needs accounts + email), search across deals (needs a click-out inventory, never scraping)
-- [x] All migrations applied to production, up to 1500 (1100 run by hand; 1600 to run by hand before 2028) (nightly purge job scheduled at 03:17 UTC)
+- [x] All migrations applied to production, up to 1600 (1100 and 1600 run by hand) (nightly purge job scheduled at 03:17 UTC)
 - [x] Deployed on Vercel (London) and tested end to end: X-ray → save → share
 - [x] Privacy page and footer: company number, ICO registration, registered office, contact emails, security.txt
 - [ ] Duffel integration for live flight prices
