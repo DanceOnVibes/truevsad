@@ -57,6 +57,20 @@ if (expected.some((h, i) => header[i] !== h)) {
 }
 
 const errors = [];
+/**
+ * England & Wales bank holidays (gov.uk/bank-holidays; 2028 by the standard rules). No school is
+ * open on these days, so a "last school day" or "return day" that lands on one means the row was
+ * worked out, not read from the council's page.
+ */
+const BANK_HOLIDAYS = new Set([
+  "2026-01-01", "2026-04-03", "2026-04-06", "2026-05-04", "2026-05-25", "2026-08-31", "2026-12-25", "2026-12-28",
+  "2027-01-01", "2027-03-26", "2027-03-29", "2027-05-03", "2027-05-31", "2027-08-30", "2027-12-27", "2027-12-28",
+  "2028-01-03", "2028-04-14", "2028-04-17", "2028-05-01", "2028-05-29", "2028-08-28", "2028-12-25", "2028-12-26",
+]);
+const HOLIDAY_NAMES = ["October half term", "Christmas holidays", "February half term", "Easter holidays", "May half term", "Summer holidays"];
+const shift = (iso, days) => new Date(Date.parse(`${iso}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
+const weekday = (iso) => new Date(`${iso}T00:00:00Z`).getUTCDay(); // 0 Sun … 6 Sat
+
 const values = [];
 const seen = new Set();
 const byAuthorityYear = new Map();
@@ -77,6 +91,20 @@ rows.forEach((cells, idx) => {
     const days = (Date.parse(r.ends_on) - Date.parse(r.starts_on)) / 86_400_000;
     if (days < 0) err("ends_on is before starts_on");
     if (days > 60) err("holiday is longer than 60 days — check the dates");
+  }
+  if (!HOLIDAY_NAMES.includes(r.name)) err(`name must be one of: ${HOLIDAY_NAMES.join(", ")}`);
+  if (realDate(r.starts_on) && realDate(r.ends_on)) {
+    // The day before the holiday and the day after it must be school days.
+    const lastSchoolDay = shift(r.starts_on, -1);
+    const returnDay = shift(r.ends_on, 1);
+    for (const [label, d] of [["last school day", lastSchoolDay], ["return day", returnDay]]) {
+      if (weekday(d) === 0 || weekday(d) === 6) err(`${label} ${d} is a weekend: holidays must include the weekends either side`);
+      if (BANK_HOLIDAYS.has(d)) err(`${label} ${d} is a bank holiday, when no school is open: re-check the council's page`);
+    }
+  }
+  // Summer must end the day before the NEXT school year starts, as the council published it.
+  if (r.name === "Summer holidays" && !/\b(return|returns|starts|begins|opens)\b/i.test(r.source_note)) {
+    err("Summer holidays: source_note must give the next school year's start date from the council (otherwise leave the row out)");
   }
   if (!/^https?:\/\//.test(r.source_url)) err("source_url is required (the council's own term dates page)");
   if (!r.source_note) err("source_note is required (what the page says + date checked)");
