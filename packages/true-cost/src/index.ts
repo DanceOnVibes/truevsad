@@ -56,3 +56,4 @@ export {
 } from "./fairmark";
 export { childExtras, type ChildCost } from "./free-child";
 export { receiptScope, type ReceiptScope } from "./caveats";
+export { familyWindows, quoteDifference, type DaysOff, type FamilyWindow } from "./fairfam";

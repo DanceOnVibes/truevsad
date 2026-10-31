@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { INCLUSIONS, type FairMark, type Inclusion, type TrueCostResult } from "@truevsad/true-cost";
 import { INCLUSION_LABELS, supplierDefaults } from "@/lib/supplier-defaults";
 import { ReceiptView } from "@/components/ReceiptView";
@@ -56,6 +56,30 @@ export default function XrayPage() {
   const [check, setCheck] = useState<string[]>([]);
   const [advertCheck, setAdvertCheck] = useState<Record<string, number> | undefined>(undefined);
   const flag = (field: string) => (check.includes(field) ? "check-me" : undefined);
+  /** Details carried over from FairFam: the family's own party wins over the advert's. */
+  const [fromFairFam, setFromFairFam] = useState(false);
+
+  useEffect(() => {
+    // One-time hand-over from FairFam in this tab: read once, then delete.
+    let raw: string | null = null;
+    try {
+      raw = sessionStorage.getItem("truevsad-fairfam");
+      sessionStorage.removeItem("truevsad-fairfam");
+    } catch {
+      raw = null;
+    }
+    if (!raw) return;
+    try {
+      const h = JSON.parse(raw) as { adults?: number; childAges?: number[]; departDate?: string; nights?: number };
+      if (Number.isInteger(h.adults)) setAdults(String(h.adults));
+      if (Array.isArray(h.childAges)) setChildAges(h.childAges.join(", "));
+      if (typeof h.departDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(h.departDate)) setDepartDate(h.departDate);
+      if (Number.isInteger(h.nights)) setNights(String(h.nights));
+      setFromFairFam(true);
+    } catch {
+      /* ignore a malformed hand-over */
+    }
+  }, []);
   const [nights, setNights] = useState("7");
   const [departDate, setDepartDate] = useState("");
   const [destination, setDestination] = useState("");
@@ -134,8 +158,9 @@ export default function XrayPage() {
       if (d.adults) ac.adults = d.adults;
       if (d.adults && Array.isArray(d.childAges)) ac.children = d.childAges.length;
       setAdvertCheck(Object.keys(ac).length ? ac : undefined);
-      if (d.adults) setAdults(String(d.adults));
-      if (Array.isArray(d.childAges) && d.childAges.length) setChildAges(d.childAges.join(", "));
+      // Your party from FairFam wins; the advert's own party is still checked against it.
+      if (!fromFairFam && d.adults) setAdults(String(d.adults));
+      if (!fromFairFam && Array.isArray(d.childAges) && d.childAges.length) setChildAges(d.childAges.join(", "));
       if (Array.isArray(d.includes) && d.includes.length) {
         // The deal itself said these are included — that beats the seller's usual defaults.
         setIncludes(d.includes);
@@ -249,6 +274,11 @@ export default function XrayPage() {
             onChange={(e) => setUrl(e.target.value)}
           />
           <p className="hint">We keep the link for reference only — we never open it ourselves.</p>
+          {fromFairFam && (
+            <p className="hint">
+              Your party, travel date and nights from FairFam are filled in for the next step.
+            </p>
+          )}
 
           <label htmlFor="text">Deal text</label>
           <textarea

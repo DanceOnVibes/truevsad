@@ -1,7 +1,7 @@
 import { createHmac } from "node:crypto";
 import { supabaseAdmin } from "./supabase-admin";
 
-export type RateAction = "extract" | "quote" | "share" | "split" | "visit";
+export type RateAction = "extract" | "quote" | "share" | "split" | "visit" | "fairfam";
 
 /** Requests allowed per visitor per hour. Generous for real families, tight for bots. */
 const LIMITS: Record<RateAction, number> = {
@@ -10,6 +10,7 @@ const LIMITS: Record<RateAction, number> = {
   share: 30,
   split: 60,
   visit: 20, // each new place makes two calls to OpenStreetMap's free services — be a good neighbour
+  fairfam: 60, // council lookups (postcodes.io, cached) and term dates from our own table
 };
 const WINDOW_SECONDS = 60 * 60;
 

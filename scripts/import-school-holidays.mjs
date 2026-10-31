@@ -121,7 +121,8 @@ on conflict (authority, school_year, name) do update set
   starts_on = excluded.starts_on,
   ends_on = excluded.ends_on,
   source_url = excluded.source_url,
-  source_note = excluded.source_note;
+  source_note = excluded.source_note,
+  checked_on = current_date;
 `;
 writeFileSync(sqlPath, sql);
 console.log(`✓ ${values.length} holiday(s) checked and written to data/school-holidays/school-holidays.sql`);

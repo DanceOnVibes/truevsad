@@ -32,7 +32,7 @@ All money is integer pence. The engine (`packages/true-cost`) is a pure function
 ## Repo layout
 
 ```
-apps/web               Next.js (App Router) — /xray, /school-window, /visit, /r/[slug], /api/xray
+apps/web               Next.js (App Router) — /xray, /fairfam, /school-window, /visit, /r/[slug], /api/xray
 packages/true-cost     Shared TypeScript engine: calculateTrueCost()
 supabase/migrations    Postgres + PostGIS schema with Row Level Security
 ```
@@ -97,9 +97,11 @@ supabase db push
 - [x] "Kids go free" check: AI reads the claim; the receipt shows what each child still costs in extras
 - [x] Data accuracy: every receipt lists "How we counted" and "Not checked on this receipt"; euro and US dollar adverts converted at the ECB daily rate (original price, rate and date kept and shown, also on shared receipts; no rate → no price); postcode suggests the School Window council (postcodes.io, outward code only); price statistics keep the postcode area letters and the advert currency; privacy page data table
 - [x] "Hard to argue with": FairMark judges what the advert hid (taxes, resort fees, entry documents) plus one standard hold bag per booking; the family's own bag count, seats and other extras are advisory (in the true price, never in FairMark); hold bags one per two people unless the family gives a number; advert maths check and "priced for a different party" note; AI sanity checks with "please check" highlights; "plus taxes" / "kids go free" only when the advert's words are found; airline chips and travel month; checked-on date, 12-month decay and "wrong fee?" on every fee line; confidence with a next step; receipts no longer store the postcode
+- [x] FairFam (phase 1): your council (from the postcode) or your school's own dates, the windows when every child is off, sellers' own sites in alphabetical order (not paid), one-tap hand-over to Deal X-ray, a private two-quote half-term check; nothing saved
+- [x] Council term dates carry a "checked on" date (re-checked by hand each January); receipts explain package price-rise rights
 - [ ] Cabin bag allowances (/cabin-bags, "Will my bag fit?"): research in, rows being verified
 - [ ] Watch alerts (needs accounts + email), search across deals (needs a click-out inventory, never scraping)
-- [x] All migrations applied to production, up to 1800 (1100 and 1600 run by hand) (nightly purge job scheduled at 03:17 UTC)
+- [x] All migrations applied to production, up to 1900 (1100 and 1600 run by hand) (nightly purge job scheduled at 03:17 UTC)
 - [x] Deployed on Vercel (London) and tested end to end: X-ray → save → share
 - [x] Privacy page and footer: company number, ICO registration, registered office, contact emails, security.txt
 - [ ] Duffel integration for live flight prices

@@ -3,6 +3,8 @@ import {
   calculateTrueCost,
   childExtras,
   receiptScope,
+  familyWindows,
+  quoteDifference,
   advertNotes,
   classifyTrip,
   fairShare,
@@ -250,5 +252,39 @@ describe("month and airline matching, stale figures", () => {
     expect(r.receipt.lines[1]!.confidence).toBe(0.45);
     expect(r.receipt.lines[1]!.checkedOn).toBe("2025-01-10");
     expect(r.notes.some((n) => n.includes("more than a year ago"))).toBe(true);
+  });
+});
+
+describe("FairFam windows", () => {
+  const council = [
+    { name: "October half term", startsOn: "2027-10-23", endsOn: "2027-10-31" },
+    { name: "Christmas holidays", startsOn: "2027-12-18", endsOn: "2028-01-03" },
+  ];
+  it("one calendar gives its own holidays, from today on", () => {
+    const w = familyWindows([council], "2027-11-01");
+    expect(w.length).toBe(1);
+    expect(w[0]!.startsOn).toBe("2027-12-18");
+    expect(w[0]!.maxNights).toBe(16);
+    expect(w[0]!.narrowed).toBe(false);
+  });
+  it("two schools: only the days both children are off", () => {
+    // The academy's half term starts two days later.
+    const academy = [{ name: "Half term", startsOn: "2027-10-25", endsOn: "2027-11-02" }];
+    const w = familyWindows([council, academy], "2027-09-01");
+    expect(w.length).toBe(1);
+    expect(w[0]!.startsOn).toBe("2027-10-25");
+    expect(w[0]!.endsOn).toBe("2027-10-31");
+    expect(w[0]!.days).toBe(7);
+    expect(w[0]!.maxNights).toBe(6);
+    expect(w[0]!.narrowed).toBe(true);
+  });
+  it("no shared days, no window", () => {
+    const other = [{ startsOn: "2027-11-05", endsOn: "2027-11-07" }];
+    expect(familyWindows([council.slice(0, 1), other], "2027-09-01")).toEqual([]);
+  });
+  it("compares the family's own two quotes", () => {
+    expect(quoteDifference(250000, 200000)).toEqual({ pence: 50000, percent: 25 });
+    expect(quoteDifference(180000, 200000)).toEqual({ pence: -20000, percent: -10 });
+    expect(quoteDifference(0, 200000)).toBe(null);
   });
 });
