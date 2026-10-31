@@ -340,6 +340,12 @@ function toOffer(o: BoardOfferRow): Offer {
   };
 }
 
+/** "Golden Donaire Beach, Tarragona, Spain" → "tarragona spain": town/region + country, without the hotel. */
+function placeKey(destination: string): string {
+  const parts = destination.split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+  return (parts.length >= 3 ? parts.slice(-2) : parts.length === 2 ? parts : parts.slice(0, 1)).join(" ");
+}
+
 /** "Jet2holidays.com", "jet2 holidays" → "jet2holidays": one leaderboard row per seller. */
 export function sellerKey(name: string): string {
   return name
@@ -474,7 +480,7 @@ export async function loadLeaderboard(): Promise<{ rows: LeaderboardRow[]; deals
       const g: SellerGroup = groups.get(key) ?? { names: new Map(), pcts: [], places: new Set() };
       g.names.set(o.supplier_name, (g.names.get(o.supplier_name) ?? 0) + 1);
       g.pcts.push(fm.percent);
-      if (o.destination) g.places.add(o.destination.split(",").at(-1)!.trim().toLowerCase() || o.destination.toLowerCase());
+      if (o.destination) g.places.add(placeKey(o.destination));
       groups.set(key, g);
       dealsCounted++;
     } catch {
