@@ -24,6 +24,11 @@ export default function Home() {
         <Link href="/fairfam">Open FairFam →</Link>
       </div>
       <div className="card">
+        <h2 style={{ marginTop: 0 }}>Will my bag fit?</h2>
+        <p>Every airline has its own cabin bag sizes. Measure yours and see where it flies free, from each airline&apos;s own rules.</p>
+        <Link href="/cabin-bags">Check your bag →</Link>
+      </div>
+      <div className="card">
         <h2 style={{ marginTop: 0 }}>School Window</h2>
         <p>See your council&apos;s school holidays, the quieter weeks either side, and what a trip would miss.</p>
         <Link href="/school-window">Open School Window →</Link>

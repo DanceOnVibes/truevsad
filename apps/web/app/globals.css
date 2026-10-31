@@ -186,3 +186,10 @@ button.chip.sel { border-color: var(--accent); color: var(--accent); font-weight
 .own-school { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 4px; }
 .summary-line { margin: 12px 0 4px; }
 .seller-links { margin: 8px 0; padding-left: 20px; line-height: 1.9; }
+
+/* Will my bag fit? Uses existing tokens only. */
+.fit { font-weight: 600; }
+.fit-fits { color: var(--accent); }
+.fit-fits_if_wheels, .fit-too_heavy { color: var(--warn-fg); }
+.fit-too_big { color: var(--gap); }
+.fit-not_checked { color: var(--muted); font-weight: 400; }

@@ -56,4 +56,5 @@ export {
 } from "./fairmark";
 export { childExtras, type ChildCost } from "./free-child";
 export { receiptScope, type ReceiptScope } from "./caveats";
+export { AIRLINE_BAGS, airlineBagsFor, bagFits, type AirlineBags, type BagAllowance, type BagKind, type BagPrice, type FitResult } from "./bags";
 export { familyWindows, quoteDifference, type DaysOff, type FamilyWindow } from "./fairfam";

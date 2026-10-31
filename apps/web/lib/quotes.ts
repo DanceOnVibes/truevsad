@@ -242,6 +242,8 @@ export interface PublicReceipt {
   lines: CostLine[];
   /** Plain facts about how this was priced (currency conversion, summer rates without a date). */
   notes: string[];
+  /** The airline flying the deal, when the family told us. */
+  airline: string | null;
 }
 
 interface CostLineRow {
@@ -401,6 +403,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
     children: party?.child_ages?.length ?? 0,
     lines: receiptLines,
     notes,
+    airline: offer?.airline ?? null,
   };
 }
 

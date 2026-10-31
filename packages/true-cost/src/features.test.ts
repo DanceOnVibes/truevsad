@@ -3,6 +3,9 @@ import {
   calculateTrueCost,
   childExtras,
   receiptScope,
+  AIRLINE_BAGS,
+  airlineBagsFor,
+  bagFits,
   familyWindows,
   quoteDifference,
   advertNotes,
@@ -286,5 +289,40 @@ describe("FairFam windows", () => {
     expect(quoteDifference(250000, 200000)).toEqual({ pence: 50000, percent: 25 });
     expect(quoteDifference(180000, 200000)).toEqual({ pence: -20000, percent: -10 });
     expect(quoteDifference(0, 200000)).toBe(null);
+  });
+});
+
+describe("Will my bag fit?", () => {
+  const easy = airlineBagsFor("easyJet holidays")!;
+  const free = easy.bags.find((b) => b.kind === "underseat")!;
+  it("finds the airline from a seller name", () => {
+    expect(easy.airline).toBe("easyJet");
+    expect(airlineBagsFor("Jet2holidays")!.airline).toBe("Jet2");
+    expect(airlineBagsFor("loveholidays")).toBe(undefined);
+  });
+  it("compares largest side to largest side", () => {
+    expect(bagFits({ dims: [20, 36, 45] }, free)).toBe("fits");
+    expect(bagFits({ dims: [46, 36, 20] }, free)).toBe("too_big");
+    expect(bagFits({ dims: [45, 36, 20], kg: 16 }, free)).toBe("too_heavy");
+  });
+  it("Wizz Air: one side up to 5cm over may be wheels", () => {
+    const wizz = airlineBagsFor("Wizz Air")!.bags.find((b) => b.kind === "underseat")!;
+    expect(bagFits({ dims: [44, 30, 20] }, wizz)).toBe("fits_if_wheels");
+    expect(bagFits({ dims: [46, 30, 20] }, wizz)).toBe("too_big");
+    expect(bagFits({ dims: [42, 32, 20] }, wizz)).toBe("too_big");
+  });
+  it("never answers for sizes we haven't checked", () => {
+    const klm = airlineBagsFor("KLM")!.bags[0]!;
+    expect(bagFits({ dims: [10, 10, 10] }, klm)).toBe("not_checked");
+  });
+  it("every verified row has its source, the airline's words and a check date", () => {
+    for (const a of AIRLINE_BAGS)
+      for (const b of a.bags)
+        if (b.verified) {
+          expect(/^https:\/\//.test(b.sourceUrl)).toBe(true);
+          expect(b.quote.length > 10).toBe(true);
+          expect(b.dims !== null).toBe(true);
+          expect(/^\d{4}-\d{2}-\d{2}$/.test(b.checkedOn)).toBe(true);
+        }
   });
 });

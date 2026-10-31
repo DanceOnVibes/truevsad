@@ -485,6 +485,7 @@ export default function XrayPage() {
             includes={includes}
             excludesTaxesAndFees={excludesFees}
             fairMark={fairMark ?? undefined}
+            airline={airline || supplier || null}
           />
           <ChildCostsNote costs={childCosts} />
 
