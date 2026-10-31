@@ -33,6 +33,8 @@ export function receiptScope(
   if (lines.some((l) => /per room/i.test(l.label))) counted.push("Per-room fees: one room for the whole party.");
   if (lines.some((l) => l.category === "levy" && /4-star/i.test(l.label)))
     counted.push("Tourist tax: the 4-star hotel rate (3-star is lower, 5-star higher).");
+  if (lines.some((l) => l.category !== "supplier"))
+    counted.push("Seats: only what the airline makes a family pay to sit together. Nothing for adults-only bookings, where choosing seats is optional.");
   if (lines.some((l) => ADVISORY_CATEGORIES.includes(l.category)))
     counted.push("FairMark counts one hold bag per booking as standard, the same for every seller. Your own bag number, seats and other extras are in your total but not in the seller's FairMark.");
 

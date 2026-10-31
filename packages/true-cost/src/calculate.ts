@@ -1,6 +1,7 @@
 import { formatGBP, roundPence } from "./money";
 import { childrenInBand, partySize, validateParty } from "./party";
 import { advertNotes } from "./advert";
+import { seatUnits } from "./seats";
 import { hasTaxCoverage } from "./scope";
 import {
   ADVISORY_CATEGORIES,
@@ -15,7 +16,7 @@ import {
   type TrueCostResult,
 } from "./types";
 
-export const ENGINE_VERSION = "0.5.0";
+export const ENGINE_VERSION = "0.6.0";
 
 /** A fee figure last checked more than this many days ago counts for half in the confidence score. */
 export const STALE_AFTER_DAYS = 365;
@@ -176,8 +177,11 @@ function applyRule(
   }
 
   // Hold bags are advisory: the family's own number, or one per two people (a couple often shares).
+  // Seats: only what the airline makes a family pay to sit together (see seats.ts).
+  const seat = rule.covers === "seats" ? seatUnits(rule, party) : undefined;
+  if (seat === null) return null;
   const { units, label } =
-    rule.covers === "hold_bag" && rule.unit === "per_person" ? bagUnits(rule, party) : unitsFor(rule, party, nights);
+    seat ?? (rule.covers === "hold_bag" && rule.unit === "per_person" ? bagUnits(rule, party) : unitsFor(rule, party, nights));
   if (units === 0) return null;
   return {
     category: rule.category,
