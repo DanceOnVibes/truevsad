@@ -53,3 +53,4 @@ export {
   type FairMarkReason,
 } from "./fairmark";
 export { childExtras, type ChildCost } from "./free-child";
+export { receiptScope, type ReceiptScope } from "./caveats";

@@ -7,6 +7,9 @@ import { ReceiptView } from "@/components/ReceiptView";
 import { FairSharePanel } from "@/components/FairSharePanel";
 import { ChildCostsNote } from "@/components/ChildCostsNote";
 
+const CURRENCIES = { GBP: "£", EUR: "€", USD: "$" } as const;
+type Currency = keyof typeof CURRENCIES;
+
 type Step = "paste" | "confirm" | "receipt";
 
 /**
@@ -37,10 +40,12 @@ export default function XrayPage() {
 
   // Step 2 — confirm (all editable)
   const [price, setPrice] = useState("");
+  const [currency, setCurrency] = useState<Currency>("GBP");
   const [basis, setBasis] = useState<"per_person" | "total">("per_person");
   const [excludesFees, setExcludesFees] = useState(false);
   const [freeChild, setFreeChild] = useState(false);
   const [childCosts, setChildCosts] = useState<{ age: number; pence: number }[]>([]);
+  const [councils, setCouncils] = useState<string[]>([]);
   const [nights, setNights] = useState("7");
   const [departDate, setDepartDate] = useState("");
   const [destination, setDestination] = useState("");
@@ -95,6 +100,12 @@ export default function XrayPage() {
       const d = data.draft ?? {};
       if (d.headlinePence) setPrice((d.headlinePence / 100).toFixed(2));
       if (d.headlineBasis) setBasis(d.headlineBasis);
+      const extraNotes: string[] = [];
+      if (typeof d.currency === "string" && Object.hasOwn(CURRENCIES, d.currency)) setCurrency(d.currency as Currency);
+      else if (typeof d.currency === "string" && d.currency) {
+        setCurrency("GBP");
+        extraNotes.push(`The advert looks priced in ${d.currency}. We can price pounds, euros or US dollars — enter the price in one of those.`);
+      }
       setExcludesFees(d.excludesTaxesAndFees === true);
       setFreeChild(d.freeChildClaim === true);
       if (d.nights) setNights(String(d.nights));
@@ -108,7 +119,7 @@ export default function XrayPage() {
         setIncludes(d.includes);
         setIncludesTouched(true);
       }
-      setNotes(data.notes ?? []);
+      setNotes([...(data.notes ?? []), ...extraNotes]);
       setStep("confirm");
     } catch (e) {
       setError((e as Error).message);
@@ -129,7 +140,7 @@ export default function XrayPage() {
       const offer = {
         headlinePence: Math.round(parseFloat(price) * 100),
         headlineBasis: basis,
-        currency: "GBP",
+        currency,
         nights: Number(nights),
         destination: destination || undefined,
         supplierName: supplier || undefined,
@@ -149,6 +160,7 @@ export default function XrayPage() {
       setResult(data.result);
       setFairMark(data.fairMark ?? null);
       setChildCosts(Array.isArray(data.childCosts) ? data.childCosts : []);
+      setCouncils(Array.isArray(data.councils) ? data.councils : []);
       setQuoteId(data.quoteId ?? null);
       setShareUrl(null);
       setCopied(false);
@@ -242,8 +254,16 @@ export default function XrayPage() {
 
           <div className="row">
             <div>
-              <label htmlFor="price">Advertised price (£)</label>
+              <label htmlFor="price">Advertised price ({CURRENCIES[currency]})</label>
               <input id="price" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} />
+            </div>
+            <div>
+              <label htmlFor="currency">Currency</label>
+              <select id="currency" value={currency} onChange={(e) => setCurrency(e.target.value as Currency)}>
+                <option value="GBP">£ pounds</option>
+                <option value="EUR">€ euros</option>
+                <option value="USD">$ US dollars</option>
+              </select>
             </div>
             <div>
               <label htmlFor="basis">Price is</label>
@@ -332,6 +352,11 @@ export default function XrayPage() {
             </div>
           </div>
           <p className="hint">Ages only — no dates of birth, no names. We keep only the first half of your postcode.</p>
+          <p className="hint">
+            Why we ask: ages decide which bag rules and tourist taxes apply (many are free for younger children). Your postcode
+            (optional) lets us find your council&apos;s school holidays, and in our anonymous price
+            statistics we keep only its letters (e.g. SE).
+          </p>
 
           <button onClick={onQuote} disabled={busy || !price}>
             {busy ? "Working it out…" : "Show the true price"}
@@ -393,7 +418,12 @@ export default function XrayPage() {
             )}
             <a
               href={`/school-window?${new URLSearchParams(
-                departDate ? { date: departDate, nights } : { nights },
+                {
+                  ...(departDate ? { date: departDate } : {}),
+                  nights,
+                  // Only a council name we hold dates for, and only when the postcode points to one.
+                  ...(councils.length === 1 ? { council: councils[0]! } : {}),
+                },
               ).toString()}`}
             >
               Check these dates against your school holidays →

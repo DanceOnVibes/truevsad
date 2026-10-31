@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   calculateTrueCost,
   childExtras,
+  receiptScope,
   classifyTrip,
   fairShare,
   scorePlace,
@@ -165,5 +166,21 @@ describe("free child places", () => {
   it("a 16-year-old also pays the tourist tax; room fees don't count per child", () => {
     const c = childExtras({ party: { adults: 2, childAges: [16] }, offer, rules: selectRules(rules, offer) });
     expect(c).toEqual([{ age: 16, pence: 6667 + 7 * 275 }]);
+  });
+});
+
+describe("receipt scope", () => {
+  const line = (category: "supplier" | "levy" | "party_extra", label: string) => ({ category, label, amountPence: 100, source: "rule" as const, confidence: 0.5 });
+  it("states how it counted and what it didn't check, without hedging words", () => {
+    const c = receiptScope({ includes: [] }, { receipt: { lines: [line("supplier", "Advertised"), line("party_extra", "Hold bag, return"), line("levy", "Balearic tourist tax (4-star hotel, May–Oct rate)")], subtotals: {} as never } });
+    expect(c.notChecked.some((s) => s.includes("Transfers"))).toBe(true);
+    expect(c.counted.some((s) => s.includes("one per person"))).toBe(true);
+    expect(c.counted.some((s) => s.includes("4-star"))).toBe(true);
+    expect([...c.counted, ...c.notChecked].some((s) => /assum|estimat|guess/i.test(s))).toBe(false);
+  });
+  it("doesn't list transfers when the deal includes them", () => {
+    const c = receiptScope({ includes: ["transfers"] }, { receipt: { lines: [], subtotals: {} as never } });
+    expect(c.notChecked.some((s) => s.includes("Transfers"))).toBe(false);
+    expect(c.counted).toEqual([]);
   });
 });

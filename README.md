@@ -95,8 +95,9 @@ supabase db push
 - [x] Anonymous price observations (one line per X-ray: seller, place, travel week, party size, prices per person; no ages, postcode, link or quote id), kept 2 years — the base for school-holiday premiums later
 - [x] /fees: every fee rule in use, with source, date checked and how sure we are
 - [x] "Kids go free" check: AI reads the claim; the receipt shows what each child still costs in extras
+- [x] Data accuracy: every receipt lists "How we counted" and "Not checked on this receipt"; euro and US dollar adverts converted at the ECB daily rate (original price, rate and date kept and shown, also on shared receipts; no rate → no price); postcode suggests the School Window council (postcodes.io, outward code only); price statistics keep the postcode area letters and the advert currency; privacy page data table
 - [ ] Watch alerts (needs accounts + email), search across deals (needs a click-out inventory, never scraping)
-- [x] All migrations applied to production, up to 1600 (1100 and 1600 run by hand) (nightly purge job scheduled at 03:17 UTC)
+- [x] All migrations applied to production, up to 1700 (1100 and 1600 run by hand) (nightly purge job scheduled at 03:17 UTC)
 - [x] Deployed on Vercel (London) and tested end to end: X-ray → save → share
 - [x] Privacy page and footer: company number, ICO registration, registered office, contact emails, security.txt
 - [ ] Duffel integration for live flight prices

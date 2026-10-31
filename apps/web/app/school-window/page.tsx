@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { classifyTrip, shoulderWeeks, type TripWindow } from "@truevsad/true-cost";
+import { classifyTrip, shoulderWeeks, toOutwardPostcode, type TripWindow } from "@truevsad/true-cost";
 import { loadAuthorities, loadHolidays, type HolidayRow } from "@/lib/school";
 import { EMAILS } from "@/lib/company";
+import { councilsForOutcode, matchSupported } from "@/lib/councils";
 
 export const runtime = "nodejs";
 export const preferredRegion = "lhr1";
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
     "See your council's school holidays, the shoulder weeks either side, and how many school days a trip would miss.",
 };
 
-type Search = Promise<{ council?: string; date?: string; nights?: string }>;
+type Search = Promise<{ council?: string; date?: string; nights?: string; pc?: string }>;
 
 const STATUS_LABEL: Record<TripWindow["status"], string> = {
   school_holiday: "School holiday",
@@ -39,7 +40,20 @@ function short(d: string): string {
 export default async function SchoolWindowPage({ searchParams }: { searchParams: Search }) {
   const sp = await searchParams;
   const authorities = await loadAuthorities();
-  const council = authorities.find((a) => a.authority === sp.council)?.authority ?? "";
+  let council = authorities.find((a) => a.authority === sp.council)?.authority ?? "";
+
+  // Don't know your council? Suggest it from the first half of the postcode (sent to postcodes.io,
+  // never stored). One postcode district can cross council borders, so the family always confirms.
+  let suggestion: { outcode: string; found: string[]; matched: string[] } | null = null;
+  const outcode = !council && sp.pc ? toOutwardPostcode(sp.pc) : undefined;
+  if (outcode) {
+    const found = await councilsForOutcode(outcode);
+    if (found) {
+      const matched = matchSupported(found, authorities.map((a) => a.authority));
+      suggestion = { outcode, found, matched };
+      if (matched.length === 1) council = matched[0]!;
+    }
+  }
   const holidays = council ? await loadHolidays(council) : [];
 
   const date = sp.date && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : "";
@@ -87,6 +101,26 @@ export default async function SchoolWindowPage({ searchParams }: { searchParams:
               </option>
             ))}
           </select>
+          {!council && (
+            <>
+              <label htmlFor="pc">Not sure? First half of your postcode</label>
+              <input id="pc" name="pc" placeholder="e.g. SE11" defaultValue={outcode ?? ""} />
+              <p className="hint">
+                Used once to look up your council, then forgotten. We never store it from this page.
+              </p>
+            </>
+          )}
+          {suggestion && (
+            <p className="hint">
+              {suggestion.matched.length === 1
+                ? `${suggestion.outcode} is in ${suggestion.matched[0]}. Postcode areas can cross council borders, so change it above if your child's school is elsewhere.`
+                : suggestion.matched.length > 1
+                  ? `${suggestion.outcode} covers parts of ${suggestion.matched.join(" and ")}. Choose the council your child's school is in.`
+                  : suggestion.found.length
+                    ? `${suggestion.outcode} is in ${suggestion.found.join(" / ")}. We don't have term dates for ${suggestion.found.length === 1 ? "that council" : "those councils"} yet.`
+                    : `We couldn't find ${suggestion.outcode}. Check the first half of your postcode, or choose your council above.`}
+            </p>
+          )}
           <div className="row">
             <div>
               <label htmlFor="date">Check a trip (optional)</label>

@@ -16,6 +16,9 @@ import { loadFeeRules, saveQuote, shareQuote, type SourceKind } from "@/lib/quot
 import { allowRequest } from "@/lib/rate-limit";
 import { aiConfigured, extractWithAi, type DraftOffer } from "@/lib/extract-ai";
 import { logObservation } from "@/lib/observations";
+import { conversionNote, toPence } from "@/lib/currency";
+import { councilsForOutcode, matchSupported } from "@/lib/councils";
+import { loadAuthorities } from "@/lib/school";
 
 // Run in London, next to Supabase London. Node runtime (not edge) so it pins to lhr1.
 export const runtime = "nodejs";
@@ -126,16 +129,17 @@ const EXCLUDES_FEES =
 const FREE_CHILD = /\b(kids?|child(ren)?)\s+(go|stay|fly|travel|eat)\s+free\b|\bfree\s+(kids?|child(ren)?)\s+places?\b/i;
 
 function naiveExtract(text: string): DraftOffer {
-  const price = text.match(/£\s?([\d,]+(?:\.\d{1,2})?)/);
+  const price = text.match(/([£€$])\s?([\d,]+(?:\.\d{1,2})?)/);
+  const currency = price?.[1] === "€" ? "EUR" : price?.[1] === "$" ? "USD" : "GBP";
   const nights = text.match(/(\d{1,2})\s*nights?/i);
   const perPerson = /\b(pp|p\.p\.|per person)\b/i.test(text);
   const excludes = EXCLUDES_FEES.test(text);
   const freeChild = FREE_CHILD.test(text);
 
   return {
-    headlinePence: price ? Math.round(parseFloat(price[1]!.replace(/,/g, "")) * 100) : undefined,
+    headlinePence: price ? Math.round(parseFloat(price[2]!.replace(/,/g, "")) * 100) : undefined,
     headlineBasis: perPerson ? "per_person" : "total",
-    currency: "GBP",
+    currency,
     nights: nights ? parseInt(nights[1]!, 10) : undefined,
     excludesTaxesAndFees: excludes || undefined,
     freeChildClaim: freeChild || undefined,
@@ -181,27 +185,49 @@ function linkWords(url: string | undefined): string | undefined {
 async function quote(body: Record<string, unknown>) {
   const party = parseParty(body.party);
   if (typeof party === "string") return bad(party);
-  const offer = parseOffer(body.offer);
-  if (typeof offer === "string") return bad(offer);
+  const parsed = parseOffer(body.offer);
+  if (typeof parsed === "string") return bad(parsed);
+  // Euros or dollars → pounds at the ECB rate. No rate, no price: we never guess.
+  const converted = await toPence(parsed);
+  if (typeof converted === "string") return bad(converted);
+  const { offer, conversion } = converted;
 
   const sourceKind: SourceKind =
     body.sourceKind === "link" || body.sourceKind === "screenshot" ? body.sourceKind : "text";
   const sourceUrl = normaliseLink(body.sourceUrl);
 
   try {
+    // The council lookup (for the School Window link) runs alongside pricing and never blocks it.
+    const councilsP = suggestCouncil(party.outwardPostcode);
     const rules = selectRules(await loadFeeRules(), offer);
     const result = calculateTrueCost({ party, offer, rules });
+    if (conversion) result.notes.unshift(conversionNote(conversion));
     // Saving must never block the answer: if it fails, the user still gets the price.
-    const quoteId = await saveQuote({ party, offer, result, sourceKind, sourceUrl });
+    const quoteId = await saveQuote({ party, offer, result, sourceKind, sourceUrl, conversion });
     const fm = fairMark(result);
     // Anonymous statistics, written after the answer is sent so the family never waits for it.
-    after(() => logObservation({ party, offer, result, fairMark: fm }));
+    after(() => logObservation({ party, offer, result, fairMark: fm, advertisedCurrency: conversion?.from }));
     // "Kids go free"? What each child still costs in extras.
     const childCosts = offer.freeChildClaim ? childExtras({ party, offer, rules }) : [];
-    return NextResponse.json({ result, fairMark: fm, childCosts, quoteId });
+    const councils = await councilsP;
+    return NextResponse.json({ result, fairMark: fm, childCosts, quoteId, councils });
   } catch (err) {
     if (err instanceof PartyValidationError) return bad(err.message);
     return bad(err instanceof Error ? err.message : "Could not price this deal.");
+  }
+}
+
+/**
+ * Councils we hold school dates for that cover this postcode district. Only the outward code
+ * (e.g. "SE11") goes to postcodes.io; nothing is stored. Empty when unknown or the lookup fails.
+ */
+async function suggestCouncil(outcode: string | undefined): Promise<string[]> {
+  if (!outcode) return [];
+  try {
+    const [found, authorities] = await Promise.all([councilsForOutcode(outcode), loadAuthorities()]);
+    return found ? matchSupported(found, authorities.map((a) => a.authority)) : [];
+  } catch {
+    return [];
   }
 }
 
@@ -257,8 +283,11 @@ function parseTravelDate(v: unknown): string | undefined {
 // ---------------------------------------------------------------------------
 
 async function split(body: Record<string, unknown>) {
-  const offer = parseOffer(body.offer);
-  if (typeof offer === "string") return bad(offer);
+  const parsed = parseOffer(body.offer);
+  if (typeof parsed === "string") return bad(parsed);
+  const converted = await toPence(parsed);
+  if (typeof converted === "string") return bad(converted);
+  const { offer } = converted;
   if (!Array.isArray(body.families) || body.families.length < 2 || body.families.length > 6) {
     return bad("Add between 2 and 6 families.");
   }
