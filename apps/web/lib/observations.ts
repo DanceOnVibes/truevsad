@@ -7,8 +7,15 @@ import { supabaseAdmin } from "./supabase-admin";
  *
  * They let us measure, over time and without scraping, how prices move in school holidays and
  * how fair each seller is. Deliberately NOT linked to the quote or the family: no quote id, no
- * ages, no postcode, no link, and only the week of travel and of checking.
+ * ages, no link, and only the week of travel and of checking. From the postcode we keep only the
+ * AREA letters ("SE11" → "SE"), which cover tens of thousands of homes.
  */
+
+/** "SE11" → "SE", "B3" → "B", "CF10" → "CF". Anything else → null. */
+export function postcodeArea(outward: string | undefined): string | null {
+  const m = /^([A-Z]{1,2})[0-9]/.exec((outward ?? "").toUpperCase());
+  return m ? m[1]! : null;
+}
 
 /** Monday of the week containing `d` (UTC), as YYYY-MM-DD. */
 export function mondayOf(d: Date): string {
