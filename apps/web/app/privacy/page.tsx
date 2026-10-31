@@ -62,6 +62,15 @@ export default function PrivacyPage() {
           only if you click them.
         </p>
 
+        <h2>FairMark board and leaderboard</h2>
+        <p>
+          The FairMark leaderboard is built from anonymous totals per holiday seller across all the
+          deals checked in the last 30 days: it never shows a single family&apos;s deal. A shared
+          receipt appears on the public FairMark board only if you tick the box when you share it. The
+          board shows the destination, seller, nights, number of adults and children and the prices,
+          never your postcode, children&apos;s ages or the deal link.
+        </p>
+
         <h2>School Window and splitting a price</h2>
         <p>
           Checking a date against your council&apos;s school holidays, or splitting a price between

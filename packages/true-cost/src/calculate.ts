@@ -1,5 +1,6 @@
 import { formatGBP, roundPence } from "./money";
 import { childrenInBand, partySize, validateParty } from "./party";
+import { hasTaxCoverage } from "./scope";
 import {
   COST_CATEGORIES,
   type CostCategory,
@@ -11,7 +12,7 @@ import {
   type TrueCostResult,
 } from "./types";
 
-export const ENGINE_VERSION = "0.3.0";
+export const ENGINE_VERSION = "0.4.0";
 
 /**
  * TrueCost = supplier lines + party extras + levies + entry docs + door-to-door + payment/FX
@@ -85,6 +86,8 @@ export function calculateTrueCost(input: TrueCostInput): TrueCostResult {
     confidence: weightedConfidence(lines),
     usedDemoRules: rules.some((r) => r.demo),
     notes,
+    // A levy the deal already includes is skipped by selectRules, but the tick itself counts.
+    taxCoverage: hasTaxCoverage(offer, rules),
     engineVersion: ENGINE_VERSION,
   };
 }
@@ -142,6 +145,7 @@ function applyRule(
       source: "rule",
       confidence: rule.confidence,
       ruleId: rule.id,
+      sourceUrl: rule.sourceUrl,
       working: `${(rule.amount.basisPoints / 100).toFixed(2)}% of ${formatGBP(supplierSubtotal)}`,
     };
   }
@@ -155,6 +159,7 @@ function applyRule(
     source: "rule",
     confidence: rule.confidence,
     ruleId: rule.id,
+    sourceUrl: rule.sourceUrl,
     working: units === 1 && rule.unit === "per_party"
       ? formatGBP(rule.amount.pence)
       : `${label} × ${formatGBP(rule.amount.pence)}`,

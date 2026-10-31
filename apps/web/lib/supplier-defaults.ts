@@ -38,4 +38,5 @@ export const INCLUSION_LABELS: Record<Inclusion, string> = {
   cabin_bag: "Large cabin bags",
   seats: "Seats together",
   transfers: "Airport transfers",
+  local_taxes: "Local tourist taxes",
 };

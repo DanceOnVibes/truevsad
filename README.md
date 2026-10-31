@@ -90,8 +90,10 @@ supabase db push
 - [x] Visit Before You Book core: /visit with OpenStreetMap counts (cached 30 days in London), families / couples / groups traffic lights
 - [x] Fair Share: split a deal between families on the receipt (never saved)
 - [x] Watch groundwork: shared receipts re-price with today's fee rules and flag changes
+- [x] FairMark: badge + exact % on every receipt (recalculated on view), opt-in public deals board with "Show only Fair Price deals", Operator Fairness Leaderboard (reference family, last 30 days, hourly), WhatsApp preview image for shared receipts
+- [x] FairMark hardening: £ gap split into "taxes and fees left out" vs "extras your family needs", distance to the Fair Price line + biggest extra, reasons when unavailable, no badge without local tax data, "Local tourist taxes" can be ticked as included, median leaderboard (10+ deals, best/worst), /fairmark/method, /how-we-earn, a source link on every fee line
 - [ ] Watch alerts (needs accounts + email), search across deals (needs a click-out inventory, never scraping)
-- [x] All migrations applied to production, up to 1200 (1100 run by hand) (nightly purge job scheduled at 03:17 UTC)
+- [x] All migrations applied to production, up to 1400 (1100 run by hand) (nightly purge job scheduled at 03:17 UTC)
 - [x] Deployed on Vercel (London) and tested end to end: X-ray → save → share
 - [x] Privacy page and footer: company number, ICO registration, registered office, contact emails, security.txt
 - [ ] Duffel integration for live flight prices

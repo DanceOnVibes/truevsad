@@ -46,9 +46,9 @@ export interface Party {
 export type HeadlineBasis = "per_person" | "total";
 
 /** Things a deal can already include, so we never charge for them twice. */
-export type Inclusion = "hold_bag" | "cabin_bag" | "seats" | "transfers";
+export type Inclusion = "hold_bag" | "cabin_bag" | "seats" | "transfers" | "local_taxes";
 
-export const INCLUSIONS: readonly Inclusion[] = ["hold_bag", "cabin_bag", "seats", "transfers"] as const;
+export const INCLUSIONS: readonly Inclusion[] = ["hold_bag", "cabin_bag", "seats", "transfers", "local_taxes"] as const;
 
 /** What the advert says. Confirmed by the user before we price it. */
 export interface Offer {
@@ -119,6 +119,8 @@ export interface FeeRule {
    * [5,6,7,8,9,10]. Empty = all year. Without a travel date we assume July (and say so).
    */
   months?: number[];
+  /** Where the figure comes from (shown as a link on the receipt). */
+  sourceUrl?: string;
   /**
    * Rules in the same group never stack: if several apply, only the most specific one is used
    * (the one listing the fewest places). E.g. "Barcelona" beats "Catalonia-wide" for a Barcelona hotel.
@@ -139,6 +141,8 @@ export interface CostLineInput {
 export interface CostLine extends CostLineInput {
   /** Human-readable working, e.g. "2 adults × 3 nights × £2.50". */
   working?: string;
+  /** Where the figure comes from, for rule lines. */
+  sourceUrl?: string;
 }
 
 export interface Receipt {
@@ -169,5 +173,11 @@ export interface TrueCostResult {
   usedDemoRules: boolean;
   /** Plain-English assumptions the family should know about, e.g. "No travel date, so summer rates used". */
   notes: string[];
+  /**
+   * Do we actually know the local taxes for this destination? True when a tax rule matched,
+   * the destination is known to have none, or the family ticked taxes as already included.
+   * FairMark is withheld when false, so "0% extra" can never mean "we know nothing".
+   */
+  taxCoverage: boolean;
   engineVersion: string;
 }

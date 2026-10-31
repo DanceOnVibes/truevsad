@@ -24,7 +24,7 @@ A rule that can't be backed up is worse than no rule: it breaks the whole promis
 | `source_note` | yes | One line: what the page says, and the date you checked it | `Gov page, checked 30 Oct 2026` |
 | `valid_from` | yes | `YYYY-MM-DD` when the figure starts | `2026-11-01` |
 | `valid_to` | no | `YYYY-MM-DD` when it ends, if known | |
-| `covers` | no | If this fee is for something a package might already include: `hold_bag`, `cabin_bag`, `seats` or `transfers`. The fee is then skipped when the family ticks it as included. | `hold_bag` |
+| `covers` | no | If this fee is for something a package might already include: `hold_bag`, `cabin_bag`, `seats`, `transfers` or `local_taxes` (every tourist tax row). The fee is then skipped when the family ticks it as included. | `hold_bag` |
 | `max_nights` | no | Per-night taxes that stop after a number of nights (Catalonia: first 7 only) | `7` |
 | `months` | no | Travel months this rate applies to: `5-10` (May–Oct), `11-4` (Nov–Apr) or `1\|2\|12`. Blank = all year | `5-10` |
 | `exclusive_group` | no | Rules in the same group never stack; the one listing the fewest places wins (e.g. Barcelona beats rest of Catalonia) | `catalonia_tax` |

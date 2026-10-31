@@ -125,3 +125,27 @@ describe("exclusive groups", () => {
     expect(selectRules([rest, bcn], { destination: "Golden Donaire Beach, Salou, Spain" }).map((r) => r.id)).toEqual(["rest"]);
   });
 });
+
+describe("tax coverage", () => {
+  const tax: FeeRule = { id: "t", category: "levy", label: "Tax", unit: "per_person_per_night", amount: { kind: "fixed", pence: 100 }, confidence: 0.8, regions: ["Mallorca"], covers: "local_taxes" };
+  const offer = (destination: string, includes: Offer["includes"] = []): Offer => ({ headlinePence: 50000, headlineBasis: "total", currency: "GBP", nights: 7, destination, includes });
+  const party = { adults: 2, childAges: [] };
+  it("knows Mallorca (a tax rule matched)", () => {
+    const o = offer("Alcudia, Mallorca, Spain");
+    expect(calculateTrueCost({ party, offer: o, rules: selectRules([tax], o) }).taxCoverage).toBe(true);
+  });
+  it("knows Tenerife has no tourist tax", () => {
+    const o = offer("Costa Adeje, Tenerife, Spain");
+    expect(calculateTrueCost({ party, offer: o, rules: selectRules([tax], o) }).taxCoverage).toBe(true);
+  });
+  it("doesn't pretend to know Turkey", () => {
+    const o = offer("Side, Antalya, Turkey");
+    expect(calculateTrueCost({ party, offer: o, rules: selectRules([tax], o) }).taxCoverage).toBe(false);
+  });
+  it("never charges taxes twice when the deal includes them", () => {
+    const o = offer("Alcudia, Mallorca, Spain", ["local_taxes"]);
+    const r = calculateTrueCost({ party, offer: o, rules: selectRules([tax], o) });
+    expect(r.trueCostPence).toBe(50000);
+    expect(r.taxCoverage).toBe(true);
+  });
+});

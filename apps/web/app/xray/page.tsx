@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { INCLUSIONS, type Inclusion, type TrueCostResult } from "@truevsad/true-cost";
+import { INCLUSIONS, type FairMark, type Inclusion, type TrueCostResult } from "@truevsad/true-cost";
 import { INCLUSION_LABELS, supplierDefaults } from "@/lib/supplier-defaults";
 import { ReceiptView } from "@/components/ReceiptView";
 import { FairSharePanel } from "@/components/FairSharePanel";
@@ -62,6 +62,8 @@ export default function XrayPage() {
 
   // Step 3 — receipt
   const [result, setResult] = useState<TrueCostResult | null>(null);
+  const [fairMark, setFairMark] = useState<FairMark | null>(null);
+  const [listPublicly, setListPublicly] = useState(false);
   const [quoteId, setQuoteId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -140,6 +142,7 @@ export default function XrayPage() {
       });
       setQuoted({ offer, party: { adults: Number(adults), childAges: ages } });
       setResult(data.result);
+      setFairMark(data.fairMark ?? null);
       setQuoteId(data.quoteId ?? null);
       setShareUrl(null);
       setCopied(false);
@@ -156,7 +159,7 @@ export default function XrayPage() {
     setBusy(true);
     setError(null);
     try {
-      const data = await post({ step: "share", quoteId });
+      const data = await post({ step: "share", quoteId, listPublicly });
       const link = `${window.location.origin}${data.path}`;
       setShareUrl(link);
       if (navigator.share) {
@@ -334,6 +337,7 @@ export default function XrayPage() {
             lines={result.receipt.lines}
             includes={includes}
             excludesTaxesAndFees={excludesFees}
+            fairMark={fairMark ?? undefined}
           />
 
           {quoteId ? (
@@ -348,9 +352,19 @@ export default function XrayPage() {
                 </p>
               </div>
             ) : (
-              <button onClick={onShare} disabled={busy}>
-                {busy ? "Making link…" : "Share this receipt"}
-              </button>
+              <div>
+                <label className="check">
+                  <input type="checkbox" checked={listPublicly} onChange={(e) => setListPublicly(e.target.checked)} />{" "}
+                  Also show this deal on the public <a href="/fairmark">FairMark board</a>
+                </label>
+                <p className="hint">
+                  Optional. The board shows the destination, seller, nights, party size and prices, never
+                  your postcode, children&apos;s ages or the deal link.
+                </p>
+                <button onClick={onShare} disabled={busy}>
+                  {busy ? "Making link…" : "Share this receipt"}
+                </button>
+              </div>
             )
           ) : (
             <p className="hint">Sharing isn&apos;t available right now.</p>

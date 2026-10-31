@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   calculateTrueCost,
+  fairMark,
   fairShare,
   INCLUSIONS,
   PartyValidationError,
@@ -185,7 +186,7 @@ async function quote(body: Record<string, unknown>) {
     const result = calculateTrueCost({ party, offer, rules });
     // Saving must never block the answer: if it fails, the user still gets the price.
     const quoteId = await saveQuote({ party, offer, result, sourceKind, sourceUrl });
-    return NextResponse.json({ result, quoteId });
+    return NextResponse.json({ result, fairMark: fairMark(result), quoteId });
   } catch (err) {
     if (err instanceof PartyValidationError) return bad(err.message);
     return bad(err instanceof Error ? err.message : "Could not price this deal.");
@@ -285,7 +286,8 @@ async function share(body: Record<string, unknown>) {
   if (typeof body.quoteId !== "string" || !UUID.test(body.quoteId)) {
     return bad("Missing quote.");
   }
-  const slug = await shareQuote(body.quoteId);
+  // Listing on the public Fair Price board is the family's choice, off unless they tick it.
+  const slug = await shareQuote(body.quoteId, body.listPublicly === true);
   if (!slug) {
     return NextResponse.json({ error: "Could not create a share link right now." }, { status: 503 });
   }
