@@ -57,7 +57,7 @@ export default async function SharedReceiptPage({ params }: { params: Params }) 
         </p>
       )}
       <div className="card">
-        <ReceiptView {...r} />
+        <ReceiptView {...r} airline={r.airline ?? r.supplierName} />
         <ChildCostsNote costs={r.childCostsPence.map((pence) => ({ pence }))} />
       </div>
       <p>
