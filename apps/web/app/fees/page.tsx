@@ -82,8 +82,9 @@ export default async function FeesPage() {
             <h2 style={{ marginTop: 0 }}>{title}</h2>
             {category === "party_extra" && (
               <p className="hint">
-                Advisory: these are in your true price but never counted in FairMark. Hold bags are
-                counted as one per two people aged 2 and over unless you tell us how many you&apos;re taking.
+                Advisory: these are in your true price. Hold bags are counted as one per two people aged 2
+                and over unless you tell us how many you&apos;re taking. FairMark counts only one hold bag
+                per booking, the same standard for every seller.
               </p>
             )}
             <table className="receipt">

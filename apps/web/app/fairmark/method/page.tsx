@@ -21,10 +21,12 @@ export default function FairMarkMethodPage() {
       <div className="card">
         <h2 style={{ marginTop: 0 }}>The calculation</h2>
         <p>
-          FairMark = taxes and fees the advert left out ÷ advertised price × 100. &ldquo;Left out&rdquo;
-          means charges every family on that deal must pay: tourist taxes, resort fees and entry
-          documents, each from a published source. Anything the deal already includes is never
-          counted.
+          FairMark = (taxes and fees the advert left out + one hold bag) ÷ advertised price × 100.
+          &ldquo;Left out&rdquo; means charges every family on that deal must pay: tourist taxes,
+          resort fees and entry documents, each from a published source. The hold bag is our standard:
+          one return hold bag per booking, at that airline&apos;s price, the same for every seller and
+          every family size, because a holiday with no hold bag at all isn&apos;t realistic. If the deal
+          already includes hold bags, nothing is added. Anything the deal includes is never counted.
         </p>
         <ul>
           <li><strong>FairMark Gold</strong>: {FAIRMARK_SCALE.gold}% or less, including adverts that left nothing out.</li>
@@ -33,10 +35,10 @@ export default function FairMarkMethodPage() {
           <li><strong>High gap</strong>: more than {FAIRMARK_SCALE.higher}%.</li>
         </ul>
         <p>
-          <strong>Extras your family adds</strong> (hold bags, seats together, getting to the airport)
-          are on every receipt and in your true price, marked &ldquo;advisory&rdquo;, but they are
-          never counted in FairMark. How many bags a family takes is the family&apos;s choice, so a
-          seller is judged only on what its own advert left out.
+          <strong>Extras your family adds</strong> (your own number of bags, seats together, getting
+          to the airport) are on every receipt and in your true price, marked &ldquo;advisory&rdquo;,
+          but they never change the seller&apos;s FairMark. Taking three bags or none, the seller is
+          judged on the same standard of one.
         </p>
       </div>
 
@@ -83,8 +85,9 @@ export default function FairMarkMethodPage() {
         <p>
           Since April 2025, UK law has required advertised prices to include every fee a customer must
           pay, such as mandatory taxes and booking fees. The Competition and Markets Authority enforces
-          this. FairMark measures what an advert still leaves out, such as local taxes paid at the hotel.
-          Optional extras are shown on your receipt so you see your real total, but they never count
+          this. FairMark measures what an advert still leaves out, such as local taxes paid at the hotel,
+          plus one hold bag, which the law treats as optional but almost every family needs. Other
+          optional extras are shown on your receipt so you see your real total, but they never count
           against the seller.
         </p>
       </div>

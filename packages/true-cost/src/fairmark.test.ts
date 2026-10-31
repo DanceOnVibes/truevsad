@@ -51,33 +51,30 @@ describe("FairMark hardening", () => {
     expect(f.reason).toBe("no_tax_data");
     expect(f.summary.length > 0).toBe(true);
   });
-  it("judges only what the advert hid; family extras are never counted against the seller", () => {
-    const f = fairMark({
-      advertisedPence: 100000,
-      trueCostPence: 112000,
-      confidence: 0.8,
-      taxCoverage: true,
-      lines: [
-        { category: "supplier", label: "Advertised price", amountPence: 100000, source: "extracted", confidence: 0.9 },
-        { category: "levy", label: "Tourist tax", amountPence: 2000, source: "rule", confidence: 0.8 },
-        { category: "party_extra", label: "Hold bags", amountPence: 10000, source: "rule", confidence: 0.5 },
-      ],
-    });
-    expect(f.gapPence).toBe(2000);
-    expect(f.percent).toBe(2);
+  const lines = [
+    { category: "supplier" as const, label: "Advertised price", amountPence: 100000, source: "extracted" as const, confidence: 0.9 },
+    { category: "levy" as const, label: "Tourist tax", amountPence: 2000, source: "rule" as const, confidence: 0.8 },
+    { category: "party_extra" as const, label: "Hold bag, return", amountPence: 21000, source: "rule" as const, confidence: 0.8, working: "3 bags (your number) × £70.00" },
+  ];
+  it("judges taxes left out plus ONE standard hold bag, never the family's own bag count", () => {
+    const f = fairMark({ advertisedPence: 100000, trueCostPence: 123000, confidence: 0.8, taxCoverage: true, lines, standardBagPence: 7000 });
+    expect(f.gapPence).toBe(9000);
+    expect(f.percent).toBe(9);
+    expect(f.level).toBe("fair");
     expect(f.requiredPence).toBe(2000);
-    expect(f.extrasPence).toBe(10000);
+    expect(f.standardBagPence).toBe(7000);
+    expect(f.extrasPence).toBe(21000);
+    expect(f.summary).toContain("one hold bag (£70.00)");
     expect(f.summary).toContain("Tourist tax");
-    expect(f.summary.includes("Hold bags")).toBe(false);
-    expect(f.summary).toContain("aren't counted against the seller");
   });
-  it("a deal with nothing hidden is Gold even when the family adds bags", () => {
+  it("reads one bag's price from a stored receipt line when there is no engine result", () => {
+    const f = fairMark({ advertisedPence: 100000, trueCostPence: 123000, confidence: 0.8, taxCoverage: true, lines });
+    expect(f.standardBagPence).toBe(7000);
+  });
+  it("a deal that includes bags and leaves nothing out is Gold", () => {
     const f = fairMark({
-      advertisedPence: 100000, trueCostPence: 130000, confidence: 0.8, taxCoverage: true,
-      lines: [
-        { category: "supplier", label: "Advertised price", amountPence: 100000, source: "extracted", confidence: 0.9 },
-        { category: "party_extra", label: "Hold bags", amountPence: 30000, source: "rule", confidence: 0.8 },
-      ],
+      advertisedPence: 100000, trueCostPence: 100000, confidence: 0.8, taxCoverage: true, standardBagPence: 0,
+      lines: [{ category: "supplier", label: "Advertised price", amountPence: 100000, source: "extracted", confidence: 0.9 }],
     });
     expect(f.level).toBe("gold");
     expect(f.gapPence).toBe(0);

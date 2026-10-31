@@ -197,6 +197,12 @@ describe("advisory hold bags", () => {
     expect(line.advisory).toBe(true);
     expect(line.working!.includes("1 per 2 people aged 2+")).toBe(true);
   });
+  it("the seller's standard bag stays the same whatever the family takes", () => {
+    const none = calculateTrueCost({ party: { adults: 2, childAges: [7, 11], holdBags: 0 }, offer, rules: [bag] });
+    expect(none.standardBagPence).toBe(7000);
+    const included = calculateTrueCost({ party: { adults: 2, childAges: [] }, offer: { ...offer, includes: ["hold_bag"] }, rules: selectRules([bag], { includes: ["hold_bag"] }) });
+    expect(included.standardBagPence).toBe(0);
+  });
   it("uses the family's own number, including none", () => {
     const three = calculateTrueCost({ party: { adults: 2, childAges: [7, 11], holdBags: 3 }, offer, rules: [bag] });
     expect(three.trueCostPence).toBe(300000 + 3 * 7000);

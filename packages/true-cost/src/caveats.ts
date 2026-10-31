@@ -34,7 +34,7 @@ export function receiptScope(
   if (lines.some((l) => l.category === "levy" && /4-star/i.test(l.label)))
     counted.push("Tourist tax: the 4-star hotel rate (3-star is lower, 5-star higher).");
   if (lines.some((l) => ADVISORY_CATEGORIES.includes(l.category)))
-    counted.push("Bags, seats and other extras your family adds are in your total, but never counted against the seller's FairMark.");
+    counted.push("FairMark counts one hold bag per booking as standard, the same for every seller. Your own bag number, seats and other extras are in your total but not in the seller's FairMark.");
 
   const notChecked: string[] = [];
   if (!includes.includes("transfers") && !added(/transfer/i)) notChecked.push("Transfers between the resort airport and your stay.");

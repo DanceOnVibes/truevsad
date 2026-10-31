@@ -56,9 +56,9 @@ export default async function FairMarkPage({ searchParams }: { searchParams: Sea
     <main>
       <h1>FairMark</h1>
       <p className="lead">
-        How much a holiday advert leaves out: the taxes and fees every family on that deal must pay.
-        Fair Price means {FAIRMARK_SCALE.fair}% or less was left out. Extras your family chooses, like
-        bags, are on your receipt but never counted against the seller.
+        How much a holiday advert leaves out: the taxes and fees every family on that deal must pay,
+        plus one hold bag as our standard. Fair Price means {FAIRMARK_SCALE.fair}% or less. Other extras
+        your family chooses are on your receipt but never counted against the seller.
       </p>
 
       <div className="card">

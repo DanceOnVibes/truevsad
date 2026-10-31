@@ -4,11 +4,12 @@ import { ADVISORY_CATEGORIES, HIDDEN_FEE_CATEGORIES, type CostCategory, type Cos
 /**
  * FairMark — how much the advert hid.
  *
- *   fairMarkPercent = (taxes and fees the advert left out) / advertised × 100
+ *   fairMarkPercent = (taxes and fees left out + one standard hold bag) / advertised × 100
  *
- * Only "what the advert hid" counts: tourist taxes, resort fees, entry documents. What the family
- * adds — bags, seats, getting to the airport, card fees — is in their true price but never
- * counted against the seller (those lines are advisory).
+ * Counted: tourist taxes, resort fees, entry documents, and ONE return hold bag per booking when
+ * the deal doesn't include one — the same standard for every seller and every family size.
+ * Everything else the family adds (their own bag count, seats, getting to the airport, card fees)
+ * is in their true price but never counted against the seller.
  *
  * Pure function on the result of calculateTrueCost(). It never changes the price or the
  * ranking: it's a badge, a filter and a leaderboard only. When in doubt, no badge — and we
@@ -31,6 +32,8 @@ export interface FairMark {
   gapPence: number | null;
   /** Taxes, resort fees and entry documents the advert left out. */
   requiredPence: number;
+  /** FairMark's standard of one return hold bag (0 when the deal includes bags). */
+  standardBagPence: number;
   /** Extras this family needs: bags, seats, getting to the airport, card fees. */
   extrasPence: number;
   /** One plain sentence: where the deal sits against the Fair Price line, and what drives it. */
@@ -94,12 +97,16 @@ export function fairMark(input: {
   /** Receipt lines, for the split and the biggest driver. Optional. */
   lines?: CostLine[];
   receipt?: { lines: CostLine[] };
+  /** One return hold bag for this deal (from the engine result). */
+  standardBagPence?: number;
 }): FairMark {
   const { advertisedPence, trueCostPence, confidence, usedDemoRules, taxCoverage } = input;
   const lines = input.lines ?? input.receipt?.lines ?? [];
   const sum = (cats: readonly CostCategory[]) => lines.filter((l) => cats.includes(l.category)).reduce((s, l) => s + l.amountPence, 0);
   const requiredPence = sum(REQUIRED);
   const extrasPence = sum(EXTRAS);
+  const standardBagPence =
+    input.standardBagPence !== undefined ? Math.max(0, input.standardBagPence) : bagPriceFromLines(lines);
 
   const unavailable = (reason: FairMarkReason): FairMark => ({
     level: "unavailable",
@@ -108,6 +115,7 @@ export function fairMark(input: {
     display: "",
     gapPence: null,
     requiredPence,
+    standardBagPence,
     extrasPence,
     summary: REASONS[reason],
     reason,
@@ -122,7 +130,7 @@ export function fairMark(input: {
 
   // With receipt lines we judge only what the advert hid. Without them (a bare total), the whole
   // difference is all we know.
-  const gapPence = lines.length > 0 ? requiredPence : trueCostPence - advertisedPence;
+  const gapPence = lines.length > 0 ? requiredPence + standardBagPence : trueCostPence - advertisedPence;
   // Multiplied first so whole-pence inputs give exact percentages (7400 × 100 / 100000 = 7.4).
   const percent = (gapPence * 100) / advertisedPence;
   const level = fairMarkLevel(percent);
@@ -131,17 +139,28 @@ export function fairMark(input: {
   const biggest = lines
     .filter((l) => REQUIRED.includes(l.category) && l.amountPence > 0)
     .sort((a, b) => b.amountPence - a.amountPence)[0];
-  const driver = biggest ? ` Biggest: ${biggest.label} (+${formatGBP(biggest.amountPence)}).` : "";
+  const bagPart = standardBagPence > 0 && lines.length > 0 ? `, including one hold bag (${formatGBP(standardBagPence)})` : "";
+  const driver = biggest ? ` Biggest tax or fee: ${biggest.label} (+${formatGBP(biggest.amountPence)}).` : "";
   const distance = Math.abs(percent - FAIRMARK_SCALE.fair);
-  const extrasNote = extrasPence > 0 ? " Extras your family adds, like bags, aren't counted against the seller." : "";
+  const extrasNote = extrasPence > 0 ? " Your family's own extras beyond one bag aren't counted against the seller." : "";
   const summary =
     gapPence <= 0
       ? `The advert left out no taxes or fees for this family.${extrasNote}`
       : level === "gold" || level === "fair"
-        ? `${formatGBP(gapPence)} in taxes and fees the advert left out, ${distance.toFixed(1)}% inside the Fair Price line.${driver}${extrasNote}`
-        : `${formatGBP(gapPence)} in taxes and fees the advert left out, ${distance.toFixed(1)}% over the Fair Price line.${driver}${extrasNote}`;
+        ? `${formatGBP(gapPence)} left out of the advert${bagPart}, ${distance.toFixed(1)}% inside the Fair Price line.${driver}${extrasNote}`
+        : `${formatGBP(gapPence)} left out of the advert${bagPart}, ${distance.toFixed(1)}% over the Fair Price line.${driver}${extrasNote}`;
 
-  return { level, percent, label: FAIRMARK_LABELS[level], display: formatFairMarkPercent(percent), gapPence, requiredPence, extrasPence, summary };
+  return { level, percent, label: FAIRMARK_LABELS[level], display: formatFairMarkPercent(percent), gapPence, requiredPence, standardBagPence, extrasPence, summary };
+}
+
+/**
+ * Stored receipts (no engine result): one bag's price from the hold-bag line's working,
+ * "2 bags (1 per 2 people aged 2+) × £70.00" → 7000. 0 if there's no such line.
+ */
+function bagPriceFromLines(lines: CostLine[]): number {
+  const bag = lines.find((l) => l.category === "party_extra" && /hold bag|checked bag/i.test(l.label));
+  const m = bag?.working && /×\s*£([\d,]+(?:\.\d{1,2})?)\s*$/.exec(bag.working);
+  return m ? Math.round(parseFloat(m[1]!.replace(/,/g, "")) * 100) : 0;
 }
 
 /** Is this a "Fair Price" deal for the filter? Gold counts too (≤ 10%). */

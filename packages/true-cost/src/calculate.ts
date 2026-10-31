@@ -97,6 +97,9 @@ export function calculateTrueCost(input: TrueCostInput): TrueCostResult {
   if (stale) notes.push("Some fee figures were last checked more than a year ago, so they count for less in how sure we are.");
   notes.push(...advertNotes(party, offer));
   const gapPence = trueCostPence - advertisedPence;
+  // One return hold bag at this deal's price (the first fixed per-person hold-bag rule that applies).
+  const bagRule = rules.find((r) => r.covers === "hold_bag" && r.unit === "per_person" && r.amount.kind === "fixed");
+  const standardBagPence = bagRule && bagRule.amount.kind === "fixed" ? bagRule.amount.pence : 0;
 
   return {
     advertisedPence,
@@ -109,6 +112,7 @@ export function calculateTrueCost(input: TrueCostInput): TrueCostResult {
     notes,
     // A levy the deal already includes is skipped by selectRules, but the tick itself counts.
     taxCoverage: hasTaxCoverage(offer, rules),
+    standardBagPence,
     engineVersion: ENGINE_VERSION,
   };
 }

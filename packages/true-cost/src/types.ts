@@ -171,7 +171,7 @@ export interface CostLine extends CostLineInput {
   checkedOn?: string;
   /**
    * "What your family adds" (bags, seats, getting to the airport, card fees): in the family's
-   * total, but never counted against the seller in FairMark.
+   * total. FairMark counts only one standard hold bag per booking, never the family's own number.
    */
   advisory?: boolean;
 }
@@ -219,5 +219,11 @@ export interface TrueCostResult {
    * FairMark is withheld when false, so "0% extra" can never mean "we know nothing".
    */
   taxCoverage: boolean;
+  /**
+   * Price of ONE return hold bag for this deal (0 when the deal includes hold bags or no bag fee
+   * applies). FairMark's standard: every seller is judged as if the booking takes one hold bag,
+   * whatever this family chose.
+   */
+  standardBagPence: Pence;
   engineVersion: string;
 }
