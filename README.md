@@ -85,7 +85,7 @@ supabase db push
 - [ ] Paris, Amsterdam (% of room), Turkey (% of room), Bulgaria; paid cabin bags parked (see data/fee-rules/README.md)
 - [x] Travel date on the X-ray (AI reads it too); seasonal fee rates by month (summer assumed without a date, and the receipt says so)
 - [x] School Window core: `school_holiday` table, `pnpm import-holidays`, /school-window (holidays, shoulder weeks, trip check)
-- [x] School Window data 2026-27: Lambeth, Southwark, Wandsworth, Lewisham, Birmingham (loaded)
+- [x] School Window data 2026-27: Lambeth, Southwark, Wandsworth, Lewisham, Croydon, Westminster, Birmingham, Leeds, Cardiff (loaded)
 - [ ] More councils and 2027-28 dates
 - [x] Visit Before You Book core: /visit with OpenStreetMap counts (cached 30 days in London), families / couples / groups traffic lights
 - [x] Fair Share: split a deal between families on the receipt (never saved)
