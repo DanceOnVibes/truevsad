@@ -31,3 +31,14 @@ export {
 } from "./suitability";
 export { fairShare, type FairShareResult, type FamilyShare } from "./fair-share";
 export * from "./types";
+export {
+  FAIRMARK_LABELS,
+  FAIRMARK_MIN_CONFIDENCE,
+  fairMark,
+  fairMarkLevel,
+  formatFairMarkPercent,
+  isFairPrice,
+  REFERENCE_PARTY,
+  type FairMark,
+  type FairMarkLevel,
+} from "./fairmark";

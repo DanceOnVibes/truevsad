@@ -15,8 +15,10 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const { slug } = await params;
   const r = await loadPublicReceipt(slug);
   if (!r) return { title: "Receipt not found — TrueVsAd", robots: { index: false } };
+  const fm = r.fairMark.level === "unavailable" ? "" : ` · ${r.fairMark.label} ${r.fairMark.display}`;
   return {
-    title: `Advertised ${formatGBP(r.advertisedPence)} → really ${formatGBP(r.trueCostPence)} — TrueVsAd`,
+    title: `Advertised ${formatGBP(r.advertisedPence)} → really ${formatGBP(r.trueCostPence)}${fm} — TrueVsAd`,
+    description: "The true price of this holiday for the whole family, checked by TrueVsAd.",
     // Shared receipts are for the people they're sent to, not for search engines.
     robots: { index: false, follow: false },
   };

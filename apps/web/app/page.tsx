@@ -24,6 +24,11 @@ export default function Home() {
         <p>Is the resort right for your group? Playgrounds, beaches, nightlife and essentials nearby.</p>
         <Link href="/visit">Check a place →</Link>
       </div>
+      <div className="card">
+        <h2 style={{ marginTop: 0 }}>FairMark</h2>
+        <p>Which holiday prices are honest? See the fairest sellers this month, and deals where the extras add 10% or less.</p>
+        <Link href="/fairmark">See FairMark →</Link>
+      </div>
       <p className="hint">
         We never take payment and our ranking ignores commission. You always book directly with the
         supplier.

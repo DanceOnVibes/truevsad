@@ -1,4 +1,5 @@
-import { formatGBP, type CostCategory, type CostLine, type Inclusion } from "@truevsad/true-cost";
+import { formatGBP, type CostCategory, type CostLine, type FairMark, type Inclusion } from "@truevsad/true-cost";
+import { FairMarkBadge } from "./FairMarkBadge";
 import { EMAILS } from "@/lib/company";
 import { INCLUSION_LABELS } from "@/lib/supplier-defaults";
 
@@ -24,11 +25,13 @@ export interface ReceiptViewProps {
   excludesTaxesAndFees?: boolean;
   /** Assumptions the engine made, e.g. summer rates without a travel date. */
   notes?: string[];
+  /** FairMark for this receipt (badge + exact %), shown next to the true price. */
+  fairMark?: FairMark;
 }
 
 /** The Receipt. Used on the X-ray page and on shared /r/[slug] pages. */
 export function ReceiptView(props: ReceiptViewProps) {
-  const { advertisedPence, trueCostPence, gapPence, confidence, usedDemoRules, lines, includes, excludesTaxesAndFees, notes } =
+  const { advertisedPence, trueCostPence, gapPence, confidence, usedDemoRules, lines, includes, excludesTaxesAndFees, notes, fairMark } =
     props;
   const gapRatio = advertisedPence > 0 ? gapPence / advertisedPence : 0;
 
@@ -58,6 +61,11 @@ export function ReceiptView(props: ReceiptViewProps) {
         <div>
           <div className="hint">True all-in</div>
           <div className="num">{formatGBP(trueCostPence)}</div>
+          {fairMark && (
+            <div className="fm-row">
+              <FairMarkBadge fm={fairMark} />
+            </div>
+          )}
         </div>
         <div>
           <div className="hint">Gap</div>
