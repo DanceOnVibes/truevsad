@@ -4,6 +4,7 @@ import { useState } from "react";
 import { INCLUSIONS, type Inclusion, type TrueCostResult } from "@truevsad/true-cost";
 import { INCLUSION_LABELS, supplierDefaults } from "@/lib/supplier-defaults";
 import { ReceiptView } from "@/components/ReceiptView";
+import { FairSharePanel } from "@/components/FairSharePanel";
 
 type Step = "paste" | "confirm" | "receipt";
 
@@ -64,6 +65,10 @@ export default function XrayPage() {
   const [quoteId, setQuoteId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [quoted, setQuoted] = useState<{
+    offer: Record<string, unknown>;
+    party: { adults: number; childAges: number[] };
+  } | null>(null);
 
   async function post(payload: unknown) {
     const res = await fetch("/api/xray", {
@@ -115,23 +120,25 @@ export default function XrayPage() {
         .map((s) => s.trim())
         .filter(Boolean)
         .map(Number);
+      const offer = {
+        headlinePence: Math.round(parseFloat(price) * 100),
+        headlineBasis: basis,
+        currency: "GBP",
+        nights: Number(nights),
+        destination: destination || undefined,
+        supplierName: supplier || undefined,
+        includes,
+        excludesTaxesAndFees: excludesFees,
+        departDate: departDate || undefined,
+      };
       const data = await post({
         step: "quote",
         sourceKind: text ? "text" : screenshot ? "screenshot" : "link",
         sourceUrl: url || undefined,
         party: { adults: Number(adults), childAges: ages, outwardPostcode: postcode },
-        offer: {
-          headlinePence: Math.round(parseFloat(price) * 100),
-          headlineBasis: basis,
-          currency: "GBP",
-          nights: Number(nights),
-          destination: destination || undefined,
-          supplierName: supplier || undefined,
-          includes,
-          excludesTaxesAndFees: excludesFees,
-          departDate: departDate || undefined,
-        },
+        offer,
       });
+      setQuoted({ offer, party: { adults: Number(adults), childAges: ages } });
       setResult(data.result);
       setQuoteId(data.quoteId ?? null);
       setShareUrl(null);
@@ -349,6 +356,24 @@ export default function XrayPage() {
             <p className="hint">Sharing isn&apos;t available right now.</p>
           )}{" "}
           <button className="secondary" onClick={() => setStep("confirm")}>Edit details</button>
+
+          {quoted && <FairSharePanel offer={quoted.offer} party={quoted.party} />}
+
+          <p className="hint" style={{ marginTop: 16 }}>
+            {destination && (
+              <>
+                <a href={`/visit?q=${encodeURIComponent(destination)}`}>Is {destination.split(",")[0]} right for your group? →</a>
+                <br />
+              </>
+            )}
+            <a
+              href={`/school-window?${new URLSearchParams(
+                departDate ? { date: departDate, nights } : { nights },
+              ).toString()}`}
+            >
+              Check these dates against your school holidays →
+            </a>
+          </p>
         </div>
       )}
     </main>

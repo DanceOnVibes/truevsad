@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { calculateTrueCost, selectRules } from "@truevsad/true-cost";
 import type {
   CostCategory,
   CostLine,
@@ -160,6 +161,9 @@ export interface PublicReceipt {
   destination: string | null;
   includes: Inclusion[];
   excludesTaxesAndFees: boolean;
+  departDate: string | null;
+  /** The same deal priced with today's fee rules — differs when taxes or fees have changed. */
+  todayTrueCostPence: number | null;
   adults: number;
   children: number;
   lines: CostLine[];
@@ -183,7 +187,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
   const { data: q } = await db
     .from("true_cost_quote")
     .select(
-      "id, advertised_pence, true_cost_pence, gap_pence, confidence, used_demo_rules, created_at, offer:offer_id (nights, destination, includes, excludes_taxes_and_fees), party:party_id (adults, child_ages)",
+      "id, advertised_pence, true_cost_pence, gap_pence, confidence, used_demo_rules, created_at, offer:offer_id (nights, destination, includes, excludes_taxes_and_fees, depart_on, headline_pence, headline_basis, currency, supplier_name), party:party_id (adults, child_ages)",
     )
     .eq("share_slug", slug)
     .eq("is_public", true)
@@ -202,11 +206,41 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
         destination: string | null;
         includes: Inclusion[] | null;
         excludes_taxes_and_fees: boolean | null;
+        depart_on: string | null;
+        headline_pence: number | string;
+        headline_basis: "per_person" | "total";
+        currency: string;
+        supplier_name: string | null;
       }
     | null;
   const party = (Array.isArray(q.party) ? q.party[0] : q.party) as
     | { adults: number; child_ages: number[] }
     | null;
+
+  // Watch: re-price with today's rules. Ages stay on the server; only the total is shown.
+  let todayTrueCostPence: number | null = null;
+  if (offer && party) {
+    try {
+      const o: Offer = {
+        headlinePence: Number(offer.headline_pence),
+        headlineBasis: offer.headline_basis,
+        currency: offer.currency ?? "GBP",
+        nights: offer.nights,
+        destination: offer.destination ?? undefined,
+        supplierName: offer.supplier_name ?? undefined,
+        includes: offer.includes ?? [],
+        departDate: offer.depart_on ?? undefined,
+      };
+      const rules = selectRules(await loadFeeRules(), o);
+      todayTrueCostPence = calculateTrueCost({
+        party: { adults: party.adults, childAges: party.child_ages ?? [] },
+        offer: o,
+        rules,
+      }).trueCostPence;
+    } catch {
+      todayTrueCostPence = null;
+    }
+  }
 
   return {
     advertisedPence: Number(q.advertised_pence),
@@ -219,6 +253,8 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
     destination: offer?.destination ?? null,
     includes: offer?.includes ?? [],
     excludesTaxesAndFees: offer?.excludes_taxes_and_fees === true,
+    departDate: offer?.depart_on ?? null,
+    todayTrueCostPence,
     adults: party?.adults ?? 0,
     children: party?.child_ages?.length ?? 0,
     lines: ((lines ?? []) as CostLineRow[]).map((l) => ({

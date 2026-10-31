@@ -109,3 +109,9 @@ label.check input { width: auto; }
 .status-school_holiday { border-left-color: var(--gap); }
 .status-shoulder { border-left-color: #c58a00; }
 .status-term_time { border-left-color: var(--muted); }
+
+/* Visit Before You Book traffic lights */
+.light-green { border-left-color: var(--accent); }
+.light-amber { border-left-color: #c58a00; }
+.light-red { border-left-color: var(--gap); }
+ul.watch { color: var(--muted); }

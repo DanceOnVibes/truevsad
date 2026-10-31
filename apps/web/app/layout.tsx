@@ -17,6 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <footer className="site-footer">
           <Link href="/">TrueVsAd</Link> · <Link href="/xray">Deal X-ray</Link> ·{" "}
+          <Link href="/school-window">School Window</Link> · <Link href="/visit">Visit before you book</Link> ·{" "}
           <Link href="/privacy">Privacy</Link>
           <div>We never take payment. Rankings ignore commission.</div>
           <div>

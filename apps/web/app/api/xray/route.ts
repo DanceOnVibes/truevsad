@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   calculateTrueCost,
+  fairShare,
   INCLUSIONS,
   PartyValidationError,
   selectRules,
@@ -46,8 +47,8 @@ export async function POST(req: Request) {
   if (!isObject(body)) return bad("Request body must be a JSON object.");
 
   const step = body.step;
-  if (step !== "extract" && step !== "quote" && step !== "share") {
-    return bad('Unknown step. Use "extract", "quote" or "share".');
+  if (step !== "extract" && step !== "quote" && step !== "share" && step !== "split") {
+    return bad('Unknown step. Use "extract", "quote", "share" or "split".');
   }
   if (!(await allowRequest(req, step))) {
     return NextResponse.json(
@@ -58,6 +59,7 @@ export async function POST(req: Request) {
 
   if (step === "extract") return extract(body);
   if (step === "quote") return quote(body);
+  if (step === "split") return split(body);
   return share(body);
 }
 
@@ -234,6 +236,42 @@ function parseTravelDate(v: unknown): string | undefined {
   const now = Date.now();
   const day = 86_400_000;
   return t >= now - 31 * day && t <= now + 731 * day ? v : undefined;
+}
+
+// ---------------------------------------------------------------------------
+// Fair Share — split one deal between families. Worked out on the spot, never saved.
+// ---------------------------------------------------------------------------
+
+async function split(body: Record<string, unknown>) {
+  const offer = parseOffer(body.offer);
+  if (typeof offer === "string") return bad(offer);
+  if (!Array.isArray(body.families) || body.families.length < 2 || body.families.length > 6) {
+    return bad("Add between 2 and 6 families.");
+  }
+  const families: Party[] = [];
+  for (const raw of body.families) {
+    const p = parseParty(isObject(raw) ? { adults: raw.adults, childAges: raw.childAges } : raw);
+    if (typeof p === "string") return bad(p);
+    families.push({ adults: p.adults, childAges: p.childAges });
+  }
+  try {
+    const rules = selectRules(await loadFeeRules(), offer);
+    const { group, shares } = fairShare({ offer, rules, families });
+    return NextResponse.json({
+      groupTrueCostPence: group.trueCostPence,
+      groupAdvertisedPence: group.advertisedPence,
+      shares: shares.map((s) => ({
+        adults: s.party.adults,
+        children: s.party.childAges.length,
+        people: s.people,
+        trueCostPence: s.trueCostPence,
+        perPersonPence: s.perPersonPence,
+      })),
+    });
+  } catch (err) {
+    if (err instanceof PartyValidationError) return bad(err.message);
+    return bad(err instanceof Error ? err.message : "Could not split this deal.");
+  }
 }
 
 // ---------------------------------------------------------------------------
