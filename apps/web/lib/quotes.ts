@@ -454,7 +454,8 @@ export async function loadLeaderboard(): Promise<{ rows: LeaderboardRow[]; deals
   if (!data) return { rows: [], dealsCounted: 0 };
 
   const rules = await loadFeeRules();
-  const groups = new Map<string, { names: Map<string, number>; pcts: number[]; places: Set<string> }>();
+  type SellerGroup = { names: Map<string, number>; pcts: number[]; places: Set<string> };
+  const groups = new Map<string, SellerGroup>();
   let dealsCounted = 0;
   for (const row of data as unknown as {
     offer: BoardOfferRow | BoardOfferRow[] | null;
@@ -470,7 +471,7 @@ export async function loadLeaderboard(): Promise<{ rows: LeaderboardRow[]; deals
       const party = offer.headlineBasis === "per_person" ? REFERENCE_PARTY : { adults: p.adults, childAges: p.child_ages ?? [] };
       const fm = fairMark(calculateTrueCost({ party, offer, rules: selectRules(rules, offer) }));
       if (fm.percent === null) continue;
-      const g = groups.get(key) ?? { names: new Map(), pcts: [], places: new Set() };
+      const g: SellerGroup = groups.get(key) ?? { names: new Map(), pcts: [], places: new Set() };
       g.names.set(o.supplier_name, (g.names.get(o.supplier_name) ?? 0) + 1);
       g.pcts.push(fm.percent);
       if (o.destination) g.places.add(o.destination.split(",").at(-1)!.trim().toLowerCase() || o.destination.toLowerCase());
