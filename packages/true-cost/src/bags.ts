@@ -62,10 +62,12 @@ export const AIRLINE_BAGS: AirlineBags[] = [
     airline: "British Airways",
     aliases: ["British Airways", "BA Holidays", "britishairways"],
     bags: [
-      { kind: "underseat", dims: null, maxKg: null, wheelsCount: "not stated", price: "free", priceNote: "Size not checked yet: BA's page shows two handbag sizes", sourceUrl: "https://www.britishairways.com/cabinbag/", quote: "1 handbag or backpack (40 x 30 x 15cm)", checkedOn: C, verified: false },
-      { kind: "cabin", dims: [56, 45, 25], maxKg: null, wheelsCount: "yes", price: "free", priceNote: "You must be able to lift it into the locker yourself", sourceUrl: "https://www.britishairways.com/cabinbag/", quote: "Max dimensions of 56 x 45 x 25cm (22 x 18 x 10in) – including wheels and handles", checkedOn: C, verified: true },
+      { kind: "underseat", dims: [40, 30, 15], maxKg: null, wheelsCount: "not stated", price: "free", priceNote: "Must easily fit under the seat in front", sourceUrl: "https://www.britishairways.com/content/information/baggage-essentials", quote: "Max dimensions of 40 x 30 x 15cm (16 x 12 x 6in)", checkedOn: C, verified: true },
+      { kind: "cabin", dims: [56, 45, 25], maxKg: null, wheelsCount: "yes", price: "free", priceNote: "You must be able to lift it into the locker yourself", sourceUrl: "https://www.britishairways.com/content/information/baggage-essentials", quote: "Max dimensions of 56 x 45 x 25cm (22 x 18 x 10in) – including wheels and handles", checkedOn: C, verified: true },
     ],
-    notes: [],
+    notes: [
+      "Economy Basic includes no checked bag. Economy with a checked bag: 1 bag up to 23kg and 90 × 75 × 43cm.",
+    ],
   },
   {
     airline: "easyJet",

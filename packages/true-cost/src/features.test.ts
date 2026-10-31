@@ -312,9 +312,14 @@ describe("Will my bag fit?", () => {
     expect(bagFits({ dims: [42, 32, 20] }, wizz)).toBe("too_big");
   });
   it("never answers for sizes we haven't checked", () => {
-    const ba = airlineBagsFor("British Airways")!.bags.find((b) => b.kind === "underseat")!;
-    expect(bagFits({ dims: [10, 10, 10] }, ba)).toBe("not_checked");
+    const unchecked = { ...airlineBagsFor("British Airways")!.bags[0]!, verified: false };
+    expect(bagFits({ dims: [10, 10, 10] }, unchecked)).toBe("not_checked");
     expect(airlineBagsFor("KLM")).toBe(undefined);
+  });
+  it("BA's handbag, from its own page: 40 x 30 x 15", () => {
+    const ba = airlineBagsFor("British Airways")!.bags.find((b) => b.kind === "underseat")!;
+    expect(bagFits({ dims: [40, 30, 15] }, ba)).toBe("fits");
+    expect(bagFits({ dims: [40, 30, 20] }, ba)).toBe("too_big");
   });
   it("Norwegian's under-seat bag, from its own page", () => {
     const n = airlineBagsFor("Norwegian")!.bags.find((b) => b.kind === "underseat")!;
