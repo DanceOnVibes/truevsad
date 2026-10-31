@@ -3,7 +3,7 @@ import { EMAILS } from "@/lib/company";
 import { INCLUSION_LABELS } from "@/lib/supplier-defaults";
 
 export const CATEGORY_LABELS: Record<CostCategory, string> = {
-  supplier: "Flight + stay",
+  supplier: "Advertised deal",
   party_extra: "Party extras",
   levy: "Taxes & levies",
   entry_doc: "Entry documents",
@@ -20,11 +20,14 @@ export interface ReceiptViewProps {
   lines: CostLine[];
   /** What the deal already includes — shown so families see why no fee was added. */
   includes?: Inclusion[];
+  /** The advert said its price is "plus taxes and fees" (or similar). */
+  excludesTaxesAndFees?: boolean;
 }
 
 /** The Receipt. Used on the X-ray page and on shared /r/[slug] pages. */
 export function ReceiptView(props: ReceiptViewProps) {
-  const { advertisedPence, trueCostPence, gapPence, confidence, usedDemoRules, lines, includes } = props;
+  const { advertisedPence, trueCostPence, gapPence, confidence, usedDemoRules, lines, includes, excludesTaxesAndFees } =
+    props;
   const gapRatio = advertisedPence > 0 ? gapPence / advertisedPence : 0;
 
   return (
@@ -33,6 +36,14 @@ export function ReceiptView(props: ReceiptViewProps) {
         <p className="warn">
           Demo figures — extras below are placeholders, not real prices yet. Do not use this to
           make a booking decision.
+        </p>
+      )}
+
+      {excludesTaxesAndFees && (
+        <p className="warn">
+          The advert says its price is &ldquo;plus taxes and fees&rdquo;. We&apos;ve added the
+          ones we know about, but the seller may add more at checkout, so the true price could be
+          higher than shown here.
         </p>
       )}
 

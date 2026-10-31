@@ -63,6 +63,11 @@ export interface Offer {
   /** What the family confirmed the deal already includes. */
   includes?: Inclusion[];
   /**
+   * The advert itself says the price leaves things out ("plus taxes and fees", "excl. taxes").
+   * We add the fees we know about, but the seller may add more at checkout.
+   */
+  excludesTaxesAndFees?: boolean;
+  /**
    * Itemised supplier charges if the advert shows them.
    * If empty, the advertised whole-party price is used as the supplier base.
    */

@@ -92,7 +92,7 @@ async function extract(body: Record<string, unknown>) {
 
   // HARD RULE: we never fetch `url`. The AI only sees text/screenshot the family gave us.
   if ((text || image) && aiConfigured()) {
-    draft = await extractWithAi({ text: text || undefined, image });
+    draft = await extractWithAi({ text: text || undefined, image, linkWords: linkWords(url) });
     if (draft) notes.push("Read by AI — please check every field before continuing.");
   }
 
@@ -113,17 +113,55 @@ async function extract(body: Record<string, unknown>) {
   return NextResponse.json({ draft: { ...draft, sourceUrl: url }, notes });
 }
 
+/** Words that say a price is incomplete: "plus taxes and fees", "excl. taxes", "+ fees". */
+const EXCLUDES_FEES =
+  /\b(plus|excl\.?|excluding|exclusive of|not including)\s+(local\s+|all\s+)?(taxes|tax|fees|charges)\b|\+\s*(taxes|fees)\b/i;
+
 function naiveExtract(text: string): DraftOffer {
   const price = text.match(/£\s?([\d,]+(?:\.\d{1,2})?)/);
   const nights = text.match(/(\d{1,2})\s*nights?/i);
   const perPerson = /\b(pp|p\.p\.|per person)\b/i.test(text);
+  const excludes = EXCLUDES_FEES.test(text);
 
   return {
     headlinePence: price ? Math.round(parseFloat(price[1]!.replace(/,/g, "")) * 100) : undefined,
     headlineBasis: perPerson ? "per_person" : "total",
     currency: "GBP",
     nights: nights ? parseInt(nights[1]!, 10) : undefined,
+    excludesTaxesAndFees: excludes || undefined,
   };
+}
+
+/** Common link words that are never places. */
+const NOT_PLACES = new Set([
+  "www", "com", "co", "uk", "en", "gb", "html", "htm", "php", "aspx",
+  "hotel", "hotels", "holiday", "holidays", "deal", "deals", "offer", "offers",
+  "package", "packages", "search", "results", "booking", "book", "details", "property",
+  "accommodation", "flights", "flight", "and", "the", "of", "to", "in", "for", "p", "id",
+]);
+
+/**
+ * Place words from the deal link's ADDRESS ONLY, e.g.
+ *   onthebeach.co.uk/hotels/spain/costa-dorada/tarragona/golden-donaire-beach
+ *   → "spain costa dorada tarragona golden donaire beach"
+ * We never open the link. Only plain letters survive, so nothing odd reaches the AI.
+ */
+function linkWords(url: string | undefined): string | undefined {
+  if (!url) return undefined;
+  let path: string;
+  try {
+    path = decodeURIComponent(new URL(url).pathname);
+  } catch {
+    return undefined;
+  }
+  const words = path
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .split(/[^a-z]+/)
+    .filter((w) => w.length >= 2 && w.length <= 30 && !NOT_PLACES.has(w))
+    .slice(0, 20);
+  return words.length ? words.join(" ") : undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -183,6 +221,7 @@ function parseOffer(raw: unknown): Offer | string {
     includes: Array.isArray(raw.includes)
       ? [...new Set(raw.includes.filter((x): x is Inclusion => INCLUSIONS.includes(x as Inclusion)))]
       : [],
+    excludesTaxesAndFees: raw.excludesTaxesAndFees === true,
   };
 }
 

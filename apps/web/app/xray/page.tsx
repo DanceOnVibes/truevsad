@@ -36,6 +36,7 @@ export default function XrayPage() {
   // Step 2 — confirm (all editable)
   const [price, setPrice] = useState("");
   const [basis, setBasis] = useState<"per_person" | "total">("per_person");
+  const [excludesFees, setExcludesFees] = useState(false);
   const [nights, setNights] = useState("7");
   const [destination, setDestination] = useState("");
   const [supplier, setSupplier] = useState("");
@@ -83,6 +84,7 @@ export default function XrayPage() {
       const d = data.draft ?? {};
       if (d.headlinePence) setPrice((d.headlinePence / 100).toFixed(2));
       if (d.headlineBasis) setBasis(d.headlineBasis);
+      setExcludesFees(d.excludesTaxesAndFees === true);
       if (d.nights) setNights(String(d.nights));
       if (d.destination) setDestination(d.destination);
       if (d.supplierName) changeSupplier(d.supplierName);
@@ -124,6 +126,7 @@ export default function XrayPage() {
           destination: destination || undefined,
           supplierName: supplier || undefined,
           includes,
+          excludesTaxesAndFees: excludesFees,
         },
       });
       setResult(data.result);
@@ -236,6 +239,15 @@ export default function XrayPage() {
             </div>
           </div>
 
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={excludesFees}
+              onChange={(e) => setExcludesFees(e.target.checked)}
+            />{" "}
+            The advert says &ldquo;plus taxes and fees&rdquo; (or similar)
+          </label>
+
           <div className="row">
             <div>
               <label htmlFor="dest">Destination</label>
@@ -303,7 +315,12 @@ export default function XrayPage() {
 
       {step === "receipt" && result && (
         <div className="card">
-          <ReceiptView {...result} lines={result.receipt.lines} includes={includes} />
+          <ReceiptView
+            {...result}
+            lines={result.receipt.lines}
+            includes={includes}
+            excludesTaxesAndFees={excludesFees}
+          />
 
           {quoteId ? (
             shareUrl ? (

@@ -155,6 +155,7 @@ export interface PublicReceipt {
   nights: number;
   destination: string | null;
   includes: Inclusion[];
+  excludesTaxesAndFees: boolean;
   adults: number;
   children: number;
   lines: CostLine[];
@@ -178,7 +179,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
   const { data: q } = await db
     .from("true_cost_quote")
     .select(
-      "id, advertised_pence, true_cost_pence, gap_pence, confidence, used_demo_rules, created_at, offer:offer_id (nights, destination, includes), party:party_id (adults, child_ages)",
+      "id, advertised_pence, true_cost_pence, gap_pence, confidence, used_demo_rules, created_at, offer:offer_id (nights, destination, includes, excludes_taxes_and_fees), party:party_id (adults, child_ages)",
     )
     .eq("share_slug", slug)
     .eq("is_public", true)
@@ -192,7 +193,12 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
     .order("position");
 
   const offer = (Array.isArray(q.offer) ? q.offer[0] : q.offer) as
-    | { nights: number; destination: string | null; includes: Inclusion[] | null }
+    | {
+        nights: number;
+        destination: string | null;
+        includes: Inclusion[] | null;
+        excludes_taxes_and_fees: boolean | null;
+      }
     | null;
   const party = (Array.isArray(q.party) ? q.party[0] : q.party) as
     | { adults: number; child_ages: number[] }
@@ -208,6 +214,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
     nights: offer?.nights ?? 0,
     destination: offer?.destination ?? null,
     includes: offer?.includes ?? [],
+    excludesTaxesAndFees: offer?.excludes_taxes_and_fees === true,
     adults: party?.adults ?? 0,
     children: party?.child_ages?.length ?? 0,
     lines: ((lines ?? []) as CostLineRow[]).map((l) => ({
