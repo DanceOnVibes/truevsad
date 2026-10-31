@@ -85,8 +85,8 @@ export default async function FeesPage() {
                 Advisory: these are in your true price. Hold bags are counted as one per two people aged 2
                 and over unless you tell us how many you&apos;re taking. FairMark counts only one hold bag
                 per booking, the same standard for every seller. Seats are counted only when the airline
-                makes a family pay to sit together (Ryanair: one parent&apos;s seat; easyJet and BA seat
-                children under 12 with an adult for free), and never for adults-only bookings.
+                makes a family pay to sit together (Ryanair, easyJet and BA seat children with an adult for
+                free), and never for adults-only bookings. Infant fees apply to children under 2.
               </p>
             )}
             <table className="receipt">

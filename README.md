@@ -100,7 +100,8 @@ supabase db push
 - [x] FairFam (phase 1): your council (from the postcode) or your school's own dates, the windows when every child is off, sellers' own sites in alphabetical order (not paid), one-tap hand-over to Deal X-ray, a private two-quote half-term check; nothing saved
 - [x] Council term dates carry a "checked on" date (re-checked by hand each January); receipts explain package price-rise rights
 - [x] /cabin-bags and "Will my bag fit?": 10 airlines from their own pages (data/bags CSV), verified only where two research passes agree; wheels rule (Wizz +5cm); gate fees as published; receipts show the airline's cabin bag sizes. BA and Norwegian confirmed by hand from their own pages; KLM left off (its page returns 404)
-- [x] Fair seats: seats count only when the airline makes a family pay to sit together (Ryanair: one parent's family seat, per the CMA's case page; easyJet and BA: children under 12 seated with an adult free); nothing for adults-only or teen-only bookings; other airlines per adult until their policies are checked
+- [x] Fair seats: seats count only when the airline makes a family pay to sit together (Ryanair, easyJet and BA seat children with an adult free, per their own pages; Ryanair changed its policy on 25 Jun 2026 after the CMA opened a case); nothing for adults-only or teen-only bookings; other airlines per adult until their policies are checked
+- [x] Infant (under 2) fees from airlines' own fee pages: Ryanair, easyJet, Aer Lingus £50 return; Wizz Air €70; Vueling €50 (+ taxes); Jet2 free (no line); TUI and BA not published
 - [ ] Watch alerts (needs accounts + email), search across deals (needs a click-out inventory, never scraping)
 - [x] All migrations applied to production, up to 1900 (1100 and 1600 run by hand) (nightly purge job scheduled at 03:17 UTC)
 - [x] Deployed on Vercel (London) and tested end to end: X-ray → save → share

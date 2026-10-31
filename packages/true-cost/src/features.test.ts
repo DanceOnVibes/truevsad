@@ -350,12 +350,8 @@ describe("seats: only what a family must pay to sit together", () => {
     const r = calculateTrueCost({ party: { adults: 2, childAges: [] }, offer, rules: [seat("Ryanair"), seat(undefined)] });
     expect(r.trueCostPence).toBe(200000);
   });
-  it("Ryanair: one parent's family seat", () => {
-    const r = calculateTrueCost({ party: family, offer, rules: [seat("Ryanair")] });
-    expect(r.trueCostPence).toBe(200000 + 1400);
-  });
-  it("easyJet and BA seat children with an adult for free", () => {
-    const r = calculateTrueCost({ party: family, offer, rules: [seat("easyJet"), seat("British Airways")] });
+  it("Ryanair, easyJet and BA seat children with an adult for free", () => {
+    const r = calculateTrueCost({ party: family, offer, rules: [seat("Ryanair"), seat("easyJet"), seat("British Airways")] });
     expect(r.trueCostPence).toBe(200000);
     expect(familySeatingFor("easyJet holidays")!.policy).toBe("free");
   });
@@ -366,5 +362,15 @@ describe("seats: only what a family must pay to sit together", () => {
   it("teenagers only: nothing counted", () => {
     const r = calculateTrueCost({ party: { adults: 2, childAges: [13, 15] }, offer, rules: [seat("TUI")] });
     expect(r.trueCostPence).toBe(200000);
+  });
+});
+
+describe("infant fees", () => {
+  const infant: FeeRule = { id: "inf", category: "party_extra", label: "Infant fee (under 2), return", unit: "per_child", amount: { kind: "fixed", pence: 5000 }, confidence: 0.9, minAge: 0, maxAge: 1, supplierName: "easyJet" };
+  const offer: Offer = { headlinePence: 200000, headlineBasis: "total", currency: "GBP", nights: 7, supplierName: "easyJet holidays" };
+  it("charges each child under 2, never older children or adults", () => {
+    const rules = selectRules([infant], offer);
+    expect(calculateTrueCost({ party: { adults: 2, childAges: [1, 0, 4] }, offer, rules }).trueCostPence).toBe(200000 + 2 * 5000);
+    expect(calculateTrueCost({ party: { adults: 2, childAges: [2] }, offer, rules }).trueCostPence).toBe(200000);
   });
 });

@@ -26,12 +26,14 @@ export interface AirlineSeating {
 
 export const FAMILY_SEATING: AirlineSeating[] = [
   {
+    // Changed after the CMA opened its case (11 Jun 2026): Ryanair's own policy page now seats
+    // children next to an adult free under random allocation (announced 25 Jun 2026).
     airline: "Ryanair",
     aliases: ["Ryanair"],
-    policy: "one_adult",
-    sourceUrl: "https://www.gov.uk/government/news/cma-investigates-ryanair-over-charging-parents-to-sit-with-children",
+    policy: "free",
+    sourceUrl: "https://help.ryanair.com/hc/en-gb/articles/12892557860369-What-is-Ryanair-s-Family-Seat-Policy",
     quote:
-      "Ryanair's terms and conditions require at least one parent to sit with their children aged 2-11 when they fly. This is done through what Ryanair calls a 'mandatory family seat', which the parent must pay for in order to secure a seat next to them for their child.",
+      "If random allocation is selected, children will be seated next to an accompanying adult on the same reservation free of charge.",
     checkedOn: "2026-10-31",
   },
   {
