@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FAIRMARK_SCALE } from "@truevsad/true-cost";
 
 export default function Home() {
   return (
@@ -26,7 +27,7 @@ export default function Home() {
       </div>
       <div className="card">
         <h2 style={{ marginTop: 0 }}>FairMark</h2>
-        <p>Which holiday prices are honest? See the fairest sellers this month, and deals where the extras add 10% or less.</p>
+        <p>Which holiday prices are honest? See the fairest sellers this month, and deals whose adverts left out {FAIRMARK_SCALE.fair}% or less.</p>
         <Link href="/fairmark">See FairMark →</Link>
       </div>
       <p className="hint">

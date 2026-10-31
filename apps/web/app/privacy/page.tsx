@@ -31,14 +31,16 @@ export default function PrivacyPage() {
         <h2>What we store when you X-ray a deal</h2>
         <ul>
           <li>Number of adults and the <strong>ages</strong> of any children (never dates of birth).</li>
-          <li>The <strong>first half</strong> of your postcode only (e.g. SE11), if you give it.</li>
-          <li>The deal details you confirm: price, nights, travel date (if you give it), destination, supplier.</li>
+          <li>The deal details you confirm: price, nights, travel date or month (if you give it), destination, seller and airline.</li>
+          <li>How many hold bags you&apos;re taking, if you tell us.</li>
           <li>The link to the deal, if you paste one. We never open it ourselves.</li>
           <li>The price breakdown we worked out.</li>
         </ul>
         <p>
-          We do <strong>not</strong> ask for or store names, email addresses, full postcodes,
-          passport details or payment details. We never take payment.
+          We do <strong>not</strong> ask for or store names, email addresses, passport details or
+          payment details, and your postcode is not stored with the receipt. If you give the first half
+          (e.g. SE11), we use it at that moment to find your council and keep only its letters (SE) in
+          anonymous statistics. We never take payment.
         </p>
 
         <h2>Reading your deal</h2>
@@ -116,21 +118,21 @@ export default function PrivacyPage() {
             </thead>
             <tbody>
               <tr>
-                <td>Adults and children&apos;s ages</td>
+                <td>Adults, children&apos;s ages and hold bags</td>
                 <td>Bag rules and tourist taxes depend on age</td>
-                <td>Ages only, never dates of birth or names</td>
+                <td>Ages only, never dates of birth or names; bags only if you give a number</td>
                 <td>With the receipt</td>
               </tr>
               <tr>
                 <td>Postcode</td>
                 <td>Finding your council&apos;s school holidays</td>
-                <td>First half on the receipt (SE11); letters only in statistics (SE)</td>
-                <td>With the receipt; statistics 2 years</td>
+                <td>Used at that moment only; letters only in statistics (SE)</td>
+                <td>Not kept with the receipt; statistics 2 years</td>
               </tr>
               <tr>
                 <td>Deal details you confirm</td>
                 <td>Working out the true price</td>
-                <td>Price, currency, nights, travel date, destination, seller</td>
+                <td>Price, currency, nights, travel date or month, destination, seller, airline</td>
                 <td>With the receipt</td>
               </tr>
               <tr>

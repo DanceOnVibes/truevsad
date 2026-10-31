@@ -41,6 +41,11 @@ export interface Party {
   childAges: number[];
   /** Outward code only, e.g. "SE11". Used for door-to-door costs. */
   outwardPostcode?: string;
+  /**
+   * Hold bags the whole party is taking, if the family told us. Without it we count one bag per
+   * two people (advisory: a couple often shares one).
+   */
+  holdBags?: number;
 }
 
 export type HeadlineBasis = "per_person" | "total";
@@ -58,6 +63,8 @@ export interface Offer {
   currency: string;
   nights: number;
   supplierName?: string;
+  /** The airline flying the deal, when the seller isn't the airline (e.g. a package on Ryanair). */
+  airline?: string;
   destination?: string;
   departureAirport?: string;
   /** What the family confirmed the deal already includes. */
@@ -71,6 +78,19 @@ export interface Offer {
   freeChildClaim?: boolean;
   /** First day of the trip, YYYY-MM-DD, if the family told us. Picks seasonal tax rates. */
   departDate?: string;
+  /** Travel month (1–12) when the family knows the month but not the date. */
+  departMonth?: number;
+  /**
+   * What the advert itself says about its price, used only to check its own numbers add up and
+   * that it was priced for this family. Never changes the price.
+   */
+  advertCheck?: {
+    perPersonPence?: Pence;
+    totalPence?: Pence;
+    /** Who the advertised price is for, e.g. "based on 2 adults sharing". */
+    adults?: number;
+    children?: number;
+  };
   /**
    * Itemised supplier charges if the advert shows them.
    * If empty, the advertised whole-party price is used as the supplier base.
@@ -123,6 +143,8 @@ export interface FeeRule {
   months?: number[];
   /** Where the figure comes from (shown as a link on the receipt). */
   sourceUrl?: string;
+  /** When we last checked the figure against its source, YYYY-MM-DD. */
+  checkedOn?: string;
   /**
    * Rules in the same group never stack: if several apply, only the most specific one is used
    * (the one listing the fewest places). E.g. "Barcelona" beats "Catalonia-wide" for a Barcelona hotel.
@@ -145,7 +167,21 @@ export interface CostLine extends CostLineInput {
   working?: string;
   /** Where the figure comes from, for rule lines. */
   sourceUrl?: string;
+  /** When the figure was last checked against its source, YYYY-MM-DD. */
+  checkedOn?: string;
+  /**
+   * "What your family adds" (bags, seats, getting to the airport, card fees): in the family's
+   * total, but never counted against the seller in FairMark.
+   */
+  advisory?: boolean;
 }
+
+/** Family-added extras: advisory, never part of the FairMark judgement. */
+export const ADVISORY_CATEGORIES: readonly CostCategory[] = ["party_extra", "door_to_door", "payment_fx"] as const;
+/** What the advert hid: the only categories FairMark judges the seller on. */
+export const HIDDEN_FEE_CATEGORIES: readonly CostCategory[] = ["levy", "entry_doc"] as const;
+/** Working text used when the family gave their own bag count. */
+export const STATED_BAGS_WORDING = "your number";
 
 export interface Receipt {
   lines: CostLine[];
@@ -158,6 +194,8 @@ export interface TrueCostInput {
   rules?: FeeRule[];
   /** Any extra lines the user added by hand. */
   extraLines?: CostLineInput[];
+  /** Today, YYYY-MM-DD. Fee figures checked more than a year before this count for less. */
+  asOf?: string;
 }
 
 export interface TrueCostResult {

@@ -9,6 +9,7 @@ import {
   selectRules,
   type FairMark,
   type FairMarkLevel,
+  FAIRMARK_SCALE,
 } from "@truevsad/true-cost";
 import type {
   CostCategory,
@@ -48,6 +49,19 @@ interface FeeRuleRow {
   months: number[] | null;
   exclusive_group: string | null;
   source_url: string | null;
+  source_note: string | null;
+}
+
+const MONTH_ABBR = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+
+/** "… checked 31 Oct 2026" in a rule's source note → "2026-10-31". */
+export function checkedOnFrom(note: string | null | undefined): string | undefined {
+  const m = note && /checked\s+(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})/i.exec(note);
+  if (!m) return undefined;
+  const month = MONTH_ABBR.indexOf(m[2]!.slice(0, 3).toLowerCase());
+  if (month < 0) return undefined;
+  const d = new Date(Date.UTC(Number(m[3]), month, Number(m[1])));
+  return Number.isNaN(d.getTime()) ? undefined : d.toISOString().slice(0, 10);
 }
 
 /**
@@ -63,7 +77,7 @@ export async function loadFeeRules(): Promise<FeeRule[]> {
   const { data, error } = await db
     .from("fee_rule")
     .select(
-      "id, category, label, unit, amount_pence, amount_bp, min_age, max_age, confidence, regions, supplier_name, covers, max_nights, months, exclusive_group, source_url",
+      "id, category, label, unit, amount_pence, amount_bp, min_age, max_age, confidence, regions, supplier_name, covers, max_nights, months, exclusive_group, source_url, source_note",
     )
     .eq("is_active", true)
     .lte("valid_from", today)
@@ -90,6 +104,7 @@ export async function loadFeeRules(): Promise<FeeRule[]> {
     months: r.months ?? undefined,
     exclusiveGroup: r.exclusive_group ?? undefined,
     sourceUrl: r.source_url && /^https?:\/\//.test(r.source_url) ? r.source_url : undefined,
+    checkedOn: checkedOnFrom(r.source_note),
   }));
 }
 
@@ -110,9 +125,13 @@ export async function saveQuote(input: {
   const db = supabaseAdmin();
   if (!db) return null;
 
+  // The postcode did its job at pricing time (council lookup, area letters in statistics).
+  // Nothing reads it later, so it isn't stored with the receipt.
+  const { outwardPostcode: _unused, ...partyToStore } = input.party;
+  void _unused;
   const { data, error } = await db.rpc("save_quote", {
     p: {
-      party: input.party,
+      party: partyToStore,
       offer: { ...input.offer, sourceKind: input.sourceKind, sourceUrl: input.sourceUrl },
       result: input.result,
     },
@@ -131,18 +150,27 @@ export async function saveQuote(input: {
   if (fmErr) console.error("fairmark save failed:", fmErr.message);
   const extra: Record<string, unknown> = {};
   if (input.offer.freeChildClaim) extra.free_child_claim = true;
+  if (input.offer.airline) extra.airline = input.offer.airline;
+  if (input.offer.departMonth) extra.depart_month = input.offer.departMonth;
   if (input.conversion) {
     extra.fx_from_currency = input.conversion.from;
     extra.fx_from_amount_minor = input.conversion.amountMinor;
     extra.fx_rate = input.conversion.rate;
     extra.fx_date = input.conversion.date;
   }
-  if (Object.keys(extra).length) {
-    const { data: q } = await db.from("true_cost_quote").select("offer_id").eq("id", id).maybeSingle();
-    if (q?.offer_id) {
-      const { error: oErr } = await db.from("offer").update(extra).eq("id", q.offer_id);
-      if (oErr) console.error("offer extras save failed:", oErr.message);
-    }
+  const { data: q } = await db.from("true_cost_quote").select("offer_id, party_id").eq("id", id).maybeSingle();
+  if (q?.offer_id && Object.keys(extra).length) {
+    const { error: oErr } = await db.from("offer").update(extra).eq("id", q.offer_id);
+    if (oErr) console.error("offer extras save failed:", oErr.message);
+  }
+  if (q?.party_id && input.party.holdBags !== undefined) {
+    const { error: pErr } = await db.from("party").update({ hold_bags: input.party.holdBags }).eq("id", q.party_id);
+    if (pErr) console.error("party bags save failed:", pErr.message);
+  }
+  // What the receipt said when it was priced (conversion, advert checks, seasonal rates).
+  if (input.result.notes.length) {
+    const { error: nErr } = await db.from("true_cost_quote").update({ notes: input.result.notes.slice(0, 12) }).eq("id", id);
+    if (nErr) console.error("notes save failed:", nErr.message);
   }
   return id;
 }
@@ -223,7 +251,10 @@ interface CostLineRow {
   working: string | null;
   source: string;
   confidence: number | string;
-  fee_rule: { source_url: string | null } | { source_url: string | null }[] | null;
+  fee_rule:
+    | { source_url: string | null; source_note: string | null }
+    | { source_url: string | null; source_note: string | null }[]
+    | null;
 }
 
 /** Loads a shared receipt by slug. Only public quotes. No postcode, no ages, no link. */
@@ -235,7 +266,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
   const { data: q } = await db
     .from("true_cost_quote")
     .select(
-      "id, advertised_pence, true_cost_pence, gap_pence, confidence, used_demo_rules, created_at, fairmark_level, offer:offer_id (nights, destination, includes, excludes_taxes_and_fees, depart_on, headline_pence, headline_basis, currency, supplier_name, free_child_claim, fx_from_currency, fx_from_amount_minor, fx_rate, fx_date), party:party_id (adults, child_ages)",
+      "id, advertised_pence, true_cost_pence, gap_pence, confidence, used_demo_rules, created_at, fairmark_level, notes, offer:offer_id (nights, destination, includes, excludes_taxes_and_fees, depart_on, depart_month, airline, headline_pence, headline_basis, currency, supplier_name, free_child_claim, fx_from_currency, fx_from_amount_minor, fx_rate, fx_date), party:party_id (adults, child_ages, hold_bags)",
     )
     .eq("share_slug", slug)
     .eq("is_public", true)
@@ -244,7 +275,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
 
   const { data: lines } = await db
     .from("cost_line")
-    .select("category, label, amount_pence, working, source, confidence, fee_rule:fee_rule_id (source_url)")
+    .select("category, label, amount_pence, working, source, confidence, fee_rule:fee_rule_id (source_url, source_note)")
     .eq("quote_id", q.id)
     .order("position");
 
@@ -264,11 +295,16 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
         fx_from_amount_minor: number | string | null;
         fx_rate: number | string | null;
         fx_date: string | null;
+        depart_month: number | null;
+        airline: string | null;
       }
     | null;
   const party = (Array.isArray(q.party) ? q.party[0] : q.party) as
-    | { adults: number; child_ages: number[] }
+    | { adults: number; child_ages: number[]; hold_bags: number | null }
     | null;
+  const familyParty = party
+    ? { adults: party.adults, childAges: party.child_ages ?? [], holdBags: party.hold_bags ?? undefined }
+    : null;
 
   // Watch: re-price with today's rules. Ages stay on the server; only the total is shown.
   let todayTrueCostPence: number | null = null;
@@ -296,19 +332,25 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
         supplierName: offer.supplier_name ?? undefined,
         includes: offer.includes ?? [],
         departDate: offer.depart_on ?? undefined,
+        departMonth: offer.depart_month ?? undefined,
+        airline: offer.airline ?? undefined,
       };
       const rules = selectRules(await loadFeeRules(), o);
       const now = calculateTrueCost({
-        party: { adults: party.adults, childAges: party.child_ages ?? [] },
+        party: familyParty!,
         offer: o,
         rules,
+        asOf: new Date().toISOString().slice(0, 10),
       });
       todayTrueCostPence = now.trueCostPence;
       today = fairMark(now);
-      notes.push(...now.notes);
+      // Notes saved when it was priced win (they include the advert checks); otherwise today's.
+      const stored = Array.isArray(q.notes) ? (q.notes as string[]) : [];
+      if (stored.length) notes.splice(0, notes.length, ...stored);
+      else notes.push(...now.notes);
       if (offer.free_child_claim) {
         childCostsPence = childExtras({
-          party: { adults: party.adults, childAges: party.child_ages ?? [] },
+          party: familyParty!,
           offer: o,
           rules,
         }).map((c) => c.pence);
@@ -326,6 +368,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
     source: l.source as LineSource,
     confidence: Number(l.confidence),
     sourceUrl: one(l.fee_rule)?.source_url ?? undefined,
+    checkedOn: checkedOnFrom(one(l.fee_rule)?.source_note),
   }));
 
   return {
@@ -372,6 +415,8 @@ export const LEADERBOARD_MIN_DEALS = 10;
 
 interface BoardOfferRow {
   nights: number;
+  depart_month?: number | null;
+  airline?: string | null;
   destination: string | null;
   supplier_name: string | null;
   includes: Inclusion[] | null;
@@ -396,6 +441,8 @@ function toOffer(o: BoardOfferRow): Offer {
     supplierName: o.supplier_name ?? undefined,
     includes: o.includes ?? [],
     departDate: o.depart_on ?? undefined,
+    departMonth: o.depart_month ?? undefined,
+    airline: o.airline ?? undefined,
   };
 }
 
@@ -439,7 +486,7 @@ export async function loadListedDeals(fairOnly: boolean): Promise<ListedDeal[]> 
   const { data } = await db
     .from("true_cost_quote")
     .select(
-      "share_slug, created_at, offer:offer_id (nights, destination, supplier_name, includes, depart_on, headline_pence, headline_basis, currency, excludes_taxes_and_fees), party:party_id (adults, child_ages)",
+      "share_slug, created_at, offer:offer_id (nights, destination, supplier_name, includes, depart_on, depart_month, airline, headline_pence, headline_basis, currency, excludes_taxes_and_fees), party:party_id (adults, child_ages)",
     )
     .eq("listed", true)
     .eq("is_public", true)
@@ -515,7 +562,7 @@ export async function loadLeaderboard(): Promise<{ rows: LeaderboardRow[]; deals
   const { data } = await db
     .from("true_cost_quote")
     .select(
-      "offer:offer_id (nights, destination, supplier_name, includes, depart_on, headline_pence, headline_basis, currency, excludes_taxes_and_fees), party:party_id (adults, child_ages)",
+      "offer:offer_id (nights, destination, supplier_name, includes, depart_on, depart_month, airline, headline_pence, headline_basis, currency, excludes_taxes_and_fees), party:party_id (adults, child_ages)",
     )
     .gte("created_at", since)
     .limit(5000);
@@ -564,11 +611,11 @@ export async function loadLeaderboard(): Promise<{ rows: LeaderboardRow[]; deals
       destinations: g.places.size,
       averagePercent: average,
       medianPercent: median,
-      fairShare: g.pcts.filter((x) => x <= 10).length / g.pcts.length,
+      fairShare: g.pcts.filter((x) => x <= FAIRMARK_SCALE.fair).length / g.pcts.length,
       bestPercent: sorted[0]!,
       worstPercent: sorted.at(-1)!,
       level: fairMarkLevel(median),
-      verified: g.pcts.length >= 30 && g.places.size >= 5 && median <= 10,
+      verified: g.pcts.length >= 30 && g.places.size >= 5 && median <= FAIRMARK_SCALE.fair,
     });
   }
   return { rows, dealsCounted };

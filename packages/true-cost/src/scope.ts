@@ -25,18 +25,20 @@ export function mentions(haystack: string, needle: string): boolean {
 /** Month we price seasonal rates for: the travel month, or July when we don't know it. */
 export const ASSUMED_MONTH = 7;
 
-export function travelMonth(departDate: string | undefined): number {
+export function travelMonth(departDate: string | undefined, departMonth?: number): number {
   const m = departDate && /^\d{4}-(\d{2})-\d{2}$/.exec(departDate);
-  return m ? Number(m[1]) : ASSUMED_MONTH;
+  if (m) return Number(m[1]);
+  return departMonth && Number.isInteger(departMonth) && departMonth >= 1 && departMonth <= 12 ? departMonth : ASSUMED_MONTH;
 }
 
-type ScopeOffer = Pick<Offer, "destination" | "supplierName" | "includes" | "departDate">;
+type ScopeOffer = Pick<Offer, "destination" | "supplierName" | "includes" | "departDate"> &
+  Partial<Pick<Offer, "departMonth" | "airline">>;
 
 export function ruleApplies(rule: FeeRule, offer: ScopeOffer): boolean {
   // Never charge for something the deal already includes.
   if (rule.covers && offer.includes?.includes(rule.covers)) return false;
   // Seasonal rates: only the one for the travel month.
-  if (rule.months && rule.months.length > 0 && !rule.months.includes(travelMonth(offer.departDate))) {
+  if (rule.months && rule.months.length > 0 && !rule.months.includes(travelMonth(offer.departDate, offer.departMonth))) {
     return false;
   }
   if (rule.regions && rule.regions.length > 0) {
@@ -44,8 +46,10 @@ export function ruleApplies(rule: FeeRule, offer: ScopeOffer): boolean {
     if (!rule.regions.some((r) => mentions(offer.destination!, r))) return false;
   }
   if (rule.supplierName) {
-    if (!offer.supplierName) return false;
-    if (!mentions(offer.supplierName, rule.supplierName)) return false;
+    // The seller's own fee, or the airline's when a package names the airline that flies it.
+    const bySeller = offer.supplierName ? mentions(offer.supplierName, rule.supplierName) : false;
+    const byAirline = offer.airline ? mentions(offer.airline, rule.supplierName) : false;
+    if (!bySeller && !byAirline) return false;
   }
   return true;
 }

@@ -1,5 +1,6 @@
 import { after, NextResponse } from "next/server";
 import {
+  advertNotes,
   calculateTrueCost,
   childExtras,
   fairMark,
@@ -118,7 +119,81 @@ async function extract(body: Record<string, unknown>) {
     notes.push("We don't open links ourselves. Paste the deal text or a screenshot so we can read the details.");
   }
 
-  return NextResponse.json({ draft: { ...draft, sourceUrl: url }, notes });
+  const { draft: checked, check } = sanityCheck(draft, text, Boolean(image), notes);
+  return NextResponse.json({ draft: { ...checked, sourceUrl: url }, notes, check });
+}
+
+/**
+ * Plausibility checks on what was read. Anything out of range is cleared or highlighted for the
+ * family to confirm. The two claim flags ("plus taxes", "kids go free") only stand when the
+ * advert's own words are really in the text we were given — never inferred.
+ */
+function sanityCheck(
+  d: DraftOffer,
+  text: string,
+  hadImage: boolean,
+  notes: string[],
+): { draft: DraftOffer; check: string[] } {
+  const out: DraftOffer = { ...d };
+  const check = new Set<string>();
+  const squash = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
+  const inText = (quote: string | undefined) => Boolean(quote && text && squash(text).includes(squash(quote)));
+
+  if (out.headlinePence !== undefined) {
+    const [lo, hi] = out.headlineBasis === "per_person" ? [2_000, 1_000_000] : [5_000, 5_000_000];
+    if (out.headlinePence < lo || out.headlinePence > hi) {
+      check.add("price");
+      notes.push("The price we read looks unusual. Please check it against the advert.");
+    }
+  }
+  if (out.nights !== undefined && out.nights > 30) {
+    check.add("nights");
+    notes.push(`${out.nights} nights is a long stay. Please check the number of nights.`);
+  }
+  if (out.adults !== undefined && out.adults > 6) check.add("adults");
+  if (out.departDate) {
+    const t = Date.parse(`${out.departDate}T00:00:00Z`);
+    const now = Date.now();
+    if (!Number.isFinite(t) || t < now - 2 * 86_400_000 || t > now + 731 * 86_400_000) {
+      out.departDate = undefined;
+      check.add("depart");
+      notes.push("The travel date we read is in the past or too far ahead, so we've left it blank.");
+    }
+  }
+
+  // Claim flags: text adverts must contain the words; screenshots can't be checked, so we ask.
+  const foundTaxes = inText(out.taxesQuote) || (Boolean(text) && EXCLUDES_FEES.test(text));
+  if (out.excludesTaxesAndFees && !foundTaxes) {
+    if (hadImage) check.add("excludes"); // may be in the screenshot: ask, don't untick
+    else {
+      out.excludesTaxesAndFees = undefined;
+      notes.push("We couldn't find \"plus taxes and fees\" (or similar) in the advert text, so that box is unticked. Tick it if the advert says so.");
+    }
+  }
+  const foundFree = inText(out.freeChildQuote) || (Boolean(text) && FREE_CHILD.test(text));
+  if (out.freeChildClaim && !foundFree) {
+    if (hadImage) check.add("freeChild");
+    else {
+      out.freeChildClaim = undefined;
+      notes.push("We couldn't find a \"kids go free\" claim in the advert text, so that box is unticked.");
+    }
+  }
+  if (check.has("excludes") || check.has("freeChild")) {
+    notes.push("Read from the screenshot: please confirm the highlighted boxes match what the advert says.");
+  }
+
+  // The advert's own maths, using the party it was priced for.
+  if (out.perPersonPence || out.totalPence) {
+    const maths = advertNotes(
+      { adults: out.adults ?? 2, childAges: out.childAges ?? [] },
+      { freeChildClaim: out.freeChildClaim, advertCheck: { perPersonPence: out.perPersonPence, totalPence: out.totalPence } },
+    );
+    if (maths.length) {
+      check.add("price");
+      notes.push(...maths);
+    }
+  }
+  return { draft: out, check: [...check] };
 }
 
 /** Words that say a price is incomplete: "plus taxes and fees", "excl. taxes", "+ fees". */
@@ -200,7 +275,7 @@ async function quote(body: Record<string, unknown>) {
     // The council lookup (for the School Window link) runs alongside pricing and never blocks it.
     const councilsP = suggestCouncil(party.outwardPostcode);
     const rules = selectRules(await loadFeeRules(), offer);
-    const result = calculateTrueCost({ party, offer, rules });
+    const result = calculateTrueCost({ party, offer, rules, asOf: new Date().toISOString().slice(0, 10) });
     if (conversion) result.notes.unshift(conversionNote(conversion));
     // Saving must never block the answer: if it fails, the user still gets the price.
     const quoteId = await saveQuote({ party, offer, result, sourceKind, sourceUrl, conversion });
@@ -242,7 +317,12 @@ function parseParty(raw: unknown): Party | string {
   if (typeof raw.outwardPostcode === "string" && raw.outwardPostcode.trim() && !postcode) {
     return "Postcode not recognised. Enter just the first part, e.g. SE11.";
   }
-  return { adults, childAges, outwardPostcode: postcode };
+  const holdBags =
+    raw.holdBags === undefined || raw.holdBags === null || raw.holdBags === "" ? undefined : Number(raw.holdBags);
+  if (holdBags !== undefined && !(Number.isInteger(holdBags) && holdBags >= 0 && holdBags <= 30)) {
+    return "Hold bags must be a whole number from 0 to 30.";
+  }
+  return { adults, childAges, outwardPostcode: postcode, holdBags };
 }
 
 function parseOffer(raw: unknown): Offer | string {
@@ -265,7 +345,26 @@ function parseOffer(raw: unknown): Offer | string {
     excludesTaxesAndFees: raw.excludesTaxesAndFees === true,
     freeChildClaim: raw.freeChildClaim === true,
     departDate: parseTravelDate(raw.departDate),
+    departMonth: Number.isInteger(raw.departMonth) && (raw.departMonth as number) >= 1 && (raw.departMonth as number) <= 12
+      ? (raw.departMonth as number)
+      : undefined,
+    airline: tidy(raw.airline, 60),
+    advertCheck: parseAdvertCheck(raw.advertCheck),
   };
+}
+
+/** What the advert itself said about its price and party. Only used for checks, never pricing. */
+function parseAdvertCheck(raw: unknown): Offer["advertCheck"] {
+  if (!isObject(raw)) return undefined;
+  const pence = (v: unknown) => (Number.isInteger(v) && (v as number) > 0 && (v as number) < 100_000_000 ? (v as number) : undefined);
+  const count = (v: unknown, max: number) => (Number.isInteger(v) && (v as number) >= 0 && (v as number) <= max ? (v as number) : undefined);
+  const out = {
+    perPersonPence: pence(raw.perPersonPence),
+    totalPence: pence(raw.totalPence),
+    adults: count(raw.adults, 9),
+    children: count(raw.children, 9),
+  };
+  return Object.values(out).some((v) => v !== undefined) ? out : undefined;
 }
 
 /** YYYY-MM-DD, a real date, from a month ago up to two years ahead. Anything else is ignored. */

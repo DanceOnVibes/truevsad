@@ -1,10 +1,14 @@
 import { formatGBP } from "./money";
-import type { CostCategory, CostLine, Party } from "./types";
+import { ADVISORY_CATEGORIES, HIDDEN_FEE_CATEGORIES, type CostCategory, type CostLine, type Party } from "./types";
 
 /**
- * FairMark — how far a deal's true price sits above its advertised price.
+ * FairMark — how much the advert hid.
  *
- *   fairMarkPercent = (trueCost − advertised) / advertised × 100
+ *   fairMarkPercent = (taxes and fees the advert left out) / advertised × 100
+ *
+ * Only "what the advert hid" counts: tourist taxes, resort fees, entry documents. What the family
+ * adds — bags, seats, getting to the airport, card fees — is in their true price but never
+ * counted against the seller (those lines are advisory).
  *
  * Pure function on the result of calculateTrueCost(). It never changes the price or the
  * ranking: it's a badge, a filter and a leaderboard only. When in doubt, no badge — and we
@@ -23,7 +27,7 @@ export interface FairMark {
   label: string;
   /** "+7.4%" (one decimal), or "" when unavailable. */
   display: string;
-  /** True − advertised, whole pence (null when unavailable). */
+  /** What the advert hid, whole pence: the amount FairMark judges (null when unavailable). */
   gapPence: number | null;
   /** Taxes, resort fees and entry documents the advert left out. */
   requiredPence: number;
@@ -61,13 +65,16 @@ const REASONS: Record<FairMarkReason, string> = {
  */
 export const REFERENCE_PARTY: Party = { adults: 2, childAges: [7, 11] };
 
-const REQUIRED: CostCategory[] = ["levy", "entry_doc"];
-const EXTRAS: CostCategory[] = ["party_extra", "door_to_door", "payment_fx"];
+const REQUIRED: readonly CostCategory[] = HIDDEN_FEE_CATEGORIES;
+const EXTRAS: readonly CostCategory[] = ADVISORY_CATEGORIES;
+
+/** Upper bound (inclusive) of each level, in % of the advertised price hidden. */
+export const FAIRMARK_SCALE = { gold: 5, fair: FAIR_LINE_PERCENT, higher: 20 } as const;
 
 export function fairMarkLevel(percent: number): Exclude<FairMarkLevel, "unavailable"> {
-  if (percent <= 5) return "gold"; // includes 0% and negative gaps
-  if (percent <= FAIR_LINE_PERCENT) return "fair";
-  if (percent <= 20) return "higher";
+  if (percent <= FAIRMARK_SCALE.gold) return "gold"; // includes 0% and negative gaps
+  if (percent <= FAIRMARK_SCALE.fair) return "fair";
+  if (percent <= FAIRMARK_SCALE.higher) return "higher";
   return "high";
 }
 
@@ -90,7 +97,7 @@ export function fairMark(input: {
 }): FairMark {
   const { advertisedPence, trueCostPence, confidence, usedDemoRules, taxCoverage } = input;
   const lines = input.lines ?? input.receipt?.lines ?? [];
-  const sum = (cats: CostCategory[]) => lines.filter((l) => cats.includes(l.category)).reduce((s, l) => s + l.amountPence, 0);
+  const sum = (cats: readonly CostCategory[]) => lines.filter((l) => cats.includes(l.category)).reduce((s, l) => s + l.amountPence, 0);
   const requiredPence = sum(REQUIRED);
   const extrasPence = sum(EXTRAS);
 
@@ -113,23 +120,26 @@ export function fairMark(input: {
   if (!(Number.isFinite(confidence) && confidence >= FAIRMARK_MIN_CONFIDENCE)) return unavailable("low_confidence");
   if (taxCoverage === false) return unavailable("no_tax_data");
 
-  const gapPence = trueCostPence - advertisedPence;
+  // With receipt lines we judge only what the advert hid. Without them (a bare total), the whole
+  // difference is all we know.
+  const gapPence = lines.length > 0 ? requiredPence : trueCostPence - advertisedPence;
   // Multiplied first so whole-pence inputs give exact percentages (7400 × 100 / 100000 = 7.4).
   const percent = (gapPence * 100) / advertisedPence;
   const level = fairMarkLevel(percent);
 
-  // The biggest single extra, so "why" is always one glance away.
+  // The biggest hidden fee, so "why" is always one glance away.
   const biggest = lines
-    .filter((l) => l.category !== "supplier" && l.amountPence > 0)
+    .filter((l) => REQUIRED.includes(l.category) && l.amountPence > 0)
     .sort((a, b) => b.amountPence - a.amountPence)[0];
-  const driver = biggest ? ` Biggest extra: ${biggest.label} (+${formatGBP(biggest.amountPence)}).` : "";
-  const distance = Math.abs(percent - FAIR_LINE_PERCENT);
+  const driver = biggest ? ` Biggest: ${biggest.label} (+${formatGBP(biggest.amountPence)}).` : "";
+  const distance = Math.abs(percent - FAIRMARK_SCALE.fair);
+  const extrasNote = extrasPence > 0 ? " Extras your family adds, like bags, aren't counted against the seller." : "";
   const summary =
     gapPence <= 0
-      ? "Nothing extra to pay on top of the advertised price for this family."
+      ? `The advert left out no taxes or fees for this family.${extrasNote}`
       : level === "gold" || level === "fair"
-        ? `${formatGBP(gapPence)} on top of the advert, ${distance.toFixed(1)}% inside the Fair Price line.${driver}`
-        : `${formatGBP(gapPence)} on top of the advert, ${distance.toFixed(1)}% over the Fair Price line.${driver}`;
+        ? `${formatGBP(gapPence)} in taxes and fees the advert left out, ${distance.toFixed(1)}% inside the Fair Price line.${driver}${extrasNote}`
+        : `${formatGBP(gapPence)} in taxes and fees the advert left out, ${distance.toFixed(1)}% over the Fair Price line.${driver}${extrasNote}`;
 
   return { level, percent, label: FAIRMARK_LABELS[level], display: formatFairMarkPercent(percent), gapPence, requiredPence, extrasPence, summary };
 }

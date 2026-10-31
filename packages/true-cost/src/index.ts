@@ -1,4 +1,5 @@
-export { calculateTrueCost, ENGINE_VERSION } from "./calculate";
+export { calculateTrueCost, ENGINE_VERSION, STALE_AFTER_DAYS } from "./calculate";
+export { advertNotes } from "./advert";
 export { formatGBP } from "./money";
 export {
   ASSUMED_MONTH,
@@ -41,6 +42,7 @@ export { fairShare, type FairShareResult, type FamilyShare } from "./fair-share"
 export * from "./types";
 export {
   FAIR_LINE_PERCENT,
+  FAIRMARK_SCALE,
   FAIRMARK_LABELS,
   FAIRMARK_MIN_CONFIDENCE,
   fairMark,

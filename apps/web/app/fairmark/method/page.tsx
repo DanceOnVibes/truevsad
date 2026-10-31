@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ENGINE_VERSION, FAIRMARK_MIN_CONFIDENCE, REFERENCE_PARTY } from "@truevsad/true-cost";
+import { ENGINE_VERSION, FAIRMARK_MIN_CONFIDENCE, FAIRMARK_SCALE, REFERENCE_PARTY } from "@truevsad/true-cost";
 import { EMAILS } from "@/lib/company";
 import { LEADERBOARD_DAYS, LEADERBOARD_MIN_DEALS } from "@/lib/quotes";
 
@@ -21,23 +21,22 @@ export default function FairMarkMethodPage() {
       <div className="card">
         <h2 style={{ marginTop: 0 }}>The calculation</h2>
         <p>
-          FairMark = (true price − advertised price) ÷ advertised price × 100. The true price comes from
-          the same engine as every receipt: the advertised price for your party, plus taxes, entry
-          documents and the extras a family needs, each from a published source. Anything the deal
-          already includes is never counted twice.
+          FairMark = taxes and fees the advert left out ÷ advertised price × 100. &ldquo;Left out&rdquo;
+          means charges every family on that deal must pay: tourist taxes, resort fees and entry
+          documents, each from a published source. Anything the deal already includes is never
+          counted.
         </p>
         <ul>
-          <li><strong>FairMark Gold</strong>: 5% or less, including deals with nothing extra to pay.</li>
-          <li><strong>Fair Price</strong>: more than 5%, up to 10%.</li>
-          <li><strong>Higher gap</strong>: more than 10%, up to 20%.</li>
-          <li><strong>High gap</strong>: more than 20%.</li>
+          <li><strong>FairMark Gold</strong>: {FAIRMARK_SCALE.gold}% or less, including adverts that left nothing out.</li>
+          <li><strong>Fair Price</strong>: more than {FAIRMARK_SCALE.gold}%, up to {FAIRMARK_SCALE.fair}%.</li>
+          <li><strong>Higher gap</strong>: more than {FAIRMARK_SCALE.fair}%, up to {FAIRMARK_SCALE.higher}%.</li>
+          <li><strong>High gap</strong>: more than {FAIRMARK_SCALE.higher}%.</li>
         </ul>
         <p>
-          We split the gap in two: <strong>taxes and fees the advert left out</strong> (tourist taxes,
-          resort fees, entry documents) and <strong>extras your family needs</strong> (hold bags, seats
-          together). Extras such as bags are legally optional for sellers to show, so a high gap does
-          not mean a seller has broken any rule. It means the advertised price is far from what your
-          family will pay.
+          <strong>Extras your family adds</strong> (hold bags, seats together, getting to the airport)
+          are on every receipt and in your true price, marked &ldquo;advisory&rdquo;, but they are
+          never counted in FairMark. How many bags a family takes is the family&apos;s choice, so a
+          seller is judged only on what its own advert left out.
         </p>
       </div>
 
@@ -62,7 +61,7 @@ export default function FairMarkMethodPage() {
           </li>
           <li>Ranked by the median gap, so one unusual deal can&apos;t make or break a seller. Best and worst deals are shown too.</li>
           <li>A seller needs at least {LEADERBOARD_MIN_DEALS} checked deals to appear.</li>
-          <li>The ✓ needs 30+ deals in 5+ destinations with a median gap of 10% or less. It is earned, never bought, and lost automatically.</li>
+          <li>The ✓ needs 30+ deals in 5+ destinations with a median of {FAIRMARK_SCALE.fair}% or less left out. It is earned, never bought, and lost automatically.</li>
           <li>We rank the company selling the deal, not the brand of holiday inside it.</li>
         </ul>
       </div>
@@ -84,8 +83,9 @@ export default function FairMarkMethodPage() {
         <p>
           Since April 2025, UK law has required advertised prices to include every fee a customer must
           pay, such as mandatory taxes and booking fees. The Competition and Markets Authority enforces
-          this. FairMark measures more than the law does: it also counts the optional extras a family
-          will realistically need, because that is the price you actually pay.
+          this. FairMark measures what an advert still leaves out, such as local taxes paid at the hotel.
+          Optional extras are shown on your receipt so you see your real total, but they never count
+          against the seller.
         </p>
       </div>
 

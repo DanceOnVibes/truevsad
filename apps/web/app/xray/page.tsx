@@ -8,6 +8,9 @@ import { FairSharePanel } from "@/components/FairSharePanel";
 import { ChildCostsNote } from "@/components/ChildCostsNote";
 
 const CURRENCIES = { GBP: "£", EUR: "€", USD: "$" } as const;
+/** One tap instead of a guess: the airline decides the bag and seat fees. */
+const AIRLINES = ["Jet2", "TUI", "easyJet", "Ryanair", "Wizz Air", "British Airways"] as const;
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 type Currency = keyof typeof CURRENCIES;
 
 type Step = "paste" | "confirm" | "receipt";
@@ -46,6 +49,13 @@ export default function XrayPage() {
   const [freeChild, setFreeChild] = useState(false);
   const [childCosts, setChildCosts] = useState<{ age: number; pence: number }[]>([]);
   const [councils, setCouncils] = useState<string[]>([]);
+  const [airline, setAirline] = useState("");
+  const [departMonth, setDepartMonth] = useState("");
+  const [holdBags, setHoldBags] = useState("");
+  /** Fields the server wants the family to double-check. */
+  const [check, setCheck] = useState<string[]>([]);
+  const [advertCheck, setAdvertCheck] = useState<Record<string, number> | undefined>(undefined);
+  const flag = (field: string) => (check.includes(field) ? "check-me" : undefined);
   const [nights, setNights] = useState("7");
   const [departDate, setDepartDate] = useState("");
   const [destination, setDestination] = useState("");
@@ -112,6 +122,18 @@ export default function XrayPage() {
       if (d.departDate) setDepartDate(d.departDate);
       if (d.destination) setDestination(d.destination);
       if (d.supplierName) changeSupplier(d.supplierName);
+      const knownAirline = AIRLINES.find((a) =>
+        [d.airline, d.supplierName].some((x) => typeof x === "string" && x.toLowerCase().includes(a.toLowerCase())),
+      );
+      setAirline(knownAirline ?? (typeof d.airline === "string" ? d.airline : ""));
+      setCheck(Array.isArray(data.check) ? data.check : []);
+      // What the advert itself said, kept only to check its maths and who it was priced for.
+      const ac: Record<string, number> = {};
+      if (d.perPersonPence) ac.perPersonPence = d.perPersonPence;
+      if (d.totalPence) ac.totalPence = d.totalPence;
+      if (d.adults) ac.adults = d.adults;
+      if (d.adults && Array.isArray(d.childAges)) ac.children = d.childAges.length;
+      setAdvertCheck(Object.keys(ac).length ? ac : undefined);
       if (d.adults) setAdults(String(d.adults));
       if (Array.isArray(d.childAges) && d.childAges.length) setChildAges(d.childAges.join(", "));
       if (Array.isArray(d.includes) && d.includes.length) {
@@ -148,15 +170,24 @@ export default function XrayPage() {
         excludesTaxesAndFees: excludesFees,
         freeChildClaim: freeChild,
         departDate: departDate || undefined,
+        departMonth: !departDate && departMonth ? Number(departMonth) : undefined,
+        airline: airline || undefined,
+        advertCheck,
       };
       const data = await post({
         step: "quote",
         sourceKind: text ? "text" : screenshot ? "screenshot" : "link",
         sourceUrl: url || undefined,
-        party: { adults: Number(adults), childAges: ages, outwardPostcode: postcode },
+        party: {
+          adults: Number(adults),
+          childAges: ages,
+          outwardPostcode: postcode,
+          holdBags: holdBags.trim() === "" ? undefined : Number(holdBags),
+        },
         offer,
       });
       setQuoted({ offer, party: { adults: Number(adults), childAges: ages } });
+      setCheck([]);
       setResult(data.result);
       setFairMark(data.fairMark ?? null);
       setChildCosts(Array.isArray(data.childCosts) ? data.childCosts : []);
@@ -255,7 +286,7 @@ export default function XrayPage() {
           <div className="row">
             <div>
               <label htmlFor="price">Advertised price ({CURRENCIES[currency]})</label>
-              <input id="price" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} />
+              <input id="price" className={flag("price")} inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} />
             </div>
             <div>
               <label htmlFor="currency">Currency</label>
@@ -274,15 +305,28 @@ export default function XrayPage() {
             </div>
             <div>
               <label htmlFor="nights">Nights</label>
-              <input id="nights" inputMode="numeric" value={nights} onChange={(e) => setNights(e.target.value)} />
+              <input id="nights" className={flag("nights")} inputMode="numeric" value={nights} onChange={(e) => setNights(e.target.value)} />
             </div>
             <div>
               <label htmlFor="depart">Travel date (optional)</label>
-              <input id="depart" type="date" value={departDate} onChange={(e) => setDepartDate(e.target.value)} />
+              <input id="depart" className={flag("depart")} type="date" value={departDate} onChange={(e) => setDepartDate(e.target.value)} />
             </div>
+            {!departDate && (
+              <div>
+                <label htmlFor="month">Or just the month</label>
+                <select id="month" value={departMonth} onChange={(e) => setDepartMonth(e.target.value)}>
+                  <option value="">Not sure</option>
+                  {MONTHS.map((m, i) => (
+                    <option key={m} value={String(i + 1)}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
-          <label className="check">
+          <label className={`check ${flag("excludes") ?? ""}`}>
             <input
               type="checkbox"
               checked={excludesFees}
@@ -290,7 +334,7 @@ export default function XrayPage() {
             />{" "}
             The advert says &ldquo;plus taxes and fees&rdquo; (or similar)
           </label>
-          <label className="check">
+          <label className={`check ${flag("freeChild") ?? ""}`}>
             <input type="checkbox" checked={freeChild} onChange={(e) => setFreeChild(e.target.checked)} />{" "}
             The advert says children go free (&ldquo;free child places&rdquo;)
           </label>
@@ -317,6 +361,30 @@ export default function XrayPage() {
           </div>
           <p className="hint">These help us add the right local taxes and fees.</p>
 
+          <div className="chips" role="group" aria-label="Airline">
+            <span className="hint">Airline flying you:</span>
+            {AIRLINES.map((a) => (
+              <button
+                key={a}
+                type="button"
+                className={`chip ${airline === a ? "sel" : ""}`}
+                aria-pressed={airline === a}
+                onClick={() => setAirline(airline === a ? "" : a)}
+              >
+                {a}
+              </button>
+            ))}
+            <button
+              type="button"
+              className={`chip ${airline === "" ? "sel" : ""}`}
+              aria-pressed={airline === ""}
+              onClick={() => setAirline("")}
+            >
+              Other / not sure
+            </button>
+          </div>
+          <p className="hint">The airline decides the bag and seat fees. Without it we use a typical price and say so.</p>
+
           <fieldset className="includes">
             <legend>What does this deal already include?</legend>
             {INCLUSIONS.map((item) => (
@@ -340,7 +408,7 @@ export default function XrayPage() {
           <div className="row">
             <div>
               <label htmlFor="adults">Adults</label>
-              <input id="adults" inputMode="numeric" value={adults} onChange={(e) => setAdults(e.target.value)} />
+              <input id="adults" className={flag("adults")} inputMode="numeric" value={adults} onChange={(e) => setAdults(e.target.value)} />
             </div>
             <div>
               <label htmlFor="kids">Children&apos;s ages</label>
@@ -350,8 +418,22 @@ export default function XrayPage() {
               <label htmlFor="pc">Postcode (first part)</label>
               <input id="pc" placeholder="e.g. SE11" value={postcode} onChange={(e) => setPostcode(e.target.value)} />
             </div>
+            <div>
+              <label htmlFor="bags">Hold bags (whole party)</label>
+              <input
+                id="bags"
+                inputMode="numeric"
+                placeholder="1 per 2 people"
+                value={holdBags}
+                onChange={(e) => setHoldBags(e.target.value)}
+              />
+            </div>
           </div>
-          <p className="hint">Ages only — no dates of birth, no names. We keep only the first half of your postcode.</p>
+          <p className="hint">
+            Bags are advisory: leave it blank and we count one per two people, as a couple often shares
+            one. Put 0 if you&apos;re taking cabin bags only.
+          </p>
+          <p className="hint">Ages only — no dates of birth, no names. Your postcode isn&apos;t kept with the receipt.</p>
           <p className="hint">
             Why we ask: ages decide which bag rules and tourist taxes apply (many are free for younger children). Your postcode
             (optional) lets us find your council&apos;s school holidays, and in our anonymous price

@@ -51,7 +51,7 @@ describe("FairMark hardening", () => {
     expect(f.reason).toBe("no_tax_data");
     expect(f.summary.length > 0).toBe(true);
   });
-  it("splits required fees from family extras and names the biggest extra", () => {
+  it("judges only what the advert hid; family extras are never counted against the seller", () => {
     const f = fairMark({
       advertisedPence: 100000,
       trueCostPence: 112000,
@@ -63,11 +63,23 @@ describe("FairMark hardening", () => {
         { category: "party_extra", label: "Hold bags", amountPence: 10000, source: "rule", confidence: 0.5 },
       ],
     });
-    expect(f.level).toBe("higher");
-    expect(f.gapPence).toBe(12000);
+    expect(f.gapPence).toBe(2000);
+    expect(f.percent).toBe(2);
     expect(f.requiredPence).toBe(2000);
     expect(f.extrasPence).toBe(10000);
-    expect(f.summary).toContain("2.0% over the Fair Price line");
-    expect(f.summary).toContain("Hold bags");
+    expect(f.summary).toContain("Tourist tax");
+    expect(f.summary.includes("Hold bags")).toBe(false);
+    expect(f.summary).toContain("aren't counted against the seller");
+  });
+  it("a deal with nothing hidden is Gold even when the family adds bags", () => {
+    const f = fairMark({
+      advertisedPence: 100000, trueCostPence: 130000, confidence: 0.8, taxCoverage: true,
+      lines: [
+        { category: "supplier", label: "Advertised price", amountPence: 100000, source: "extracted", confidence: 0.9 },
+        { category: "party_extra", label: "Hold bags", amountPence: 30000, source: "rule", confidence: 0.8 },
+      ],
+    });
+    expect(f.level).toBe("gold");
+    expect(f.gapPence).toBe(0);
   });
 });

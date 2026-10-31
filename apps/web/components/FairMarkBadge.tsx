@@ -9,7 +9,7 @@ export function FairMarkBadge({ fm, compact = false }: { fm: FairMark; compact?:
     return <span className="fm-none">FairMark unavailable</span>;
   }
   return (
-    <span className={`fm fm-${fm.level}`} title="FairMark: how far the true price is above the advertised price">
+    <span className={`fm fm-${fm.level}`} title="FairMark: how much in taxes and fees the advert left out">
       {fm.label}
       {!compact && <span className="fm-pct"> {fm.display}</span>}
     </span>
@@ -26,8 +26,8 @@ export function FairMarkDetail({ fm }: { fm: FairMark }) {
       <p className="hint">{fm.summary}</p>
       {(fm.requiredPence > 0 || fm.extrasPence > 0) && (
         <p className="hint">
-          Taxes and fees the advert left out: {formatGBP(fm.requiredPence)} · Extras your family needs:{" "}
-          {formatGBP(fm.extrasPence)}
+          Taxes and fees the advert left out: {formatGBP(fm.requiredPence)} · Extras your family adds
+          (advisory, not counted against the seller): {formatGBP(fm.extrasPence)}
         </p>
       )}
       <p className="hint">

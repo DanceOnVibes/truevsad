@@ -1,4 +1,4 @@
-import { formatGBP, receiptScope, type CostCategory, type CostLine, type FairMark, type Inclusion } from "@truevsad/true-cost";
+import { ADVISORY_CATEGORIES, formatGBP, receiptScope, type CostCategory, type CostLine, type FairMark, type Inclusion } from "@truevsad/true-cost";
 import { FairMarkBadge, FairMarkDetail } from "./FairMarkBadge";
 import { EMAILS } from "@/lib/company";
 import { INCLUSION_LABELS } from "@/lib/supplier-defaults";
@@ -27,6 +27,21 @@ export interface ReceiptViewProps {
   notes?: string[];
   /** FairMark for this receipt (badge + exact %), shown next to the true price. */
   fairMark?: FairMark;
+}
+
+function checkedLabel(iso: string): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  return Number.isNaN(d.getTime())
+    ? ""
+    : d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+}
+
+/** Confidence as something the family can act on, not a mood. */
+function nextStep(lines: CostLine[], notes: string[] | undefined): string | null {
+  if (notes?.some((n) => n.startsWith("No travel date"))) return "Add your travel date or month to make it more exact.";
+  if (lines.some((l) => /airline not stated/i.test(l.label))) return "Choose the airline to make it more exact.";
+  if (lines.some((l) => l.category !== "supplier" && l.confidence < 0.5)) return "Some fees are typical prices rather than this seller's own.";
+  return null;
 }
 
 /** The Receipt. Used on the X-ray page and on shared /r/[slug] pages. */
@@ -77,7 +92,13 @@ export function ReceiptView(props: ReceiptViewProps) {
         </div>
       </div>
       {fairMark && <FairMarkDetail fm={fairMark} />}
-      <p className="hint">Confidence: {Math.round(confidence * 100)}%</p>
+      <p className="hint">
+        Confidence: {Math.round(confidence * 100)}%
+        {(() => {
+          const step = nextStep(lines, notes);
+          return step ? ` · ${step}` : "";
+        })()}
+      </p>
       {notes?.map((n) => (
         <p key={n} className="hint">
           {n}
@@ -93,12 +114,26 @@ export function ReceiptView(props: ReceiptViewProps) {
                 {l.label}
                 <div className="working">
                   {CATEGORY_LABELS[l.category]}
+                  {(l.advisory || ADVISORY_CATEGORIES.includes(l.category)) && (
+                    <span className="advisory-tag"> · advisory</span>
+                  )}
                   {l.working ? ` · ${l.working}` : ""}
                   {l.sourceUrl && (
                     <>
                       {" · "}
                       <a href={l.sourceUrl} target="_blank" rel="noopener noreferrer">
                         source
+                      </a>
+                    </>
+                  )}
+                  {l.checkedOn && checkedLabel(l.checkedOn) ? ` · checked ${checkedLabel(l.checkedOn)}` : ""}
+                  {l.category !== "supplier" && (
+                    <>
+                      {" · "}
+                      <a
+                        href={`mailto:${EMAILS.corrections}?subject=${encodeURIComponent(`Wrong fee: ${l.label}`)}`}
+                      >
+                        wrong fee?
                       </a>
                     </>
                   )}

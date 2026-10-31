@@ -3,6 +3,7 @@ import {
   calculateTrueCost,
   childExtras,
   receiptScope,
+  advertNotes,
   classifyTrip,
   fairShare,
   scorePlace,
@@ -159,13 +160,14 @@ describe("free child places", () => {
     { id: "room", category: "levy", label: "Room fee", unit: "per_party_per_night", amount: { kind: "fixed", pence: 834 }, confidence: 0.7 },
   ];
   const offer: Offer = { headlinePence: 60000, headlineBasis: "per_person", currency: "GBP", nights: 7, destination: "Alcudia, Mallorca, Spain", freeChildClaim: true };
-  it("a 'free' 7-year-old still costs the hold bag; a baby costs nothing", () => {
+  it("a 'free' 7-year-old still costs a share of the bags; a baby costs nothing", () => {
+    // 3 people aged 2+ → 2 bags (one per two people) = £133.34, shared equally: £44.45 each.
     const c = childExtras({ party: { adults: 2, childAges: [7, 1] }, offer, rules: selectRules(rules, offer) });
-    expect(c).toEqual([{ age: 7, pence: 6667 }, { age: 1, pence: 0 }]);
+    expect(c).toEqual([{ age: 7, pence: 4445 }, { age: 1, pence: 0 }]);
   });
   it("a 16-year-old also pays the tourist tax; room fees don't count per child", () => {
     const c = childExtras({ party: { adults: 2, childAges: [16] }, offer, rules: selectRules(rules, offer) });
-    expect(c).toEqual([{ age: 16, pence: 6667 + 7 * 275 }]);
+    expect(c).toEqual([{ age: 16, pence: 4445 + 7 * 275 }]);
   });
 });
 
@@ -174,7 +176,7 @@ describe("receipt scope", () => {
   it("states how it counted and what it didn't check, without hedging words", () => {
     const c = receiptScope({ includes: [] }, { receipt: { lines: [line("supplier", "Advertised"), line("party_extra", "Hold bag, return"), line("levy", "Balearic tourist tax (4-star hotel, May–Oct rate)")], subtotals: {} as never } });
     expect(c.notChecked.some((s) => s.includes("Transfers"))).toBe(true);
-    expect(c.counted.some((s) => s.includes("one per person"))).toBe(true);
+    expect(c.counted.some((s) => s.includes("one per two people"))).toBe(true);
     expect(c.counted.some((s) => s.includes("4-star"))).toBe(true);
     expect([...c.counted, ...c.notChecked].some((s) => /assum|estimat|guess/i.test(s))).toBe(false);
   });
@@ -182,5 +184,65 @@ describe("receipt scope", () => {
     const c = receiptScope({ includes: ["transfers"] }, { receipt: { lines: [], subtotals: {} as never } });
     expect(c.notChecked.some((s) => s.includes("Transfers"))).toBe(false);
     expect(c.counted).toEqual([]);
+  });
+});
+
+describe("advisory hold bags", () => {
+  const bag: FeeRule = { id: "bag", category: "party_extra", label: "Hold bag, return", unit: "per_person", amount: { kind: "fixed", pence: 7000 }, confidence: 0.5, minAge: 2, covers: "hold_bag" };
+  const offer: Offer = { headlinePence: 300000, headlineBasis: "total", currency: "GBP", nights: 7 };
+  it("counts one bag per two people aged 2+, rounded up, and marks it advisory", () => {
+    const r = calculateTrueCost({ party: { adults: 2, childAges: [7, 11, 1] }, offer, rules: [bag] });
+    const line = r.receipt.lines.find((l) => l.label === "Hold bag, return")!;
+    expect(line.amountPence).toBe(2 * 7000);
+    expect(line.advisory).toBe(true);
+    expect(line.working!.includes("1 per 2 people aged 2+")).toBe(true);
+  });
+  it("uses the family's own number, including none", () => {
+    const three = calculateTrueCost({ party: { adults: 2, childAges: [7, 11], holdBags: 3 }, offer, rules: [bag] });
+    expect(three.trueCostPence).toBe(300000 + 3 * 7000);
+    const none = calculateTrueCost({ party: { adults: 2, childAges: [7, 11], holdBags: 0 }, offer, rules: [bag] });
+    expect(none.trueCostPence).toBe(300000);
+  });
+});
+
+describe("advert maths and party checks", () => {
+  const party = { adults: 2, childAges: [7, 11] };
+  it("flags per-person × people that doesn't match the total", () => {
+    const notes = advertNotes(party, { freeChildClaim: true, advertCheck: { perPersonPence: 89900, totalPence: 269700 } });
+    expect(notes.length).toBe(1);
+    expect(notes[0]!.includes("don't add up")).toBe(true);
+    expect(notes[0]!.includes("£1,798.00")).toBe(true);
+  });
+  it("is quiet when the maths adds up", () => {
+    expect(advertNotes(party, { advertCheck: { perPersonPence: 50000, totalPence: 200000 } })).toEqual([]);
+  });
+  it("says when the price was for a different party", () => {
+    const notes = advertNotes(party, { advertCheck: { adults: 2, children: 0 } });
+    expect(notes.length).toBe(1);
+    expect(notes[0]!.includes("2 adults.")).toBe(true);
+  });
+});
+
+describe("month and airline matching, stale figures", () => {
+  const summer: FeeRule = { id: "s", category: "levy", label: "Summer tax", unit: "per_adult_per_night", amount: { kind: "fixed", pence: 300 }, confidence: 0.9, months: [5, 6, 7, 8, 9, 10] };
+  const winter: FeeRule = { ...summer, id: "w", label: "Winter tax", amount: { kind: "fixed", pence: 100 }, months: [11, 12, 1, 2, 3, 4] };
+  it("a travel month picks the rate, with no summer note", () => {
+    const offer: Offer = { headlinePence: 1000, headlineBasis: "total", currency: "GBP", nights: 1, departMonth: 2 };
+    const rules = selectRules([summer, winter], offer);
+    expect(rules.map((r) => r.id)).toEqual(["w"]);
+    expect(calculateTrueCost({ party: { adults: 1, childAges: [] }, offer, rules }).notes).toEqual([]);
+  });
+  it("an airline's own fee applies to a package that names the airline", () => {
+    const ry: FeeRule = { id: "ry", category: "party_extra", label: "Ryanair bag", unit: "per_person", amount: { kind: "fixed", pence: 7000 }, confidence: 0.5, supplierName: "Ryanair", covers: "hold_bag" };
+    const offer = { supplierName: "loveholidays", airline: "Ryanair" };
+    expect(selectRules([ry], offer).length).toBe(1);
+    expect(selectRules([ry], { supplierName: "loveholidays" }).length).toBe(0);
+  });
+  it("a figure checked over a year ago counts for half, and the receipt says so", () => {
+    const tax: FeeRule = { ...summer, months: undefined, checkedOn: "2025-01-10" };
+    const r = calculateTrueCost({ party: { adults: 2, childAges: [] }, offer: { headlinePence: 1000, headlineBasis: "total", currency: "GBP", nights: 1 }, rules: [tax], asOf: "2026-10-31" });
+    expect(r.receipt.lines[1]!.confidence).toBe(0.45);
+    expect(r.receipt.lines[1]!.checkedOn).toBe("2025-01-10");
+    expect(r.notes.some((n) => n.includes("more than a year ago"))).toBe(true);
   });
 });
