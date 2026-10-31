@@ -62,6 +62,15 @@ export default function PrivacyPage() {
           only if you click them.
         </p>
 
+        <h2>Anonymous price statistics</h2>
+        <p>
+          Each time a deal is X-rayed we also keep one anonymous line of statistics: the seller, the
+          town and country, the week of travel, the number of nights, how many people and children,
+          and the price per person before and after extras. It has no link to your receipt and holds
+          no ages, postcode, deal link or exact dates (only the week). We keep it for 2 years to
+          measure how prices change in school holidays and how fair each seller is over time.
+        </p>
+
         <h2>FairMark board and leaderboard</h2>
         <p>
           The FairMark leaderboard is built from anonymous totals per holiday seller across all the

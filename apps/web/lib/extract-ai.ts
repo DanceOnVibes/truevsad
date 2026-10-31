@@ -22,6 +22,7 @@ export interface DraftOffer {
   childAges?: number[];
   includes?: Inclusion[];
   excludesTaxesAndFees?: boolean;
+  freeChildClaim?: boolean;
   departDate?: string;
 }
 
@@ -62,6 +63,10 @@ const SCHEMA = {
     departDate: {
       type: "STRING",
       description: "Outbound flight / check-in date as YYYY-MM-DD, only if a specific date is shown.",
+    },
+    freeChildClaim: {
+      type: "BOOLEAN",
+      description: "true if the advert claims children go free, e.g. 'free child places', 'kids go free', 'children stay free'.",
     },
     excludesTaxesAndFees: {
       type: "BOOLEAN",
@@ -189,6 +194,7 @@ function clean(json: string): DraftOffer | null {
     childAges: ages && ages.length ? ages : undefined,
     includes: includes && includes.length ? includes : undefined,
     excludesTaxesAndFees: r.excludesTaxesAndFees === true ? true : undefined,
+    freeChildClaim: r.freeChildClaim === true ? true : undefined,
     departDate: typeof r.departDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(r.departDate) ? r.departDate : undefined,
   };
 }

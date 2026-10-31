@@ -67,6 +67,8 @@ export interface Offer {
    * We add the fees we know about, but the seller may add more at checkout.
    */
   excludesTaxesAndFees?: boolean;
+  /** The advert says children go free ("free child places", "kids go free"). */
+  freeChildClaim?: boolean;
   /** First day of the trip, YYYY-MM-DD, if the family told us. Picks seasonal tax rates. */
   departDate?: string;
   /**

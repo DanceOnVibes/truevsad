@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import {
   calculateTrueCost,
+  childExtras,
   fairMark,
   fairShare,
   INCLUSIONS,
@@ -14,6 +15,7 @@ import {
 import { loadFeeRules, saveQuote, shareQuote, type SourceKind } from "@/lib/quotes";
 import { allowRequest } from "@/lib/rate-limit";
 import { aiConfigured, extractWithAi, type DraftOffer } from "@/lib/extract-ai";
+import { logObservation } from "@/lib/observations";
 
 // Run in London, next to Supabase London. Node runtime (not edge) so it pins to lhr1.
 export const runtime = "nodejs";
@@ -120,11 +122,15 @@ async function extract(body: Record<string, unknown>) {
 const EXCLUDES_FEES =
   /\b(plus|excl\.?|excluding|exclusive of|not including)\s+(local\s+|all\s+)?(taxes|tax|fees|charges)\b|\+\s*(taxes|fees)\b/i;
 
+/** "Kids go free", "free child places", "children stay free". */
+const FREE_CHILD = /\b(kids?|child(ren)?)\s+(go|stay|fly|travel|eat)\s+free\b|\bfree\s+(kids?|child(ren)?)\s+places?\b/i;
+
 function naiveExtract(text: string): DraftOffer {
   const price = text.match(/£\s?([\d,]+(?:\.\d{1,2})?)/);
   const nights = text.match(/(\d{1,2})\s*nights?/i);
   const perPerson = /\b(pp|p\.p\.|per person)\b/i.test(text);
   const excludes = EXCLUDES_FEES.test(text);
+  const freeChild = FREE_CHILD.test(text);
 
   return {
     headlinePence: price ? Math.round(parseFloat(price[1]!.replace(/,/g, "")) * 100) : undefined,
@@ -132,6 +138,7 @@ function naiveExtract(text: string): DraftOffer {
     currency: "GBP",
     nights: nights ? parseInt(nights[1]!, 10) : undefined,
     excludesTaxesAndFees: excludes || undefined,
+    freeChildClaim: freeChild || undefined,
   };
 }
 
@@ -186,7 +193,12 @@ async function quote(body: Record<string, unknown>) {
     const result = calculateTrueCost({ party, offer, rules });
     // Saving must never block the answer: if it fails, the user still gets the price.
     const quoteId = await saveQuote({ party, offer, result, sourceKind, sourceUrl });
-    return NextResponse.json({ result, fairMark: fairMark(result), quoteId });
+    const fm = fairMark(result);
+    // Anonymous statistics, written after the answer is sent so the family never waits for it.
+    after(() => logObservation({ party, offer, result, fairMark: fm }));
+    // "Kids go free"? What each child still costs in extras.
+    const childCosts = offer.freeChildClaim ? childExtras({ party, offer, rules }) : [];
+    return NextResponse.json({ result, fairMark: fm, childCosts, quoteId });
   } catch (err) {
     if (err instanceof PartyValidationError) return bad(err.message);
     return bad(err instanceof Error ? err.message : "Could not price this deal.");
@@ -225,6 +237,7 @@ function parseOffer(raw: unknown): Offer | string {
       ? [...new Set(raw.includes.filter((x): x is Inclusion => INCLUSIONS.includes(x as Inclusion)))]
       : [],
     excludesTaxesAndFees: raw.excludesTaxesAndFees === true,
+    freeChildClaim: raw.freeChildClaim === true,
     departDate: parseTravelDate(raw.departDate),
   };
 }

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatGBP } from "@truevsad/true-cost";
 import { ReceiptView } from "@/components/ReceiptView";
+import { ChildCostsNote } from "@/components/ChildCostsNote";
 import { loadPublicReceipt } from "@/lib/quotes";
 
 export const runtime = "nodejs";
@@ -57,6 +58,7 @@ export default async function SharedReceiptPage({ params }: { params: Params }) 
       )}
       <div className="card">
         <ReceiptView {...r} />
+        <ChildCostsNote costs={r.childCostsPence.map((pence) => ({ pence }))} />
       </div>
       <p>
         <Link href="/xray">X-ray your own deal →</Link>

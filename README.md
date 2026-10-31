@@ -92,8 +92,11 @@ supabase db push
 - [x] Watch groundwork: shared receipts re-price with today's fee rules and flag changes
 - [x] FairMark: badge + exact % on every receipt (recalculated on view), opt-in public deals board with "Show only Fair Price deals", Operator Fairness Leaderboard (reference family, last 30 days, hourly), WhatsApp preview image for shared receipts
 - [x] FairMark hardening: £ gap split into "taxes and fees left out" vs "extras your family needs", distance to the Fair Price line + biggest extra, reasons when unavailable, no badge without local tax data, "Local tourist taxes" can be ticked as included, median leaderboard (10+ deals, best/worst), /fairmark/method, /how-we-earn, a source link on every fee line
+- [x] Anonymous price observations (one line per X-ray: seller, place, travel week, party size, prices per person; no ages, postcode, link or quote id), kept 2 years — the base for school-holiday premiums later
+- [x] /fees: every fee rule in use, with source, date checked and how sure we are
+- [x] "Kids go free" check: AI reads the claim; the receipt shows what each child still costs in extras
 - [ ] Watch alerts (needs accounts + email), search across deals (needs a click-out inventory, never scraping)
-- [x] All migrations applied to production, up to 1400 (1100 run by hand) (nightly purge job scheduled at 03:17 UTC)
+- [x] All migrations applied to production, up to 1500 (1100 run by hand; 1600 to run by hand before 2028) (nightly purge job scheduled at 03:17 UTC)
 - [x] Deployed on Vercel (London) and tested end to end: X-ray → save → share
 - [x] Privacy page and footer: company number, ICO registration, registered office, contact emails, security.txt
 - [ ] Duffel integration for live flight prices
