@@ -5,6 +5,7 @@ import { INCLUSIONS, type FairMark, type Inclusion, type TrueCostResult } from "
 import { INCLUSION_LABELS, supplierDefaults } from "@/lib/supplier-defaults";
 import { ReceiptView } from "@/components/ReceiptView";
 import { FairSharePanel } from "@/components/FairSharePanel";
+import { ChildCostsNote } from "@/components/ChildCostsNote";
 
 type Step = "paste" | "confirm" | "receipt";
 
@@ -38,6 +39,8 @@ export default function XrayPage() {
   const [price, setPrice] = useState("");
   const [basis, setBasis] = useState<"per_person" | "total">("per_person");
   const [excludesFees, setExcludesFees] = useState(false);
+  const [freeChild, setFreeChild] = useState(false);
+  const [childCosts, setChildCosts] = useState<{ age: number; pence: number }[]>([]);
   const [nights, setNights] = useState("7");
   const [departDate, setDepartDate] = useState("");
   const [destination, setDestination] = useState("");
@@ -93,6 +96,7 @@ export default function XrayPage() {
       if (d.headlinePence) setPrice((d.headlinePence / 100).toFixed(2));
       if (d.headlineBasis) setBasis(d.headlineBasis);
       setExcludesFees(d.excludesTaxesAndFees === true);
+      setFreeChild(d.freeChildClaim === true);
       if (d.nights) setNights(String(d.nights));
       if (d.departDate) setDepartDate(d.departDate);
       if (d.destination) setDestination(d.destination);
@@ -131,6 +135,7 @@ export default function XrayPage() {
         supplierName: supplier || undefined,
         includes,
         excludesTaxesAndFees: excludesFees,
+        freeChildClaim: freeChild,
         departDate: departDate || undefined,
       };
       const data = await post({
@@ -143,6 +148,7 @@ export default function XrayPage() {
       setQuoted({ offer, party: { adults: Number(adults), childAges: ages } });
       setResult(data.result);
       setFairMark(data.fairMark ?? null);
+      setChildCosts(Array.isArray(data.childCosts) ? data.childCosts : []);
       setQuoteId(data.quoteId ?? null);
       setShareUrl(null);
       setCopied(false);
@@ -264,6 +270,10 @@ export default function XrayPage() {
             />{" "}
             The advert says &ldquo;plus taxes and fees&rdquo; (or similar)
           </label>
+          <label className="check">
+            <input type="checkbox" checked={freeChild} onChange={(e) => setFreeChild(e.target.checked)} />{" "}
+            The advert says children go free (&ldquo;free child places&rdquo;)
+          </label>
 
           <div className="row">
             <div>
@@ -339,6 +349,7 @@ export default function XrayPage() {
             excludesTaxesAndFees={excludesFees}
             fairMark={fairMark ?? undefined}
           />
+          <ChildCostsNote costs={childCosts} />
 
           {quoteId ? (
             shareUrl ? (

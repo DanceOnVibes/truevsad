@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   calculateTrueCost,
+  childExtras,
   classifyTrip,
   fairShare,
   scorePlace,
@@ -147,5 +148,22 @@ describe("tax coverage", () => {
     const r = calculateTrueCost({ party, offer: o, rules: selectRules([tax], o) });
     expect(r.trueCostPence).toBe(50000);
     expect(r.taxCoverage).toBe(true);
+  });
+});
+
+describe("free child places", () => {
+  const rules: FeeRule[] = [
+    { id: "bag", category: "party_extra", label: "Hold bag", unit: "per_person", amount: { kind: "fixed", pence: 6667 }, confidence: 0.4, minAge: 2, covers: "hold_bag" },
+    { id: "tax", category: "levy", label: "Tax", unit: "per_person_per_night", amount: { kind: "fixed", pence: 275 }, confidence: 0.9, minAge: 16, regions: ["Mallorca"], covers: "local_taxes" },
+    { id: "room", category: "levy", label: "Room fee", unit: "per_party_per_night", amount: { kind: "fixed", pence: 834 }, confidence: 0.7 },
+  ];
+  const offer: Offer = { headlinePence: 60000, headlineBasis: "per_person", currency: "GBP", nights: 7, destination: "Alcudia, Mallorca, Spain", freeChildClaim: true };
+  it("a 'free' 7-year-old still costs the hold bag; a baby costs nothing", () => {
+    const c = childExtras({ party: { adults: 2, childAges: [7, 1] }, offer, rules: selectRules(rules, offer) });
+    expect(c).toEqual([{ age: 7, pence: 6667 }, { age: 1, pence: 0 }]);
+  });
+  it("a 16-year-old also pays the tourist tax; room fees don't count per child", () => {
+    const c = childExtras({ party: { adults: 2, childAges: [16] }, offer, rules: selectRules(rules, offer) });
+    expect(c).toEqual([{ age: 16, pence: 6667 + 7 * 275 }]);
   });
 });

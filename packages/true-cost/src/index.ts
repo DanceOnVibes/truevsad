@@ -52,3 +52,4 @@ export {
   type FairMarkLevel,
   type FairMarkReason,
 } from "./fairmark";
+export { childExtras, type ChildCost } from "./free-child";

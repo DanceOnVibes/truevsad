@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import {
   calculateTrueCost,
+  childExtras,
   fairMark,
   fairMarkLevel,
   isFairPrice,
@@ -125,6 +126,10 @@ export async function saveQuote(input: {
     .update({ fairmark_percent: fm.percent, fairmark_level: fm.level })
     .eq("id", id);
   if (fmErr) console.error("fairmark save failed:", fmErr.message);
+  if (input.offer.freeChildClaim) {
+    const { data: q } = await db.from("true_cost_quote").select("offer_id").eq("id", id).maybeSingle();
+    if (q?.offer_id) await db.from("offer").update({ free_child_claim: true }).eq("id", q.offer_id);
+  }
   return id;
 }
 
@@ -184,6 +189,8 @@ export interface PublicReceipt {
   excludesTaxesAndFees: boolean;
   departDate: string | null;
   supplierName: string | null;
+  /** "Kids go free": what each child still costs in extras (no ages on shared receipts). */
+  childCostsPence: number[];
   /** The same deal priced with today's fee rules — differs when taxes or fees have changed. */
   todayTrueCostPence: number | null;
   /** FairMark recalculated on this view (today's rules); falls back to the stored one. */
@@ -212,7 +219,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
   const { data: q } = await db
     .from("true_cost_quote")
     .select(
-      "id, advertised_pence, true_cost_pence, gap_pence, confidence, used_demo_rules, created_at, fairmark_level, offer:offer_id (nights, destination, includes, excludes_taxes_and_fees, depart_on, headline_pence, headline_basis, currency, supplier_name), party:party_id (adults, child_ages)",
+      "id, advertised_pence, true_cost_pence, gap_pence, confidence, used_demo_rules, created_at, fairmark_level, offer:offer_id (nights, destination, includes, excludes_taxes_and_fees, depart_on, headline_pence, headline_basis, currency, supplier_name, free_child_claim), party:party_id (adults, child_ages)",
     )
     .eq("share_slug", slug)
     .eq("is_public", true)
@@ -236,6 +243,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
         headline_basis: "per_person" | "total";
         currency: string;
         supplier_name: string | null;
+        free_child_claim: boolean | null;
       }
     | null;
   const party = (Array.isArray(q.party) ? q.party[0] : q.party) as
@@ -245,6 +253,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
   // Watch: re-price with today's rules. Ages stay on the server; only the total is shown.
   let todayTrueCostPence: number | null = null;
   let today: FairMark | null = null;
+  let childCostsPence: number[] = [];
   if (offer && party) {
     try {
       const o: Offer = {
@@ -265,6 +274,13 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
       });
       todayTrueCostPence = now.trueCostPence;
       today = fairMark(now);
+      if (offer.free_child_claim) {
+        childCostsPence = childExtras({
+          party: { adults: party.adults, childAges: party.child_ages ?? [] },
+          offer: o,
+          rules,
+        }).map((c) => c.pence);
+      }
     } catch {
       todayTrueCostPence = null;
     }
@@ -293,6 +309,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
     excludesTaxesAndFees: offer?.excludes_taxes_and_fees === true,
     departDate: offer?.depart_on ?? null,
     supplierName: offer?.supplier_name ?? null,
+    childCostsPence,
     todayTrueCostPence,
     // Today's figure when we can re-price; otherwise what was stored when it was priced.
     fairMark:
@@ -350,7 +367,7 @@ function toOffer(o: BoardOfferRow): Offer {
 }
 
 /** "Golden Donaire Beach, Tarragona, Spain" → "tarragona spain": town/region + country, without the hotel. */
-function placeKey(destination: string): string {
+export function placeKey(destination: string): string {
   const parts = destination.split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
   return (parts.length >= 3 ? parts.slice(-2) : parts.length === 2 ? parts : parts.slice(0, 1)).join(" ");
 }
@@ -522,4 +539,62 @@ export async function loadLeaderboard(): Promise<{ rows: LeaderboardRow[]; deals
     });
   }
   return { rows, dealsCounted };
+}
+
+// ---------------------------------------------------------------------------
+// Public fee tables (/fees)
+// ---------------------------------------------------------------------------
+
+export interface PublicFeeRule {
+  category: CostCategory;
+  label: string;
+  unit: RuleUnit;
+  amountPence: number | null;
+  amountBp: number | null;
+  minAge: number | null;
+  maxAge: number | null;
+  supplierName: string | null;
+  regions: string[];
+  confidence: number;
+  sourceUrl: string | null;
+  sourceNote: string | null;
+  validFrom: string;
+  validTo: string | null;
+  months: number[];
+  maxNights: number | null;
+}
+
+/** Every fee rule in use today, exactly as the engine uses it. */
+export async function loadPublicFeeRules(): Promise<PublicFeeRule[]> {
+  const db = supabaseAdmin();
+  if (!db) return [];
+  const today = new Date().toISOString().slice(0, 10);
+  const { data } = await db
+    .from("fee_rule")
+    .select(
+      "category, label, unit, amount_pence, amount_bp, min_age, max_age, supplier_name, regions, confidence, source_url, source_note, valid_from, valid_to, months, max_nights",
+    )
+    .eq("is_active", true)
+    .lte("valid_from", today)
+    .or(`valid_to.is.null,valid_to.gte.${today}`)
+    .order("category")
+    .order("label");
+  return ((data ?? []) as Record<string, unknown>[]).map((r) => ({
+    category: r.category as CostCategory,
+    label: r.label as string,
+    unit: r.unit as RuleUnit,
+    amountPence: r.amount_pence === null ? null : Number(r.amount_pence),
+    amountBp: r.amount_bp === null ? null : Number(r.amount_bp),
+    minAge: (r.min_age as number | null) ?? null,
+    maxAge: (r.max_age as number | null) ?? null,
+    supplierName: (r.supplier_name as string | null) ?? null,
+    regions: (r.regions as string[] | null) ?? [],
+    confidence: Number(r.confidence),
+    sourceUrl: typeof r.source_url === "string" && /^https?:\/\//.test(r.source_url) ? r.source_url : null,
+    sourceNote: (r.source_note as string | null) ?? null,
+    validFrom: r.valid_from as string,
+    validTo: (r.valid_to as string | null) ?? null,
+    months: (r.months as number[] | null) ?? [],
+    maxNights: (r.max_nights as number | null) ?? null,
+  }));
 }
