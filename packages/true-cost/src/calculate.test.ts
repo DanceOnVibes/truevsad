@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculateTrueCost, ruleApplies, toOutwardPostcode, type FeeRule } from "./index";
+import { calculateTrueCost, ruleApplies, selectRules, toOutwardPostcode, type FeeRule } from "./index";
 
 const family = { adults: 2, childAges: [7, 1], outwardPostcode: "SE11" };
 
@@ -95,5 +95,51 @@ describe("inclusions", () => {
   it("still charges when it is not included", () => {
     expect(ruleApplies(bag, { includes: ["transfers"] })).toBe(true);
     expect(ruleApplies(bag, {})).toBe(true);
+  });
+});
+
+describe("night caps and per-room fees", () => {
+  const party = { adults: 2, childAges: [10] };
+  const offer = { headlinePence: 100000, headlineBasis: "total" as const, currency: "GBP", nights: 10 };
+
+  it("stops charging a per-night tax after maxNights", () => {
+    const tax: FeeRule = {
+      id: "cat", category: "levy", label: "Catalonia tax", unit: "per_person_per_night",
+      amount: { kind: "fixed", pence: 153 }, confidence: 0.8, minAge: 17, maxAge: 99, maxNights: 7,
+    };
+    const r = calculateTrueCost({ party, offer, rules: [tax] });
+    const line = r.receipt.lines.find((l) => l.ruleId === "cat")!;
+    expect(line.amountPence).toBe(2 * 7 * 153); // 2 adults (child exempt) × 7 nights, not 10
+    expect(line.working).toContain("charged for 7 max");
+  });
+
+  it("charges a per-party-per-night fee once per night", () => {
+    const fee: FeeRule = {
+      id: "gr", category: "levy", label: "Greece climate fee", unit: "per_party_per_night",
+      amount: { kind: "fixed", pence: 850 }, confidence: 0.7,
+    };
+    const r = calculateTrueCost({ party, offer, rules: [fee] });
+    expect(r.receipt.lines.find((l) => l.ruleId === "gr")!.amountPence).toBe(10 * 850);
+  });
+});
+
+describe("specific beats generic", () => {
+  const generic: FeeRule = {
+    id: "g", category: "party_extra", label: "Typical hold bag", unit: "per_person",
+    amount: { kind: "fixed", pence: 4500 }, confidence: 0.4, covers: "hold_bag",
+  };
+  const ezy: FeeRule = { ...generic, id: "e", label: "easyJet hold bag", supplierName: "easyJet", confidence: 0.6 };
+  const tax: FeeRule = {
+    id: "t", category: "levy", label: "Tax", unit: "per_person",
+    amount: { kind: "fixed", pence: 100 }, confidence: 0.9,
+  };
+
+  it("uses the airline's own bag fee instead of the typical one", () => {
+    const ids = selectRules([generic, ezy, tax], { supplierName: "easyJet" }).map((r) => r.id);
+    expect(ids).toEqual(["e", "t"]);
+  });
+  it("falls back to the typical fee when the airline is unknown", () => {
+    const ids = selectRules([generic, ezy, tax], { supplierName: "On the Beach" }).map((r) => r.id);
+    expect(ids).toEqual(["g", "t"]);
   });
 });

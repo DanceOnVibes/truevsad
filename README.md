@@ -79,13 +79,15 @@ supabase db push
 - [x] London (europe-west2) serves `gemini-3.5-flash` (health probe 200); `gemini-2.5-flash` is not offered there (404)
 - [x] "Plus taxes and fees" adverts flagged (AI + text check) and warned on the receipt, including shared ones
 - [x] Place words read from the deal link's address (never opened) so the AI fills in town and country
-- [ ] Real, sourced fee rules in `data/fee-rules/fee-rules.csv` (see its README)
-- [x] All migrations applied to production, up to 0800 (nightly purge job scheduled at 03:17 UTC)
+- [x] First real, sourced fee rules (Balearics, Catalonia, Greece, ESTA, Ryanair/easyJet/typical hold bags) — checked against official/secondary sources 31 Oct 2026
+- [x] Engine: per-room-per-night fees, night caps (e.g. Catalonia's 7 nights), airline-specific fee beats the generic one
+- [ ] More fee rules: Portugal, Italy, Croatia, Turkey, Malta, Cyprus, Amsterdam, Paris; seats and cabin bags; Jet2/TUI/Wizz/BA
+- [ ] Travel month on the confirm step, so seasonal taxes use the right rate
+- [x] All migrations applied to production, up to 0900 (nightly purge job scheduled at 03:17 UTC)
 - [x] Deployed on Vercel (London) and tested end to end: X-ray → save → share
 - [x] Privacy page and footer: company number, ICO registration, registered office, contact emails, security.txt
 - [ ] Duffel integration for live flight prices
 
-> The X-ray currently uses **demo** fee rules. They are placeholders, not real prices, and the UI says so.
 
 ---
 

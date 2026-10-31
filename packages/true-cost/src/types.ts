@@ -81,7 +81,9 @@ export type RuleUnit =
   | "per_adult"
   | "per_child"
   | "per_person_per_night"
-  | "per_adult_per_night";
+  | "per_adult_per_night"
+  /** Once per night for the whole party, e.g. a hotel fee charged per room per night (assumes one room). */
+  | "per_party_per_night";
 
 export type RuleAmount =
   | { kind: "fixed"; pence: Pence }
@@ -108,6 +110,8 @@ export interface FeeRule {
   supplierName?: string;
   /** Skip this rule when the deal already includes this item (e.g. a bag fee covers "hold_bag"). */
   covers?: Inclusion;
+  /** Per-night rules stop counting after this many nights (e.g. Catalonia charges the first 7 only). */
+  maxNights?: number;
 }
 
 /** A cost line before the engine has stamped it. */

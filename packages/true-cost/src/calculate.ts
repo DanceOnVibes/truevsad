@@ -11,7 +11,7 @@ import {
   type TrueCostResult,
 } from "./types";
 
-export const ENGINE_VERSION = "0.1.0";
+export const ENGINE_VERSION = "0.2.0";
 
 /**
  * TrueCost = supplier lines + party extras + levies + entry docs + door-to-door + payment/FX
@@ -88,7 +88,10 @@ function sumCategory(lines: CostLine[], category: CostCategory): Pence {
 }
 
 /** How many units of a rule this party triggers, plus a readable explanation. */
-function unitsFor(rule: FeeRule, party: Party, nights: number): { units: number; label: string } {
+function unitsFor(rule: FeeRule, party: Party, stayNights: number): { units: number; label: string } {
+  // Some per-night taxes stop after a set number of nights (e.g. Catalonia: first 7 only).
+  const capped = rule.maxNights !== undefined && stayNights > rule.maxNights;
+  const nights = capped ? rule.maxNights! : stayNights;
   const kids = childrenInBand(party, rule.minAge, rule.maxAge);
   // Adults are 18+, so they fall outside a child-only band (maxAge < 18).
   const adultsCount = rule.maxAge !== undefined && rule.maxAge < 18 ? 0 : party.adults;
@@ -106,12 +109,15 @@ function unitsFor(rule: FeeRule, party: Party, nights: number): { units: number;
     case "per_child":
       return { units: kids, label: n(kids, "child") };
     case "per_person_per_night":
-      return { units: people * nights, label: `${n(people, "person")} × ${n(nights, "night")}` };
+      return { units: people * nights, label: `${n(people, "person")} × ${nightsLabel()}` };
     case "per_adult_per_night":
-      return {
-        units: party.adults * nights,
-        label: `${n(party.adults, "adult")} × ${n(nights, "night")}`,
-      };
+      return { units: party.adults * nights, label: `${n(party.adults, "adult")} × ${nightsLabel()}` };
+    case "per_party_per_night":
+      return { units: nights, label: nightsLabel() };
+  }
+
+  function nightsLabel() {
+    return capped ? `${n(nights, "night")} (charged for ${nights} max)` : n(nights, "night");
   }
 }
 

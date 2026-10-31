@@ -12,19 +12,20 @@ A rule that can't be backed up is worse than no rule: it breaks the whole promis
 | --- | --- | --- | --- |
 | `category` | yes | `party_extra`, `levy`, `entry_doc`, `door_to_door` or `payment_fx` | `levy` |
 | `label` | yes | What the family sees on the Receipt (max 160 chars) | `Canary Islands tourist tax` |
-| `unit` | yes | `per_party`, `per_person`, `per_adult`, `per_child`, `per_person_per_night`, `per_adult_per_night` | `per_adult_per_night` |
+| `unit` | yes | `per_party`, `per_person`, `per_adult`, `per_child`, `per_person_per_night`, `per_adult_per_night`, `per_party_per_night` (once per night for the party, e.g. per room) | `per_adult_per_night` |
 | `amount_gbp` | one of these two | Fixed amount in **pounds** (converted to pence on import) | `2.50` |
 | `percent` | one of these two | Percentage of the flight + stay price | `2.99` |
 | `min_age` | no | Youngest age the rule applies to | `16` |
 | `max_age` | no | Oldest age it applies to (leave blank for adults) | |
 | `supplier_name` | no | Only for one airline/operator, e.g. `easyJet`. Blank = everyone | |
-| `region` | no | Where it applies, plain words for now, e.g. `Tenerife`. Blank = everywhere | `Canary Islands` |
+| `region` | no | Where it applies: place names separated by `\|`. Matched as whole words against destinations like "Golden Donaire Beach, Tarragona, Spain", so list the region, islands, provinces and main resort towns. Blank = everywhere | `Mallorca\|Majorca\|Palma` |
 | `confidence` | yes | 0–1. `0.9` = official published figure; `0.6` = typical price that varies; `0.3` = rough guess | `0.9` |
 | `source_url` | yes | Where the figure comes from — official pages first | `https://…` |
 | `source_note` | yes | One line: what the page says, and the date you checked it | `Gov page, checked 30 Oct 2026` |
 | `valid_from` | yes | `YYYY-MM-DD` when the figure starts | `2026-11-01` |
 | `valid_to` | no | `YYYY-MM-DD` when it ends, if known | |
 | `covers` | no | If this fee is for something a package might already include: `hold_bag`, `cabin_bag`, `seats` or `transfers`. The fee is then skipped when the family ticks it as included. | `hold_bag` |
+| `max_nights` | no | Per-night taxes that stop after a number of nights (Catalonia: first 7 only) | `7` |
 
 ## Rules of thumb
 
@@ -34,3 +35,6 @@ A rule that can't be backed up is worse than no rule: it breaks the whole promis
 - Don't invent `region` boundaries yet — map areas come in Phase 3.
 - No £0 rows. "Not required" or "included" facts are not fees — put them in research notes, or use `covers`.
 - Any bag, seat or transfer fee **must** have `covers` filled in, or we'll double-charge package holidays.
+- An airline's own fee beats the generic "typical" fee for the same item: if both apply, only the airline's is used.
+- Two rules must never match the same place for the same tax (e.g. a "Barcelona" row and a "rest of Catalonia" row that also lists Barcelona). That charges the tax twice.
+- We don't know travel dates yet, so seasonal taxes use the summer rate, and the label says so.

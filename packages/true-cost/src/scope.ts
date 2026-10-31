@@ -39,9 +39,19 @@ export function ruleApplies(
   return true;
 }
 
+/**
+ * The rules that apply to this offer.
+ *
+ * Specific beats generic: if a supplier's own fee for an item applies (e.g. "easyJet hold bag"),
+ * the generic "typical hold bag" rule is dropped, so the family isn't charged twice.
+ */
 export function selectRules(
   rules: FeeRule[],
   offer: Pick<Offer, "destination" | "supplierName" | "includes">,
 ): FeeRule[] {
-  return rules.filter((r) => ruleApplies(r, offer));
+  const applicable = rules.filter((r) => ruleApplies(r, offer));
+  const coveredBySupplier = new Set(
+    applicable.filter((r) => r.covers && r.supplierName).map((r) => r.covers),
+  );
+  return applicable.filter((r) => !(r.covers && !r.supplierName && coveredBySupplier.has(r.covers)));
 }
