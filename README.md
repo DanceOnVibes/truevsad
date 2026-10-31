@@ -86,7 +86,7 @@ supabase db push
 - [x] Travel date on the X-ray (AI reads it too); seasonal fee rates by month (summer assumed without a date, and the receipt says so)
 - [x] School Window core: `school_holiday` table, `pnpm import-holidays`, /school-window (holidays, shoulder weeks, trip check)
 - [x] School Window data (loaded): 10 councils for 2026-27 (Lambeth, Southwark, Wandsworth, Lewisham, Croydon, Westminster, Birmingham, Leeds, Bristol, Cardiff) and 8 of them for 2027-28
-- [x] Term dates round 2 (31 Oct 2026): 16 councils, 167 holidays. Added Manchester, Liverpool, Sheffield, Bradford, Kent, Essex (2026-27 and 2027-28), Lewisham and Cardiff 2027-28, and summers where the council published the September return. GLM's pass (council's exact words quoted) agreed with Grok on all 44 shared rows; Liverpool Easter 2027 corrected (page says term "Ends" on Good Friday)
+- [x] Term dates round 2 (31 Oct 2026): 16 councils, 177 holidays. Added Manchester, Liverpool, Sheffield, Bradford, Kent, Essex (2026-27 and 2027-28), Lewisham and Cardiff 2027-28, and summers where the council published the September return. GLM's pass (council's exact words quoted) agreed with Grok on all 44 shared rows; Liverpool Easter 2027 corrected (page says term "Ends" on Good Friday)
 - [ ] More councils (Hampshire, Surrey, Greenwich: Grok only, awaiting a second check; Hertfordshire, Lancashire, Bromley, Barnet, Newham)
 - [x] Visit Before You Book core: /visit with OpenStreetMap counts (cached 30 days in London), families / couples / groups traffic lights
 - [x] Fair Share: split a deal between families on the receipt (never saved)
