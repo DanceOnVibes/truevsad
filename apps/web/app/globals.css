@@ -103,3 +103,9 @@ fieldset.includes { border: 1px solid var(--line); border-radius: 8px; padding: 
 fieldset.includes legend { font-weight: 600; padding: 0 4px; }
 label.check { display: flex; align-items: center; gap: 8px; font-weight: 400; margin: 8px 0; }
 label.check input { width: auto; }
+
+/* School Window trip status */
+.status { border-left-width: 6px; }
+.status-school_holiday { border-left-color: var(--gap); }
+.status-shoulder { border-left-color: #c58a00; }
+.status-term_time { border-left-color: var(--muted); }
