@@ -9,6 +9,8 @@ export interface Authority {
 export interface HolidayRow extends SchoolHoliday {
   schoolYear: string;
   sourceUrl: string;
+  /** When we last checked these dates against the council's own page, YYYY-MM-DD. */
+  checkedOn: string | null;
 }
 
 /** Councils we have sourced school holidays for. */
@@ -29,7 +31,7 @@ export async function loadHolidays(authority: string): Promise<HolidayRow[]> {
   const since = new Date(Date.now() - 365 * 86_400_000).toISOString().slice(0, 10);
   const { data, error } = await db
     .from("school_holiday")
-    .select("authority, name, starts_on, ends_on, school_year, source_url")
+    .select("authority, name, starts_on, ends_on, school_year, source_url, checked_on")
     .eq("authority", authority)
     .gte("ends_on", since)
     .order("starts_on");
@@ -42,6 +44,7 @@ export async function loadHolidays(authority: string): Promise<HolidayRow[]> {
       ends_on: string;
       school_year: string;
       source_url: string;
+      checked_on: string | null;
     }[]
   ).map((r) => ({
     authority: r.authority,
@@ -50,5 +53,6 @@ export async function loadHolidays(authority: string): Promise<HolidayRow[]> {
     endsOn: r.ends_on,
     schoolYear: r.school_year,
     sourceUrl: r.source_url,
+    checkedOn: r.checked_on,
   }));
 }

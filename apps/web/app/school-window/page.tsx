@@ -174,6 +174,7 @@ export default async function SchoolWindowPage({ searchParams }: { searchParams:
             <a href={list[0]!.sourceUrl} rel="noopener noreferrer" target="_blank">
               {council} council
             </a>
+            {list[0]!.checkedOn ? `, checked ${short(list[0]!.checkedOn)} ${list[0]!.checkedOn.slice(0, 4)}` : ""}
             . Academies and faith schools can differ, so check with your school.
           </p>
         </div>

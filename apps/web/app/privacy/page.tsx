@@ -84,11 +84,13 @@ export default function PrivacyPage() {
           never your postcode, children&apos;s ages or the deal link.
         </p>
 
-        <h2>School Window and splitting a price</h2>
+        <h2>FairFam, School Window and splitting a price</h2>
         <p>
-          Checking a date against your council&apos;s school holidays, or splitting a price between
-          families, is worked out on the spot. We don&apos;t save which council you chose, your dates
-          or the split.
+          Checking a date against your council&apos;s school holidays, finding the weeks your whole family
+          can travel, comparing your own two quotes, or splitting a price between families is worked
+          out on the spot. We don&apos;t save which council you chose, your school&apos;s dates, your party
+          or the split. When you go from FairFam to Deal X-ray, your party, date and nights are passed
+          to the next page inside your own browser tab and deleted as soon as it opens.
         </p>
         <p>
           If you give the first half of your postcode (on School Window or the X-ray), we send only

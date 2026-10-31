@@ -174,6 +174,14 @@ export function ReceiptView(props: ReceiptViewProps) {
         <p className="hint">
           The true price above covers everything else listed on the receipt, each with its source.
         </p>
+        <h4>Good to know</h4>
+        <p className="hint">
+          If this is a package (flights and stay booked together), the price can only go up after you
+          book if the contract allows it, and only for fuel, taxes or exchange rates, with at least 20
+          days&apos; notice before you travel. If it goes up by more than 8%, you can cancel without a fee
+          and get a full refund within 14 days (Package Travel Regulations 2018). General information,
+          not legal advice.
+        </p>
       </div>
       <p className="hint">
         Spotted a figure that&apos;s wrong? Tell us at{" "}

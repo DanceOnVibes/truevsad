@@ -56,10 +56,28 @@ export default function HowWeEarnPage() {
       <div className="card">
         <h2 style={{ marginTop: 0 }}>What never changes</h2>
         <ul>
-          <li>Deals are ordered by true price and how sure we are of it, never by what a seller pays us.</li>
+          <li>Nothing on TrueVsAd is ever ordered by what a seller pays us.</li>
           <li>FairMark, the Fair Price badge and the ✓ on the sellers&apos; leaderboard can&apos;t be bought.</li>
           <li>Paid links will always be labelled.</li>
           <li>We never take payment for a holiday, and we never sell anything about you.</li>
+        </ul>
+      </div>
+
+      <div className="card">
+        <h2 style={{ marginTop: 0 }}>How we order things</h2>
+        <ul>
+          <li>
+            <strong>The FairMark deals board</strong> lists deals newest first. &ldquo;Show only Fair Price
+            deals&rdquo; hides the others but never moves a deal up or down.
+          </li>
+          <li>
+            <strong>The sellers&apos; leaderboard</strong> is ordered by each seller&apos;s median FairMark,
+            fairest first (you can flip it). The method is on{" "}
+            <Link href="/fairmark/method">How FairMark works</Link>.
+          </li>
+          <li>
+            <strong>FairFam</strong> lists holiday sellers&apos; own search pages in alphabetical order.
+          </li>
         </ul>
       </div>
 
