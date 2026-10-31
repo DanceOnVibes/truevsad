@@ -3,6 +3,7 @@ import {
   calculateTrueCost,
   childExtras,
   receiptScope,
+  familySeatingFor,
   AIRLINE_BAGS,
   airlineBagsFor,
   bagFits,
@@ -335,5 +336,35 @@ describe("Will my bag fit?", () => {
           expect(b.dims !== null).toBe(true);
           expect(/^\d{4}-\d{2}-\d{2}$/.test(b.checkedOn)).toBe(true);
         }
+  });
+});
+
+describe("seats: only what a family must pay to sit together", () => {
+  const seat = (supplierName: string | undefined): FeeRule => ({
+    id: `s-${supplierName}`, category: "party_extra", label: "Seats, return", unit: "per_adult",
+    amount: { kind: "fixed", pence: 1400 }, confidence: 0.4, covers: "seats", supplierName,
+  });
+  const offer: Offer = { headlinePence: 200000, headlineBasis: "total", currency: "GBP", nights: 7 };
+  const family = { adults: 2, childAges: [7, 11] };
+  it("adults-only bookings: nothing counted", () => {
+    const r = calculateTrueCost({ party: { adults: 2, childAges: [] }, offer, rules: [seat("Ryanair"), seat(undefined)] });
+    expect(r.trueCostPence).toBe(200000);
+  });
+  it("Ryanair: one parent's family seat", () => {
+    const r = calculateTrueCost({ party: family, offer, rules: [seat("Ryanair")] });
+    expect(r.trueCostPence).toBe(200000 + 1400);
+  });
+  it("easyJet and BA seat children with an adult for free", () => {
+    const r = calculateTrueCost({ party: family, offer, rules: [seat("easyJet"), seat("British Airways")] });
+    expect(r.trueCostPence).toBe(200000);
+    expect(familySeatingFor("easyJet holidays")!.policy).toBe("free");
+  });
+  it("airline policy unknown: per adult, as before", () => {
+    const r = calculateTrueCost({ party: family, offer, rules: [seat(undefined)] });
+    expect(r.trueCostPence).toBe(200000 + 2 * 1400);
+  });
+  it("teenagers only: nothing counted", () => {
+    const r = calculateTrueCost({ party: { adults: 2, childAges: [13, 15] }, offer, rules: [seat("TUI")] });
+    expect(r.trueCostPence).toBe(200000);
   });
 });
