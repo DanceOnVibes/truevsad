@@ -119,6 +119,11 @@ export interface FeeRule {
    * [5,6,7,8,9,10]. Empty = all year. Without a travel date we assume July (and say so).
    */
   months?: number[];
+  /**
+   * Rules in the same group never stack: if several apply, only the most specific one is used
+   * (the one listing the fewest places). E.g. "Barcelona" beats "Catalonia-wide" for a Barcelona hotel.
+   */
+  exclusiveGroup?: string;
 }
 
 /** A cost line before the engine has stamped it. */

@@ -35,6 +35,7 @@ interface FeeRuleRow {
   covers: Inclusion | null;
   max_nights: number | null;
   months: number[] | null;
+  exclusive_group: string | null;
 }
 
 /**
@@ -50,7 +51,7 @@ export async function loadFeeRules(): Promise<FeeRule[]> {
   const { data, error } = await db
     .from("fee_rule")
     .select(
-      "id, category, label, unit, amount_pence, amount_bp, min_age, max_age, confidence, regions, supplier_name, covers, max_nights, months",
+      "id, category, label, unit, amount_pence, amount_bp, min_age, max_age, confidence, regions, supplier_name, covers, max_nights, months, exclusive_group",
     )
     .eq("is_active", true)
     .lte("valid_from", today)
@@ -75,6 +76,7 @@ export async function loadFeeRules(): Promise<FeeRule[]> {
     covers: r.covers ?? undefined,
     maxNights: r.max_nights ?? undefined,
     months: r.months ?? undefined,
+    exclusiveGroup: r.exclusive_group ?? undefined,
   }));
 }
 

@@ -112,3 +112,16 @@ describe("Fair Share", () => {
     expect(r.shares.map((s) => s.advertisedPence)).toEqual([200001, 100000]);
   });
 });
+
+describe("exclusive groups", () => {
+  const base = { category: "levy" as const, unit: "per_person_per_night" as const, confidence: 0.6, exclusiveGroup: "catalonia" };
+  const bcn: FeeRule = { ...base, id: "bcn", label: "Barcelona", amount: { kind: "fixed", pence: 770 }, regions: ["Barcelona"] };
+  const rest: FeeRule = { ...base, id: "rest", label: "Catalonia", amount: { kind: "fixed", pence: 165 }, regions: ["Catalonia", "Calella", "Salou"] };
+
+  it("a Barcelona-province town written with 'Barcelona' is charged once, at the most specific rate", () => {
+    expect(selectRules([rest, bcn], { destination: "Hotel Sol, Calella, Barcelona, Spain" }).map((r) => r.id)).toEqual(["bcn"]);
+  });
+  it("elsewhere in Catalonia uses the regional rate", () => {
+    expect(selectRules([rest, bcn], { destination: "Golden Donaire Beach, Salou, Spain" }).map((r) => r.id)).toEqual(["rest"]);
+  });
+});

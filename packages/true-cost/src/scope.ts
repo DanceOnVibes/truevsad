@@ -61,5 +61,17 @@ export function selectRules(rules: FeeRule[], offer: ScopeOffer): FeeRule[] {
   const coveredBySupplier = new Set(
     applicable.filter((r) => r.covers && r.supplierName).map((r) => r.covers),
   );
-  return applicable.filter((r) => !(r.covers && !r.supplierName && coveredBySupplier.has(r.covers)));
+  const unstacked = applicable.filter(
+    (r) => !(r.covers && !r.supplierName && coveredBySupplier.has(r.covers)),
+  );
+
+  // Exclusive groups: keep only the most specific rule (fewest places listed; first wins a tie).
+  const best = new Map<string, FeeRule>();
+  const places = (r: FeeRule) => (r.regions && r.regions.length > 0 ? r.regions.length : Infinity);
+  for (const r of unstacked) {
+    if (!r.exclusiveGroup) continue;
+    const cur = best.get(r.exclusiveGroup);
+    if (!cur || places(r) < places(cur)) best.set(r.exclusiveGroup, r);
+  }
+  return unstacked.filter((r) => !r.exclusiveGroup || best.get(r.exclusiveGroup) === r);
 }

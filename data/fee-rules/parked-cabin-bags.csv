@@ -1,0 +1,4 @@
+category,label,unit,amount_gbp,percent,min_age,max_age,supplier_name,region,confidence,source_url,source_note,valid_from,valid_to,covers,max_nights,months,exclusive_group
+party_extra,"Ryanair Priority & 2 Cabin Bags (10kg), return",per_person,24.00,,,,Ryanair,,0.4,https://www.ryanair.com/gb/en/useful-info/help-centre/fees,Official fees: ~GBP 6-20 per flight; typical ~GBP 12 each way. checked 31 Oct 2026,2026-10-31,,cabin_bag,,,
+party_extra,"easyJet large cabin bag, return",per_person,32.00,,,,easyJet,,0.4,https://www.easyjet.com/en/help-centre/policy-terms-and-conditions/fees-charges,Official fees: from GBP 5.99 per flight; typical ~GBP 16 each way. checked 31 Oct 2026,2026-10-31,,cabin_bag,,,
+party_extra,"Wizz Air Priority with 10kg cabin bag, return",per_person,20.01,,,,Wizz Air,,0.4,https://wizzair.com/en-gb/information-and-services/prices/fees-and-services,Official fees: typical ~EUR 12 each way; ECB 0.8338. checked 31 Oct 2026,2026-10-31,,cabin_bag,,,
