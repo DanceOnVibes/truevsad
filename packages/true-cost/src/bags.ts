@@ -86,15 +86,6 @@ export const AIRLINE_BAGS: AirlineBags[] = [
     notes: ["Infants get an extra 10kg allowance, and up to two baby items (pushchair, car seat, travel cot) go free."],
   },
   {
-    airline: "KLM",
-    aliases: ["KLM"],
-    bags: [
-      { kind: "underseat", dims: null, maxKg: null, wheelsCount: "not stated", price: "free", sourceUrl: "https://www.klm.co.uk/information/baggage/hand-baggage", quote: "", checkedOn: C, verified: false },
-      { kind: "cabin", dims: null, maxKg: null, wheelsCount: "not stated", price: "some_fares", sourceUrl: "https://www.klm.co.uk/information/baggage/hand-baggage", quote: "", checkedOn: C, verified: false },
-    ],
-    notes: ["KLM's page blocks automated checks, so its sizes are not checked yet."],
-  },
-  {
     airline: "Lufthansa",
     aliases: ["Lufthansa"],
     bags: [
@@ -107,10 +98,10 @@ export const AIRLINE_BAGS: AirlineBags[] = [
     airline: "Norwegian",
     aliases: ["Norwegian"],
     bags: [
-      { kind: "underseat", dims: null, maxKg: null, wheelsCount: "not stated", price: "free", sourceUrl: "https://www.norwegian.com/en/travel-info/baggage/hand-baggage", quote: "Everyone can bring one underseat bag to be stored under the seat in front.", checkedOn: C, verified: false },
-      { kind: "cabin", dims: [55, 40, 23], maxKg: 10, wheelsCount: "not stated", price: "some_fares", priceNote: "Depends on the fare; 10kg is the combined weight of all hand baggage", sourceUrl: "https://www.norwegian.com/en/booking/helpful-booking-info/group-bookings/group-booking-conditions", quote: "1 overhead cabin bag (55x40x23 cm). Combined weight for hand baggage is max 10kg.", checkedOn: C, verified: true },
+      { kind: "underseat", dims: [30, 40, 20], maxKg: 10, wheelsCount: "not stated", price: "free", priceNote: "On every ticket; 10kg on LowFare", sourceUrl: "https://www.norwegian.com/en/travel-info/baggage/hand-baggage", quote: "Small underseat cabin bag (30x40x20cm)", checkedOn: C, verified: true },
+      { kind: "cabin", dims: [55, 40, 23], maxKg: 10, wheelsCount: "not stated", price: "some_fares", priceNote: "Included with LowFare+ (10kg combined) and Flex (15kg combined); not with LowFare", sourceUrl: "https://www.norwegian.com/en/travel-info/baggage/hand-baggage", quote: "Overhead cabin bag (55x40x23cm)", checkedOn: C, verified: true },
     ],
-    notes: [],
+    notes: ["Norwegian counts the combined weight of all your hand baggage."],
   },
   {
     airline: "Ryanair",
@@ -155,6 +146,9 @@ export const AIRLINE_BAGS: AirlineBags[] = [
     notes: ["Wizz Air doesn't count handles and wheels in the size, but wheels may add no more than 5cm."],
   },
 ];
+
+/** Airlines we couldn't check from a working page yet (not shown until we can). */
+export const BAGS_NOT_CHECKED = ["KLM"] as const;
 
 export function airlineBagsFor(name: string | undefined): AirlineBags | undefined {
   if (!name) return undefined;

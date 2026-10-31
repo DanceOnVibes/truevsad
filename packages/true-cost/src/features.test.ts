@@ -312,8 +312,14 @@ describe("Will my bag fit?", () => {
     expect(bagFits({ dims: [42, 32, 20] }, wizz)).toBe("too_big");
   });
   it("never answers for sizes we haven't checked", () => {
-    const klm = airlineBagsFor("KLM")!.bags[0]!;
-    expect(bagFits({ dims: [10, 10, 10] }, klm)).toBe("not_checked");
+    const ba = airlineBagsFor("British Airways")!.bags.find((b) => b.kind === "underseat")!;
+    expect(bagFits({ dims: [10, 10, 10] }, ba)).toBe("not_checked");
+    expect(airlineBagsFor("KLM")).toBe(undefined);
+  });
+  it("Norwegian's under-seat bag, from its own page", () => {
+    const n = airlineBagsFor("Norwegian")!.bags.find((b) => b.kind === "underseat")!;
+    expect(bagFits({ dims: [40, 30, 20] }, n)).toBe("fits");
+    expect(bagFits({ dims: [45, 36, 20] }, n)).toBe("too_big");
   });
   it("every verified row has its source, the airline's words and a check date", () => {
     for (const a of AIRLINE_BAGS)

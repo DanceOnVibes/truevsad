@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AIRLINE_BAGS, type BagAllowance } from "@truevsad/true-cost";
+import { AIRLINE_BAGS, BAGS_NOT_CHECKED, type BagAllowance } from "@truevsad/true-cost";
 import { BagChecker } from "./BagChecker";
 
 export const metadata: Metadata = {
   title: "Cabin bag sizes by airline, and will my bag fit? — TrueVsAd",
   description:
-    "Free under-seat and cabin bag sizes for Ryanair, easyJet, Jet2, TUI, BA, Wizz Air and more, from each airline's own page with the date we checked. Measure your bag and see where it flies free.",
+    "Free under-seat and cabin bag sizes for Ryanair, easyJet, Jet2, TUI, BA, Wizz Air, Norwegian and more, from each airline's own page with the date we checked. Measure your bag and see where it flies free.",
 };
 
 const PRICE: Record<BagAllowance["price"], string> = {
@@ -78,6 +78,11 @@ export default function CabinBagsPage() {
           ))}
         </div>
       ))}
+
+      <p className="hint">
+        Not on this list yet: {BAGS_NOT_CHECKED.join(", ")}. We add an airline only once we can check its
+        own page.
+      </p>
 
       <div className="card">
         <h2 style={{ marginTop: 0 }}>Rules changing in October 2027</h2>
