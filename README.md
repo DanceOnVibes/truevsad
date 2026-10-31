@@ -32,7 +32,7 @@ All money is integer pence. The engine (`packages/true-cost`) is a pure function
 ## Repo layout
 
 ```
-apps/web               Next.js (App Router) — site + /api/xray
+apps/web               Next.js (App Router) — /xray, /school-window, /visit, /r/[slug], /api/xray
 packages/true-cost     Shared TypeScript engine: calculateTrueCost()
 supabase/migrations    Postgres + PostGIS schema with Row Level Security
 ```
@@ -82,8 +82,14 @@ supabase db push
 - [x] First real, sourced fee rules (Balearics, Catalonia, Greece, ESTA, Ryanair/easyJet/typical hold bags) — checked against official/secondary sources 31 Oct 2026
 - [x] Engine: per-room-per-night fees, night caps (e.g. Catalonia's 7 nights), airline-specific fee beats the generic one
 - [ ] More fee rules: Portugal, Italy, Croatia, Turkey, Malta, Cyprus, Amsterdam, Paris; seats and cabin bags; Jet2/TUI/Wizz/BA
-- [ ] Travel month on the confirm step, so seasonal taxes use the right rate
-- [x] All migrations applied to production, up to 0900 (nightly purge job scheduled at 03:17 UTC)
+- [x] Travel date on the X-ray (AI reads it too); seasonal fee rates by month (summer assumed without a date, and the receipt says so)
+- [x] School Window core: `school_holiday` table, `pnpm import-holidays`, /school-window (holidays, shoulder weeks, trip check)
+- [ ] School Window data: sourced council term dates (see `data/school-holidays/README.md`)
+- [x] Visit Before You Book core: /visit with OpenStreetMap counts (cached 30 days in London), families / couples / groups traffic lights
+- [x] Fair Share: split a deal between families on the receipt (never saved)
+- [x] Watch groundwork: shared receipts re-price with today's fee rules and flag changes
+- [ ] Watch alerts (needs accounts + email), search across deals (needs a click-out inventory, never scraping)
+- [x] All migrations applied to production, up to 1000; 1100 needs a manual run (nightly purge job scheduled at 03:17 UTC)
 - [x] Deployed on Vercel (London) and tested end to end: X-ray → save → share
 - [x] Privacy page and footer: company number, ICO registration, registered office, contact emails, security.txt
 - [ ] Duffel integration for live flight prices
