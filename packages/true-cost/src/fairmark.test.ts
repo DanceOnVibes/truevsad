@@ -43,3 +43,31 @@ describe("FairMark", () => {
     expect(isFairPrice("unavailable")).toBe(false);
   });
 });
+
+describe("FairMark hardening", () => {
+  it("never calls a deal fair when we have no tax data for the place", () => {
+    const f = fairMark({ advertisedPence: 100000, trueCostPence: 100000, confidence: 0.9, taxCoverage: false });
+    expect(f.level).toBe("unavailable");
+    expect(f.reason).toBe("no_tax_data");
+    expect(f.summary.length > 0).toBe(true);
+  });
+  it("splits required fees from family extras and names the biggest extra", () => {
+    const f = fairMark({
+      advertisedPence: 100000,
+      trueCostPence: 112000,
+      confidence: 0.8,
+      taxCoverage: true,
+      lines: [
+        { category: "supplier", label: "Advertised price", amountPence: 100000, source: "extracted", confidence: 0.9 },
+        { category: "levy", label: "Tourist tax", amountPence: 2000, source: "rule", confidence: 0.8 },
+        { category: "party_extra", label: "Hold bags", amountPence: 10000, source: "rule", confidence: 0.5 },
+      ],
+    });
+    expect(f.level).toBe("higher");
+    expect(f.gapPence).toBe(12000);
+    expect(f.requiredPence).toBe(2000);
+    expect(f.extrasPence).toBe(10000);
+    expect(f.summary).toContain("2.0% over the Fair Price line");
+    expect(f.summary).toContain("Hold bags");
+  });
+});

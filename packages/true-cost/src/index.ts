@@ -1,6 +1,14 @@
 export { calculateTrueCost, ENGINE_VERSION } from "./calculate";
 export { formatGBP } from "./money";
-export { ASSUMED_MONTH, mentions, ruleApplies, selectRules, travelMonth } from "./scope";
+export {
+  ASSUMED_MONTH,
+  hasTaxCoverage,
+  KNOWN_NO_LOCAL_TAX,
+  mentions,
+  ruleApplies,
+  selectRules,
+  travelMonth,
+} from "./scope";
 export {
   childrenInBand,
   partySize,
@@ -32,6 +40,7 @@ export {
 export { fairShare, type FairShareResult, type FamilyShare } from "./fair-share";
 export * from "./types";
 export {
+  FAIR_LINE_PERCENT,
   FAIRMARK_LABELS,
   FAIRMARK_MIN_CONFIDENCE,
   fairMark,
@@ -41,4 +50,5 @@ export {
   REFERENCE_PARTY,
   type FairMark,
   type FairMarkLevel,
+  type FairMarkReason,
 } from "./fairmark";

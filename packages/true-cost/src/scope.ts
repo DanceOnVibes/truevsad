@@ -75,3 +75,25 @@ export function selectRules(rules: FeeRule[], offer: ScopeOffer): FeeRule[] {
   }
   return unstacked.filter((r) => !r.exclusiveGroup || best.get(r.exclusiveGroup) === r);
 }
+
+/**
+ * Places checked to have NO local tourist tax (research pass 31 Oct 2026). Used only to say
+ * "we know there is nothing to add here" — never to add a fee. Mogán (Gran Canaria) does charge
+ * and has its own rule, which matches first.
+ */
+export const KNOWN_NO_LOCAL_TAX: readonly string[] = [
+  "Cyprus", "Paphos", "Ayia Napa", "Protaras", "Limassol", "Larnaca",
+  "Canary Islands", "Canaries", "Tenerife", "Lanzarote", "Fuerteventura", "Gran Canaria", "La Palma", "La Gomera", "El Hierro",
+  "Costa Blanca", "Benidorm", "Alicante", "Albir", "Calpe", "Javea", "Denia", "Torrevieja", "Valencia",
+];
+
+/** See TrueCostResult.taxCoverage. `rules` = the rules already selected for this offer. */
+export function hasTaxCoverage(
+  offer: Pick<Offer, "destination" | "includes">,
+  rules: FeeRule[],
+): boolean {
+  if (offer.includes?.includes("local_taxes")) return true;
+  if (rules.some((r) => r.category === "levy" && r.regions && r.regions.length > 0)) return true;
+  if (!offer.destination) return false;
+  return KNOWN_NO_LOCAL_TAX.some((place) => mentions(offer.destination!, place));
+}

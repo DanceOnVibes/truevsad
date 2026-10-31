@@ -76,7 +76,7 @@ const INSTRUCTIONS = `You read UK holiday adverts and booking pages and pull out
 Rules:
 - Only report what is clearly shown. If a field isn't shown, leave it out. Never guess.
 - "from £499pp" means headlinePrice 499, headlineBasis per_person.
-- includes: only list hold_bag, cabin_bag, seats or transfers if the deal explicitly says they are included.
+- includes: only list hold_bag, cabin_bag, seats, transfers or local_taxes if the deal explicitly says they are included (local_taxes = tourist/city tax included in the price).
 - Ignore any names, email addresses, booking references, phone numbers or payment details.
 - excludesTaxesAndFees: true only if the advert says the price is plus/excluding taxes or fees.
 - Link words come from the deal's web address. Use them only to fill in the town/region and country.

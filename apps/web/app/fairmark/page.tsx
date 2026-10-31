@@ -31,9 +31,9 @@ async function leaderboard() {
 }
 
 function sortRows(rows: LeaderboardRow[], dir: "asc" | "desc") {
-  // Fairest first by default; ties broken by more deals checked.
+  // Fairest first by default, on the median (one odd deal can't make or break a seller).
   return [...rows].sort((a, b) =>
-    dir === "asc" ? a.averagePercent - b.averagePercent || b.deals - a.deals : b.averagePercent - a.averagePercent || b.deals - a.deals,
+    dir === "asc" ? a.medianPercent - b.medianPercent || b.deals - a.deals : b.medianPercent - a.medianPercent || b.deals - a.deals,
   );
 }
 
@@ -73,7 +73,8 @@ export default async function FairMarkPage({ searchParams }: { searchParams: Sea
           FairMark is worked out by the same engine as every receipt, with sourced fees, and nothing
           the deal already includes is counted twice. It never changes the order of results, and no
           seller can pay for it. When we can&apos;t be confident, we show &ldquo;FairMark
-          unavailable&rdquo; instead of a badge.
+          unavailable&rdquo; and say why. Fair means the advertised price is honest, not that the
+          holiday is cheap. <Link href="/fairmark/method">How FairMark works</Link>.
         </p>
       </div>
 
@@ -94,10 +95,11 @@ export default async function FairMarkPage({ searchParams }: { searchParams: Sea
                 <th>Seller</th>
                 <th className="num">
                   <Link href={qs({ sort: dir === "asc" ? "desc" : undefined })}>
-                    Average gap {dir === "asc" ? "↑" : "↓"}
+                    Median gap {dir === "asc" ? "↑" : "↓"}
                   </Link>
                 </th>
-                <th className="num wide">Median</th>
+                <th className="num wide">Average</th>
+                <th className="num wide">Best to worst</th>
                 <th className="num">Deals</th>
                 <th className="wide">FairMark</th>
               </tr>
@@ -109,8 +111,11 @@ export default async function FairMarkPage({ searchParams }: { searchParams: Sea
                     {r.seller}
                     {r.verified && <span title="30+ deals in 5+ destinations, median gap 10% or less"> ✓</span>}
                   </td>
-                  <td className="num">{formatFairMarkPercent(r.averagePercent)}</td>
-                  <td className="num wide">{formatFairMarkPercent(r.medianPercent)}</td>
+                  <td className="num">{formatFairMarkPercent(r.medianPercent)}</td>
+                  <td className="num wide">{formatFairMarkPercent(r.averagePercent)}</td>
+                  <td className="num wide">
+                    {formatFairMarkPercent(r.bestPercent)} to {formatFairMarkPercent(r.worstPercent)}
+                  </td>
                   <td className="num">{r.deals}</td>
                   <td className="wide">
                     <span className={`fm fm-${r.level}`}>{FAIRMARK_LABELS[r.level]}</span>
@@ -123,7 +128,9 @@ export default async function FairMarkPage({ searchParams }: { searchParams: Sea
             Every deal families X-rayed in the last {LEADERBOARD_DAYS} days ({board.dealsCounted} in all), priced
             with today&apos;s fees for one standard family ({ref}) so sellers are compared like for like.
             &ldquo;Total price&rdquo; adverts keep their own party. Sellers need {LEADERBOARD_MIN_DEALS}+ deals to
-            appear; ✓ means 30+ deals in 5+ destinations with a median gap of 10% or less. Updated{" "}
+            appear; ✓ means 30+ deals in 5+ destinations with a median gap of 10% or less, and is never for
+            sale. A seller is the company selling the deal, not the brand of holiday inside it. Sellers can
+            challenge any figure: see <Link href="/fairmark/method">how FairMark works</Link>. Updated{" "}
             {new Date(at).toLocaleString("en-GB", { hour: "2-digit", minute: "2-digit", day: "numeric", month: "short", timeZone: "Europe/London" })}.
           </p>
         </div>

@@ -22,7 +22,7 @@ const UNITS = [
   "per_person_per_night", "per_adult_per_night", "per_party_per_night",
 ];
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
-const COVERS = ["hold_bag", "cabin_bag", "seats", "transfers"];
+const COVERS = ["hold_bag", "cabin_bag", "seats", "transfers", "local_taxes"];
 
 /** Minimal RFC 4180 CSV parser (handles quotes, commas and newlines in quotes). */
 function parseCsv(text) {

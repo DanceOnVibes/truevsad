@@ -45,6 +45,7 @@ interface FeeRuleRow {
   max_nights: number | null;
   months: number[] | null;
   exclusive_group: string | null;
+  source_url: string | null;
 }
 
 /**
@@ -60,7 +61,7 @@ export async function loadFeeRules(): Promise<FeeRule[]> {
   const { data, error } = await db
     .from("fee_rule")
     .select(
-      "id, category, label, unit, amount_pence, amount_bp, min_age, max_age, confidence, regions, supplier_name, covers, max_nights, months, exclusive_group",
+      "id, category, label, unit, amount_pence, amount_bp, min_age, max_age, confidence, regions, supplier_name, covers, max_nights, months, exclusive_group, source_url",
     )
     .eq("is_active", true)
     .lte("valid_from", today)
@@ -86,6 +87,7 @@ export async function loadFeeRules(): Promise<FeeRule[]> {
     maxNights: r.max_nights ?? undefined,
     months: r.months ?? undefined,
     exclusiveGroup: r.exclusive_group ?? undefined,
+    sourceUrl: r.source_url && /^https?:\/\//.test(r.source_url) ? r.source_url : undefined,
   }));
 }
 
@@ -198,6 +200,7 @@ interface CostLineRow {
   working: string | null;
   source: string;
   confidence: number | string;
+  fee_rule: { source_url: string | null } | { source_url: string | null }[] | null;
 }
 
 /** Loads a shared receipt by slug. Only public quotes. No postcode, no ages, no link. */
@@ -209,7 +212,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
   const { data: q } = await db
     .from("true_cost_quote")
     .select(
-      "id, advertised_pence, true_cost_pence, gap_pence, confidence, used_demo_rules, created_at, offer:offer_id (nights, destination, includes, excludes_taxes_and_fees, depart_on, headline_pence, headline_basis, currency, supplier_name), party:party_id (adults, child_ages)",
+      "id, advertised_pence, true_cost_pence, gap_pence, confidence, used_demo_rules, created_at, fairmark_level, offer:offer_id (nights, destination, includes, excludes_taxes_and_fees, depart_on, headline_pence, headline_basis, currency, supplier_name), party:party_id (adults, child_ages)",
     )
     .eq("share_slug", slug)
     .eq("is_public", true)
@@ -218,7 +221,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
 
   const { data: lines } = await db
     .from("cost_line")
-    .select("category, label, amount_pence, working, source, confidence")
+    .select("category, label, amount_pence, working, source, confidence, fee_rule:fee_rule_id (source_url)")
     .eq("quote_id", q.id)
     .order("position");
 
@@ -267,6 +270,16 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
     }
   }
 
+  const receiptLines: CostLine[] = ((lines ?? []) as unknown as CostLineRow[]).map((l) => ({
+    category: l.category as CostCategory,
+    label: l.label as string,
+    amountPence: Number(l.amount_pence),
+    working: (l.working as string | null) ?? undefined,
+    source: l.source as LineSource,
+    confidence: Number(l.confidence),
+    sourceUrl: one(l.fee_rule)?.source_url ?? undefined,
+  }));
+
   return {
     advertisedPence: Number(q.advertised_pence),
     trueCostPence: Number(q.true_cost_pence),
@@ -281,6 +294,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
     departDate: offer?.depart_on ?? null,
     supplierName: offer?.supplier_name ?? null,
     todayTrueCostPence,
+    // Today's figure when we can re-price; otherwise what was stored when it was priced.
     fairMark:
       today ??
       fairMark({
@@ -288,17 +302,12 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
         trueCostPence: Number(q.true_cost_pence),
         confidence: Number(q.confidence),
         usedDemoRules: Boolean(q.used_demo_rules),
+        taxCoverage: q.fairmark_level != null && q.fairmark_level !== "unavailable",
+        lines: receiptLines,
       }),
     adults: party?.adults ?? 0,
     children: party?.child_ages?.length ?? 0,
-    lines: ((lines ?? []) as CostLineRow[]).map((l) => ({
-      category: l.category as CostCategory,
-      label: l.label as string,
-      amountPence: Number(l.amount_pence),
-      working: (l.working as string | null) ?? undefined,
-      source: l.source as LineSource,
-      confidence: Number(l.confidence),
-    })),
+    lines: receiptLines,
   };
 }
 
@@ -309,7 +318,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
 /** Deals counted on the leaderboard: checked in the last 30 days (unshared quotes are deleted after 30). */
 export const LEADERBOARD_DAYS = 30;
 /** A seller needs at least this many checked deals before it's named on the leaderboard. */
-export const LEADERBOARD_MIN_DEALS = 5;
+export const LEADERBOARD_MIN_DEALS = 10;
 
 interface BoardOfferRow {
   nights: number;
@@ -435,6 +444,9 @@ export interface LeaderboardRow {
   averagePercent: number;
   medianPercent: number;
   fairShare: number;
+  bestPercent: number;
+  worstPercent: number;
+  /** Based on the median, so one odd deal can't make or break a seller. */
   level: FairMarkLevel;
   /** Earned, never bought: 30+ deals in 5+ destinations with a median gap of 10% or less. */
   verified: boolean;
@@ -503,7 +515,9 @@ export async function loadLeaderboard(): Promise<{ rows: LeaderboardRow[]; deals
       averagePercent: average,
       medianPercent: median,
       fairShare: g.pcts.filter((x) => x <= 10).length / g.pcts.length,
-      level: fairMarkLevel(average),
+      bestPercent: sorted[0]!,
+      worstPercent: sorted.at(-1)!,
+      level: fairMarkLevel(median),
       verified: g.pcts.length >= 30 && g.places.size >= 5 && median <= 10,
     });
   }

@@ -1,5 +1,5 @@
 import { formatGBP, type CostCategory, type CostLine, type FairMark, type Inclusion } from "@truevsad/true-cost";
-import { FairMarkBadge } from "./FairMarkBadge";
+import { FairMarkBadge, FairMarkDetail } from "./FairMarkBadge";
 import { EMAILS } from "@/lib/company";
 import { INCLUSION_LABELS } from "@/lib/supplier-defaults";
 
@@ -75,6 +75,7 @@ export function ReceiptView(props: ReceiptViewProps) {
           </div>
         </div>
       </div>
+      {fairMark && <FairMarkDetail fm={fairMark} />}
       <p className="hint">Confidence: {Math.round(confidence * 100)}%</p>
       {notes?.map((n) => (
         <p key={n} className="hint">
@@ -92,6 +93,14 @@ export function ReceiptView(props: ReceiptViewProps) {
                 <div className="working">
                   {CATEGORY_LABELS[l.category]}
                   {l.working ? ` · ${l.working}` : ""}
+                  {l.sourceUrl && (
+                    <>
+                      {" · "}
+                      <a href={l.sourceUrl} target="_blank" rel="noopener noreferrer">
+                        source
+                      </a>
+                    </>
+                  )}
                 </div>
               </td>
               <td className="amt">{formatGBP(l.amountPence)}</td>
