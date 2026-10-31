@@ -23,6 +23,7 @@ import type {
 } from "@truevsad/true-cost";
 import { DEMO_RULES } from "./demo-rules";
 import { supabaseAdmin } from "./supabase-admin";
+import { conversionNote, type Conversion } from "./currency";
 
 export type SourceKind = "link" | "text" | "screenshot";
 
@@ -103,6 +104,8 @@ export async function saveQuote(input: {
   result: TrueCostResult;
   sourceKind: SourceKind;
   sourceUrl?: string;
+  /** Set when the advert was in euros or dollars: kept so shared receipts show the original price and rate. */
+  conversion?: Conversion;
 }): Promise<string | null> {
   const db = supabaseAdmin();
   if (!db) return null;
@@ -126,9 +129,20 @@ export async function saveQuote(input: {
     .update({ fairmark_percent: fm.percent, fairmark_level: fm.level })
     .eq("id", id);
   if (fmErr) console.error("fairmark save failed:", fmErr.message);
-  if (input.offer.freeChildClaim) {
+  const extra: Record<string, unknown> = {};
+  if (input.offer.freeChildClaim) extra.free_child_claim = true;
+  if (input.conversion) {
+    extra.fx_from_currency = input.conversion.from;
+    extra.fx_from_amount_minor = input.conversion.amountMinor;
+    extra.fx_rate = input.conversion.rate;
+    extra.fx_date = input.conversion.date;
+  }
+  if (Object.keys(extra).length) {
     const { data: q } = await db.from("true_cost_quote").select("offer_id").eq("id", id).maybeSingle();
-    if (q?.offer_id) await db.from("offer").update({ free_child_claim: true }).eq("id", q.offer_id);
+    if (q?.offer_id) {
+      const { error: oErr } = await db.from("offer").update(extra).eq("id", q.offer_id);
+      if (oErr) console.error("offer extras save failed:", oErr.message);
+    }
   }
   return id;
 }
@@ -198,6 +212,8 @@ export interface PublicReceipt {
   adults: number;
   children: number;
   lines: CostLine[];
+  /** Plain facts about how this was priced (currency conversion, summer rates without a date). */
+  notes: string[];
 }
 
 interface CostLineRow {
@@ -219,7 +235,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
   const { data: q } = await db
     .from("true_cost_quote")
     .select(
-      "id, advertised_pence, true_cost_pence, gap_pence, confidence, used_demo_rules, created_at, fairmark_level, offer:offer_id (nights, destination, includes, excludes_taxes_and_fees, depart_on, headline_pence, headline_basis, currency, supplier_name, free_child_claim), party:party_id (adults, child_ages)",
+      "id, advertised_pence, true_cost_pence, gap_pence, confidence, used_demo_rules, created_at, fairmark_level, offer:offer_id (nights, destination, includes, excludes_taxes_and_fees, depart_on, headline_pence, headline_basis, currency, supplier_name, free_child_claim, fx_from_currency, fx_from_amount_minor, fx_rate, fx_date), party:party_id (adults, child_ages)",
     )
     .eq("share_slug", slug)
     .eq("is_public", true)
@@ -244,6 +260,10 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
         currency: string;
         supplier_name: string | null;
         free_child_claim: boolean | null;
+        fx_from_currency: Conversion["from"] | null;
+        fx_from_amount_minor: number | string | null;
+        fx_rate: number | string | null;
+        fx_date: string | null;
       }
     | null;
   const party = (Array.isArray(q.party) ? q.party[0] : q.party) as
@@ -254,6 +274,17 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
   let todayTrueCostPence: number | null = null;
   let today: FairMark | null = null;
   let childCostsPence: number[] = [];
+  const notes: string[] = [];
+  if (offer?.fx_from_currency && offer.fx_rate != null && offer.fx_date && offer.fx_from_amount_minor != null) {
+    notes.push(
+      conversionNote({
+        from: offer.fx_from_currency,
+        amountMinor: Number(offer.fx_from_amount_minor),
+        rate: Number(offer.fx_rate),
+        date: offer.fx_date,
+      }),
+    );
+  }
   if (offer && party) {
     try {
       const o: Offer = {
@@ -274,6 +305,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
       });
       todayTrueCostPence = now.trueCostPence;
       today = fairMark(now);
+      notes.push(...now.notes);
       if (offer.free_child_claim) {
         childCostsPence = childExtras({
           party: { adults: party.adults, childAges: party.child_ages ?? [] },
@@ -325,6 +357,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
     adults: party?.adults ?? 0,
     children: party?.child_ages?.length ?? 0,
     lines: receiptLines,
+    notes,
   };
 }
 

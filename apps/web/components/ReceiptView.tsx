@@ -1,4 +1,4 @@
-import { formatGBP, type CostCategory, type CostLine, type FairMark, type Inclusion } from "@truevsad/true-cost";
+import { formatGBP, receiptScope, type CostCategory, type CostLine, type FairMark, type Inclusion } from "@truevsad/true-cost";
 import { FairMarkBadge, FairMarkDetail } from "./FairMarkBadge";
 import { EMAILS } from "@/lib/company";
 import { INCLUSION_LABELS } from "@/lib/supplier-defaults";
@@ -34,6 +34,7 @@ export function ReceiptView(props: ReceiptViewProps) {
   const { advertisedPence, trueCostPence, gapPence, confidence, usedDemoRules, lines, includes, excludesTaxesAndFees, notes, fairMark } =
     props;
   const gapRatio = advertisedPence > 0 ? gapPence / advertisedPence : 0;
+  const scope = receiptScope({ includes }, { receipt: { lines, subtotals: {} as never } });
 
   return (
     <>
@@ -118,6 +119,27 @@ export function ReceiptView(props: ReceiptViewProps) {
           {includes.map((i) => INCLUSION_LABELS[i]).join(", ")}.
         </p>
       )}
+      <div className="scope">
+        {scope.counted.length > 0 && (
+          <>
+            <h4>How we counted</h4>
+            <ul>
+              {scope.counted.map((c) => (
+                <li key={c}>{c}</li>
+              ))}
+            </ul>
+          </>
+        )}
+        <h4>Not checked on this receipt</h4>
+        <ul>
+          {scope.notChecked.map((c) => (
+            <li key={c}>{c}</li>
+          ))}
+        </ul>
+        <p className="hint">
+          The true price above covers everything else listed on the receipt, each with its source.
+        </p>
+      </div>
       <p className="hint">
         Spotted a figure that&apos;s wrong? Tell us at{" "}
         <a href={`mailto:${EMAILS.corrections}`}>{EMAILS.corrections}</a> and we&apos;ll fix it

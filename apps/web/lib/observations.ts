@@ -22,6 +22,8 @@ export async function logObservation(input: {
   offer: Offer;
   result: TrueCostResult;
   fairMark: FairMark;
+  /** The advert's own currency, when it wasn't pounds. */
+  advertisedCurrency?: "EUR" | "USD";
 }): Promise<void> {
   const db = supabaseAdmin();
   if (!db) return;
@@ -45,6 +47,8 @@ export async function logObservation(input: {
     free_child_claim: offer.freeChildClaim === true,
     fairmark_percent: fairMark.percent,
     engine_version: result.engineVersion,
+    home_area: postcodeArea(party.outwardPostcode),
+    advertised_currency: input.advertisedCurrency ?? "GBP",
   });
   if (error) console.error("price_observation insert failed:", error.message);
 }

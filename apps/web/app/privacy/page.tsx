@@ -66,9 +66,11 @@ export default function PrivacyPage() {
         <p>
           Each time a deal is X-rayed we also keep one anonymous line of statistics: the seller, the
           town and country, the week of travel, the number of nights, how many people and children,
-          and the price per person before and after extras. It has no link to your receipt and holds
-          no ages, postcode, deal link or exact dates (only the week). We keep it for 2 years to
-          measure how prices change in school holidays and how fair each seller is over time.
+          and the price per person before and after extras, the currency the deal was advertised in,
+          and the <strong>letters</strong> of your postcode only (e.g. SE from SE11) — an area of
+          tens of thousands of homes. It has no link to your receipt and holds no ages, full postcode
+          district, deal link or exact dates (only the week). We keep it for 2 years to measure how
+          prices change in school holidays, by home region, and how fair each seller is over time.
         </p>
 
         <h2>FairMark board and leaderboard</h2>
@@ -85,6 +87,87 @@ export default function PrivacyPage() {
           Checking a date against your council&apos;s school holidays, or splitting a price between
           families, is worked out on the spot. We don&apos;t save which council you chose, your dates
           or the split.
+        </p>
+        <p>
+          If you give the first half of your postcode (on School Window or the X-ray), we send only
+          that (e.g. SE11) to postcodes.io, a free service built on Office for National Statistics
+          data, to find your council. Nothing about you goes with it, and we don&apos;t keep the
+          answer against you.
+        </p>
+
+        <h2>Prices in euros or dollars</h2>
+        <p>
+          If a deal is priced in euros or US dollars, we convert it to pounds at the European
+          Central Bank&apos;s daily rate, fetched from Frankfurter (a free exchange-rate service). We
+          send only the currency codes, never anything about you or the deal. The receipt shows the
+          original price, the rate and its date.
+        </p>
+
+        <h2>Everything we keep, at a glance</h2>
+        <div className="table-wrap">
+          <table className="receipt data-table">
+            <thead>
+              <tr>
+                <th>What</th>
+                <th>Why we need it</th>
+                <th>How much detail</th>
+                <th>How long</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Adults and children&apos;s ages</td>
+                <td>Bag rules and tourist taxes depend on age</td>
+                <td>Ages only, never dates of birth or names</td>
+                <td>With the receipt</td>
+              </tr>
+              <tr>
+                <td>Postcode</td>
+                <td>Finding your council&apos;s school holidays</td>
+                <td>First half on the receipt (SE11); letters only in statistics (SE)</td>
+                <td>With the receipt; statistics 2 years</td>
+              </tr>
+              <tr>
+                <td>Deal details you confirm</td>
+                <td>Working out the true price</td>
+                <td>Price, currency, nights, travel date, destination, seller</td>
+                <td>With the receipt</td>
+              </tr>
+              <tr>
+                <td>Deal link</td>
+                <td>So you can find the deal again</td>
+                <td>Kept as written; we never open it</td>
+                <td>With the receipt</td>
+              </tr>
+              <tr>
+                <td>Exchange rate used</td>
+                <td>Showing how a euro or dollar price became pounds</td>
+                <td>Original price, rate and date</td>
+                <td>With the receipt</td>
+              </tr>
+              <tr>
+                <td>Price statistics</td>
+                <td>Measuring school-holiday prices and seller fairness</td>
+                <td>Anonymous line, week-level dates, not linked to you</td>
+                <td>2 years</td>
+              </tr>
+              <tr>
+                <td>Place checks (Visit)</td>
+                <td>So the next person doesn&apos;t wait</td>
+                <td>Counts of what&apos;s nearby; nothing about you</td>
+                <td>90 days</td>
+              </tr>
+              <tr>
+                <td>Scrambled visitor code</td>
+                <td>Stopping automated spam</td>
+                <td>Made from your IP address; never the address</td>
+                <td>Under a day</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="hint">
+          &ldquo;With the receipt&rdquo; means 30 days if you don&apos;t share it, 12 months if you do.
         </p>
 
         <h2>Why</h2>
@@ -130,7 +213,7 @@ export default function PrivacyPage() {
           (ico.org.uk).
         </p>
 
-        <p className="hint">Last updated 30 October 2026.</p>
+        <p className="hint">Last updated 31 October 2026.</p>
       </div>
     </main>
   );
