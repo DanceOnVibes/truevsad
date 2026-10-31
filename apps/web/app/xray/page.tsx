@@ -38,6 +38,7 @@ export default function XrayPage() {
   const [basis, setBasis] = useState<"per_person" | "total">("per_person");
   const [excludesFees, setExcludesFees] = useState(false);
   const [nights, setNights] = useState("7");
+  const [departDate, setDepartDate] = useState("");
   const [destination, setDestination] = useState("");
   const [supplier, setSupplier] = useState("");
   const [includes, setIncludes] = useState<Inclusion[]>([]);
@@ -86,6 +87,7 @@ export default function XrayPage() {
       if (d.headlineBasis) setBasis(d.headlineBasis);
       setExcludesFees(d.excludesTaxesAndFees === true);
       if (d.nights) setNights(String(d.nights));
+      if (d.departDate) setDepartDate(d.departDate);
       if (d.destination) setDestination(d.destination);
       if (d.supplierName) changeSupplier(d.supplierName);
       if (d.adults) setAdults(String(d.adults));
@@ -127,6 +129,7 @@ export default function XrayPage() {
           supplierName: supplier || undefined,
           includes,
           excludesTaxesAndFees: excludesFees,
+          departDate: departDate || undefined,
         },
       });
       setResult(data.result);
@@ -236,6 +239,10 @@ export default function XrayPage() {
             <div>
               <label htmlFor="nights">Nights</label>
               <input id="nights" inputMode="numeric" value={nights} onChange={(e) => setNights(e.target.value)} />
+            </div>
+            <div>
+              <label htmlFor="depart">Travel date (optional)</label>
+              <input id="depart" type="date" value={departDate} onChange={(e) => setDepartDate(e.target.value)} />
             </div>
           </div>
 

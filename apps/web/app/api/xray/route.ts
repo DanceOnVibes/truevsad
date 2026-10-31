@@ -222,7 +222,18 @@ function parseOffer(raw: unknown): Offer | string {
       ? [...new Set(raw.includes.filter((x): x is Inclusion => INCLUSIONS.includes(x as Inclusion)))]
       : [],
     excludesTaxesAndFees: raw.excludesTaxesAndFees === true,
+    departDate: parseTravelDate(raw.departDate),
   };
+}
+
+/** YYYY-MM-DD, a real date, from a month ago up to two years ahead. Anything else is ignored. */
+function parseTravelDate(v: unknown): string | undefined {
+  if (typeof v !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return undefined;
+  const t = Date.parse(`${v}T00:00:00Z`);
+  if (Number.isNaN(t) || new Date(t).toISOString().slice(0, 10) !== v) return undefined;
+  const now = Date.now();
+  const day = 86_400_000;
+  return t >= now - 31 * day && t <= now + 731 * day ? v : undefined;
 }
 
 // ---------------------------------------------------------------------------

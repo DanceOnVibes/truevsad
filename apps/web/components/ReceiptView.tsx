@@ -22,11 +22,13 @@ export interface ReceiptViewProps {
   includes?: Inclusion[];
   /** The advert said its price is "plus taxes and fees" (or similar). */
   excludesTaxesAndFees?: boolean;
+  /** Assumptions the engine made, e.g. summer rates without a travel date. */
+  notes?: string[];
 }
 
 /** The Receipt. Used on the X-ray page and on shared /r/[slug] pages. */
 export function ReceiptView(props: ReceiptViewProps) {
-  const { advertisedPence, trueCostPence, gapPence, confidence, usedDemoRules, lines, includes, excludesTaxesAndFees } =
+  const { advertisedPence, trueCostPence, gapPence, confidence, usedDemoRules, lines, includes, excludesTaxesAndFees, notes } =
     props;
   const gapRatio = advertisedPence > 0 ? gapPence / advertisedPence : 0;
 
@@ -66,6 +68,11 @@ export function ReceiptView(props: ReceiptViewProps) {
         </div>
       </div>
       <p className="hint">Confidence: {Math.round(confidence * 100)}%</p>
+      {notes?.map((n) => (
+        <p key={n} className="hint">
+          {n}
+        </p>
+      ))}
 
       <h3>Receipt</h3>
       <table className="receipt">

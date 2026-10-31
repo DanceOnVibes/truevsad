@@ -67,6 +67,8 @@ export interface Offer {
    * We add the fees we know about, but the seller may add more at checkout.
    */
   excludesTaxesAndFees?: boolean;
+  /** First day of the trip, YYYY-MM-DD, if the family told us. Picks seasonal tax rates. */
+  departDate?: string;
   /**
    * Itemised supplier charges if the advert shows them.
    * If empty, the advertised whole-party price is used as the supplier base.
@@ -112,6 +114,11 @@ export interface FeeRule {
   covers?: Inclusion;
   /** Per-night rules stop counting after this many nights (e.g. Catalonia charges the first 7 only). */
   maxNights?: number;
+  /**
+   * Months of travel this rate applies to (1 = January … 12 = December), e.g. a summer rate
+   * [5,6,7,8,9,10]. Empty = all year. Without a travel date we assume July (and say so).
+   */
+  months?: number[];
 }
 
 /** A cost line before the engine has stamped it. */
@@ -155,5 +162,7 @@ export interface TrueCostResult {
   confidence: number;
   /** True if any demo (non-real) rule was used. UI must show a warning. */
   usedDemoRules: boolean;
+  /** Plain-English assumptions the family should know about, e.g. "No travel date, so summer rates used". */
+  notes: string[];
   engineVersion: string;
 }
