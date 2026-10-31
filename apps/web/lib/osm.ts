@@ -163,7 +163,7 @@ async function countAround(lat: number, lon: number): Promise<PlaceCounts | null
     const json = (await res.json()) as { elements?: { type: string; tags?: { total?: string } }[] };
     const counts = (json.elements ?? []).filter((e) => e.type === "count");
     if (counts.length !== SIGNALS.length) return null;
-    return Object.fromEntries(SIGNALS.map((s, i) => [s, Number(counts[i]!.tags?.total ?? 0) || 0])) as PlaceCounts;
+    return Object.fromEntries(SIGNALS.map((s, i) => [s, Number(counts[i]!.tags?.total ?? 0) || 0])) as unknown as PlaceCounts;
   } catch (err) {
     console.error("Overpass request failed", (err as Error).name);
     return null;
@@ -172,7 +172,7 @@ async function countAround(lat: number, lon: number): Promise<PlaceCounts | null
 
 function normaliseCounts(raw: unknown): PlaceCounts {
   const r = (raw ?? {}) as Record<string, unknown>;
-  return Object.fromEntries(SIGNALS.map((s) => [s, Math.max(0, Number(r[s]) || 0)])) as PlaceCounts;
+  return Object.fromEntries(SIGNALS.map((s) => [s, Math.max(0, Number(r[s]) || 0)])) as unknown as PlaceCounts;
 }
 
 /** Map + Street View links. Built from coordinates only. */
