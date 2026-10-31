@@ -170,3 +170,14 @@ table.board td.num, table.board th.num { text-align: right; }
 table.data-table { min-width: 560px; font-size: 0.85rem; }
 table.data-table th { text-align: left; padding: 8px 8px 8px 0; border-bottom: 1px solid var(--line); color: var(--muted); font-weight: 600; }
 table.data-table td { padding-right: 8px; }
+
+/* "Please check this": fields the reader wasn't sure about. Existing warning tokens only. */
+.check-me { outline: 2px solid var(--warn-fg); outline-offset: 1px; background: var(--warn-bg); }
+label.check.check-me { border-radius: 6px; padding: 2px 4px; }
+
+/* Airline chips. */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 12px 0 4px; }
+.chips .hint { margin: 0 4px 0 0; }
+button.chip { margin-top: 0; background: transparent; color: var(--fg); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-size: 0.85rem; }
+button.chip.sel { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.advisory-tag { color: var(--muted); font-style: italic; }

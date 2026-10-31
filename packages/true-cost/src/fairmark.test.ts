@@ -51,23 +51,32 @@ describe("FairMark hardening", () => {
     expect(f.reason).toBe("no_tax_data");
     expect(f.summary.length > 0).toBe(true);
   });
-  it("splits required fees from family extras and names the biggest extra", () => {
-    const f = fairMark({
-      advertisedPence: 100000,
-      trueCostPence: 112000,
-      confidence: 0.8,
-      taxCoverage: true,
-      lines: [
-        { category: "supplier", label: "Advertised price", amountPence: 100000, source: "extracted", confidence: 0.9 },
-        { category: "levy", label: "Tourist tax", amountPence: 2000, source: "rule", confidence: 0.8 },
-        { category: "party_extra", label: "Hold bags", amountPence: 10000, source: "rule", confidence: 0.5 },
-      ],
-    });
-    expect(f.level).toBe("higher");
-    expect(f.gapPence).toBe(12000);
+  const lines = [
+    { category: "supplier" as const, label: "Advertised price", amountPence: 100000, source: "extracted" as const, confidence: 0.9 },
+    { category: "levy" as const, label: "Tourist tax", amountPence: 2000, source: "rule" as const, confidence: 0.8 },
+    { category: "party_extra" as const, label: "Hold bag, return", amountPence: 21000, source: "rule" as const, confidence: 0.8, working: "3 bags (your number) × £70.00" },
+  ];
+  it("judges taxes left out plus ONE standard hold bag, never the family's own bag count", () => {
+    const f = fairMark({ advertisedPence: 100000, trueCostPence: 123000, confidence: 0.8, taxCoverage: true, lines, standardBagPence: 7000 });
+    expect(f.gapPence).toBe(9000);
+    expect(f.percent).toBe(9);
+    expect(f.level).toBe("fair");
     expect(f.requiredPence).toBe(2000);
-    expect(f.extrasPence).toBe(10000);
-    expect(f.summary).toContain("2.0% over the Fair Price line");
-    expect(f.summary).toContain("Hold bags");
+    expect(f.standardBagPence).toBe(7000);
+    expect(f.extrasPence).toBe(21000);
+    expect(f.summary).toContain("one hold bag (£70.00)");
+    expect(f.summary).toContain("Tourist tax");
+  });
+  it("reads one bag's price from a stored receipt line when there is no engine result", () => {
+    const f = fairMark({ advertisedPence: 100000, trueCostPence: 123000, confidence: 0.8, taxCoverage: true, lines });
+    expect(f.standardBagPence).toBe(7000);
+  });
+  it("a deal that includes bags and leaves nothing out is Gold", () => {
+    const f = fairMark({
+      advertisedPence: 100000, trueCostPence: 100000, confidence: 0.8, taxCoverage: true, standardBagPence: 0,
+      lines: [{ category: "supplier", label: "Advertised price", amountPence: 100000, source: "extracted", confidence: 0.9 }],
+    });
+    expect(f.level).toBe("gold");
+    expect(f.gapPence).toBe(0);
   });
 });

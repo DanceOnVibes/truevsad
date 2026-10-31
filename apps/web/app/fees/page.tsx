@@ -33,7 +33,11 @@ const UNIT: Record<RuleUnit, string> = {
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+const isHoldBag = (r: PublicFeeRule) => r.category === "party_extra" && /hold bag|checked bag/i.test(r.label);
+
 function amount(r: PublicFeeRule): string {
+  // Bags are counted per bag: one per two people unless the family gives their own number.
+  if (r.amountPence !== null && isHoldBag(r)) return `${formatGBP(r.amountPence)} per bag`;
   if (r.amountPence !== null) return `${formatGBP(r.amountPence)} ${UNIT[r.unit]}`;
   if (r.amountBp !== null) return `${(r.amountBp / 100).toFixed(2)}% of the advertised price`;
   return "";
@@ -76,6 +80,13 @@ export default async function FeesPage() {
         return (
           <div className="card" key={category}>
             <h2 style={{ marginTop: 0 }}>{title}</h2>
+            {category === "party_extra" && (
+              <p className="hint">
+                Advisory: these are in your true price. Hold bags are counted as one per two people aged 2
+                and over unless you tell us how many you&apos;re taking. FairMark counts only one hold bag
+                per booking, the same standard for every seller.
+              </p>
+            )}
             <table className="receipt">
               <tbody>
                 {list.map((r) => (

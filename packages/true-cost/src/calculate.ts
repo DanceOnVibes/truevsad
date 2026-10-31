@@ -1,8 +1,11 @@
 import { formatGBP, roundPence } from "./money";
 import { childrenInBand, partySize, validateParty } from "./party";
+import { advertNotes } from "./advert";
 import { hasTaxCoverage } from "./scope";
 import {
+  ADVISORY_CATEGORIES,
   COST_CATEGORIES,
+  STATED_BAGS_WORDING,
   type CostCategory,
   type CostLine,
   type FeeRule,
@@ -12,7 +15,10 @@ import {
   type TrueCostResult,
 } from "./types";
 
-export const ENGINE_VERSION = "0.4.0";
+export const ENGINE_VERSION = "0.5.0";
+
+/** A fee figure last checked more than this many days ago counts for half in the confidence score. */
+export const STALE_AFTER_DAYS = 365;
 
 /**
  * TrueCost = supplier lines + party extras + levies + entry docs + door-to-door + payment/FX
@@ -21,8 +27,11 @@ export const ENGINE_VERSION = "0.4.0";
  * Pure function: no I/O, no network, no commission data. Same input → same output.
  */
 export function calculateTrueCost(input: TrueCostInput): TrueCostResult {
-  const { party, offer, rules = [], extraLines = [] } = input;
+  const { party, offer, rules = [], extraLines = [], asOf } = input;
   validateParty(party);
+  if (party.holdBags !== undefined && !(Number.isInteger(party.holdBags) && party.holdBags >= 0 && party.holdBags <= 30)) {
+    throw new Error("Hold bags must be a whole number from 0 to 30.");
+  }
 
   if (!Number.isInteger(offer.headlinePence) || offer.headlinePence < 0) {
     throw new Error("Headline price must be a non-negative whole number of pence.");
@@ -57,9 +66,19 @@ export function calculateTrueCost(input: TrueCostInput): TrueCostResult {
   const supplierSubtotal = sumCategory(lines, "supplier");
 
   // 2–6. Rule-driven lines (party extras, levies, entry docs, door-to-door, payment/FX).
+  let stale = false;
   for (const rule of rules) {
     const line = applyRule(rule, party, offer.nights, supplierSubtotal);
-    if (line && line.amountPence !== 0) lines.push(line);
+    if (!line || line.amountPence === 0) continue;
+    if (ADVISORY_CATEGORIES.includes(line.category)) line.advisory = true;
+    if (rule.checkedOn) {
+      line.checkedOn = rule.checkedOn;
+      if (asOf && daysBetween(rule.checkedOn, asOf) > STALE_AFTER_DAYS) {
+        line.confidence = Math.round(line.confidence * 50) / 100;
+        stale = true;
+      }
+    }
+    lines.push(line);
   }
 
   // User-added lines last.
@@ -72,10 +91,15 @@ export function calculateTrueCost(input: TrueCostInput): TrueCostResult {
   const trueCostPence = lines.reduce((sum, l) => sum + l.amountPence, 0);
 
   const notes: string[] = [];
-  if (!offer.departDate && rules.some((r) => r.months && r.months.length > 0)) {
-    notes.push("No travel date given, so seasonal taxes use summer rates. Add the date for a closer figure.");
+  if (!offer.departDate && !offer.departMonth && rules.some((r) => r.months && r.months.length > 0)) {
+    notes.push("No travel date given, so seasonal taxes use summer rates. Add the date or month for a closer figure.");
   }
+  if (stale) notes.push("Some fee figures were last checked more than a year ago, so they count for less in how sure we are.");
+  notes.push(...advertNotes(party, offer));
   const gapPence = trueCostPence - advertisedPence;
+  // One return hold bag at this deal's price (the first fixed per-person hold-bag rule that applies).
+  const bagRule = rules.find((r) => r.covers === "hold_bag" && r.unit === "per_person" && r.amount.kind === "fixed");
+  const standardBagPence = bagRule && bagRule.amount.kind === "fixed" ? bagRule.amount.pence : 0;
 
   return {
     advertisedPence,
@@ -88,6 +112,7 @@ export function calculateTrueCost(input: TrueCostInput): TrueCostResult {
     notes,
     // A levy the deal already includes is skipped by selectRules, but the tick itself counts.
     taxCoverage: hasTaxCoverage(offer, rules),
+    standardBagPence,
     engineVersion: ENGINE_VERSION,
   };
 }
@@ -150,7 +175,9 @@ function applyRule(
     };
   }
 
-  const { units, label } = unitsFor(rule, party, nights);
+  // Hold bags are advisory: the family's own number, or one per two people (a couple often shares).
+  const { units, label } =
+    rule.covers === "hold_bag" && rule.unit === "per_person" ? bagUnits(rule, party) : unitsFor(rule, party, nights);
   if (units === 0) return null;
   return {
     category: rule.category,
@@ -164,6 +191,23 @@ function applyRule(
       ? formatGBP(rule.amount.pence)
       : `${label} × ${formatGBP(rule.amount.pence)}`,
   };
+}
+
+function bagUnits(rule: FeeRule, party: Party): { units: number; label: string } {
+  const plural = (n: number) => `${n} bag${n === 1 ? "" : "s"}`;
+  if (party.holdBags !== undefined) {
+    return { units: party.holdBags, label: `${plural(party.holdBags)} (${STATED_BAGS_WORDING})` };
+  }
+  const eligible = party.adults + childrenInBand(party, rule.minAge, rule.maxAge);
+  const bags = Math.ceil(eligible / 2);
+  const who = rule.minAge ? ` aged ${rule.minAge}+` : "";
+  return { units: bags, label: `${plural(bags)} (1 per 2 people${who})` };
+}
+
+function daysBetween(fromIso: string, toIso: string): number {
+  const a = Date.parse(`${fromIso}T00:00:00Z`);
+  const b = Date.parse(`${toIso}T00:00:00Z`);
+  return Number.isFinite(a) && Number.isFinite(b) ? (b - a) / 86_400_000 : 0;
 }
 
 /**
