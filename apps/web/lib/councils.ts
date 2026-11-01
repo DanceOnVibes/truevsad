@@ -22,8 +22,11 @@ export async function councilsForOutcode(outcode: string): Promise<string[] | nu
     });
     if (res.status === 404) return [];
     if (!res.ok) return null;
-    const data = (await res.json()) as { result?: { admin_district?: string[] } };
-    const councils = [...new Set((data.result?.admin_district ?? []).map(tidyName))];
+    const data = (await res.json()) as { result?: { admin_district?: string[]; admin_county?: string[] } };
+    // County councils (Kent, Essex, Hampshire, Surrey, Hertfordshire, Lancashire) set term dates for
+    // their districts, so the county counts too. Unitary areas have no county ("(pseudo) …", never matched).
+    const names = [...(data.result?.admin_district ?? []), ...(data.result?.admin_county ?? [])];
+    const councils = [...new Set(names.map(tidyName))];
     cache.set(oc, { at: Date.now(), councils });
     return councils;
   } catch {

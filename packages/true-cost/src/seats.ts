@@ -63,6 +63,16 @@ export const FAMILY_SEATING: AirlineSeating[] = [
       "If you're flying with TUI Airways and there's a child under the age of 12 on your booking, we'll make sure they're seated with at least one adult in your party.",
     checkedOn: "2026-11-01",
   },
+  {
+    // Children 2+ need their own seat; at check-in a child is put next to one adult for free.
+    // ("Sitting together" for a whole booking of 2 adults is a separate paid service.)
+    airline: "Wizz Air",
+    aliases: ["Wizz Air", "Wizz"],
+    policy: "free",
+    sourceUrl: "https://wizzair.com/en-gb/help-centre/booking-information-and-services/with-children/seating-with-children",
+    quote: "During the check-in process, the adult and the child will automatically be assigned seats next to each other.",
+    checkedOn: "2026-11-01",
+  },
 ];
 
 export function familySeatingFor(name: string | undefined): AirlineSeating | undefined {

@@ -360,6 +360,14 @@ describe("seats: only what a family must pay to sit together", () => {
     expect(r.trueCostPence).toBe(200000);
     expect(familySeatingFor("TUI Airways")!.policy).toBe("free");
   });
+  it("Wizz Air puts a child next to an adult at check-in for free", () => {
+    const r = calculateTrueCost({ party: family, offer, rules: [seat("Wizz Air")] });
+    expect(r.trueCostPence).toBe(200000);
+  });
+  it("Jet2 (sitting together is a paid extra): still per adult", () => {
+    const r = calculateTrueCost({ party: family, offer, rules: [seat("Jet2")] });
+    expect(r.trueCostPence).toBe(200000 + 2 * 1400);
+  });
   it("airline policy unknown: per adult, as before", () => {
     const r = calculateTrueCost({ party: family, offer, rules: [seat(undefined)] });
     expect(r.trueCostPence).toBe(200000 + 2 * 1400);
