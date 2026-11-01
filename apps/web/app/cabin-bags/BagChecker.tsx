@@ -74,7 +74,10 @@ export function BagChecker() {
                     <td>
                       {cell(cabin)}
                       {cabin && cabin.price !== "free" && (
-                        <div className="working">{cabin.price === "paid" ? "paid extra" : "some fares only"}</div>
+                        <div className="working">
+                          {cabin.price === "paid" ? "paid extra" : "some fares only"}
+                          {cabin.buyPrice ? `: ${cabin.buyPrice}` : ""}
+                        </div>
                       )}
                     </td>
                   </tr>

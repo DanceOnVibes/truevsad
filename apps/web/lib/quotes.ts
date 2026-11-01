@@ -476,6 +476,8 @@ export interface ListedDeal {
   advertisedPence: number;
   trueCostPence: number;
   fairMark: FairMark;
+  /** What the family ticked as already in the deal (hold bags, transfers…). */
+  includes: Inclusion[];
 }
 
 /**
@@ -528,6 +530,7 @@ export async function loadListedDeals(fairOnly: boolean): Promise<ListedDeal[]> 
         advertisedPence: res.advertisedPence,
         trueCostPence: res.trueCostPence,
         fairMark: fm,
+        includes: offer.includes ?? [],
       });
     } catch {
       /* skip a deal we can't price */

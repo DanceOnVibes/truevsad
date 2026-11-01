@@ -1,4 +1,4 @@
-import { ADVISORY_CATEGORIES, airlineBagsFor, dropOffFor, formatGBP, transferFor, receiptScope, type CostCategory, type CostLine, type FairMark, type Inclusion } from "@truevsad/true-cost";
+import { ADVISORY_CATEGORIES, airlineBagsFor, CARD_FEES_CHECKED_ON, cardFeeNote, dropOffFor, formatGBP, localTaxNoteFor, NO_FEE_CARDS, SURCHARGE_BAN_URL, transferFor, receiptScope, type CostCategory, type CostLine, type FairMark, type Inclusion } from "@truevsad/true-cost";
 import { FairMarkBadge, FairMarkDetail } from "./FairMarkBadge";
 import { EMAILS } from "@/lib/company";
 import { INCLUSION_LABELS } from "@/lib/supplier-defaults";
@@ -33,6 +33,8 @@ export interface ReceiptViewProps {
   departAirport?: string | null;
   /** Where the holiday is, to show official public transfer fares when transfers aren't included. */
   destination?: string | null;
+  /** Currency the advert was priced in ("EUR", "USD"); a card-fee note shows for anything but pounds. */
+  advertisedCurrency?: string | null;
 }
 
 function checkedLabel(iso: string): string {
@@ -57,6 +59,9 @@ export function ReceiptView(props: ReceiptViewProps) {
   const bags = airlineBagsFor(props.airline ?? undefined);
   const dropOff = dropOffFor(props.departAirport);
   const transfer = includes?.includes("transfers") ? undefined : transferFor(props.destination);
+  const cardFee = cardFeeNote(props.advertisedCurrency, advertisedPence);
+  const localTax = includes?.includes("local_taxes") ? undefined : localTaxNoteFor(props.destination);
+  const today = new Date().toISOString().slice(0, 10);
   const underseat = bags?.bags.find((b) => b.kind === "underseat" && b.verified && b.dims);
   const cabin = bags?.bags.find((b) => b.kind === "cabin" && b.verified && b.dims);
   const gapRatio = advertisedPence > 0 ? gapPence / advertisedPence : 0;
@@ -199,6 +204,7 @@ export function ReceiptView(props: ReceiptViewProps) {
                 <li>
                   Cabin bag: {cabin.dims!.join(" × ")} cm{cabin.maxKg ? `, up to ${cabin.maxKg}kg` : ""},{" "}
                   {cabin.price === "free" ? "free on every fare" : cabin.price === "paid" ? "paid extra" : "included on some fares only"}.
+                  {cabin.price !== "free" && cabin.buyPrice ? ` To add it: ${cabin.buyPrice}.` : ""}
                   {cabin.gateFee ? ` Too big at the gate: ${cabin.gateFee}.` : ""}
                 </li>
               )}
@@ -206,6 +212,43 @@ export function ReceiptView(props: ReceiptViewProps) {
             <p className="hint">
               Sizes include wheels and handles unless the airline says otherwise.{" "}
               <a href="/cabin-bags">Check your bag →</a>
+            </p>
+          </>
+        )}
+        {localTax && (
+          <>
+            <h4>{localTax.name}: not in this total</h4>
+            <p className="hint">
+              {localTax.text}{" "}
+              {localTax.temporary && today <= localTax.temporary.until && (
+                <>
+                  {localTax.temporary.text}{" "}
+                  <a href={localTax.temporary.sourceUrl} target="_blank" rel="noopener noreferrer">Source</a>.{" "}
+                </>
+              )}
+              We can&apos;t work it out from a package price, so it isn&apos;t added.{" "}
+              <a href={localTax.sourceUrl} target="_blank" rel="noopener noreferrer">Official rules</a>, checked{" "}
+              {checkedLabel(localTax.checkedOn)}.
+            </p>
+          </>
+        )}
+        {cardFee && (
+          <>
+            <h4>Paying in {props.advertisedCurrency === "USD" ? "dollars" : "euros"} with a UK card</h4>
+            <ul>
+              <li>
+                Most standard UK debit cards add {cardFee.lowPercent}–{cardFee.highPercent} for paying in another
+                currency: about {formatGBP(cardFee.lowPence)}–{formatGBP(cardFee.highPence)} on this price.
+              </li>
+              <li>Some cards charge nothing for this, for example {NO_FEE_CARDS.map((c) => c.provider).join(", ")}.</li>
+              <li>
+                A UK seller can&apos;t add a fee for paying by a personal card (
+                <a href={SURCHARGE_BAN_URL} target="_blank" rel="noopener noreferrer">Payment Surcharges Regulations, reg 6A</a>).
+              </li>
+            </ul>
+            <p className="hint">
+              Not added to your true price: it depends on your card. Rates from each bank&apos;s own page, checked{" "}
+              {checkedLabel(CARD_FEES_CHECKED_ON)}.
             </p>
           </>
         )}

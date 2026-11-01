@@ -73,6 +73,26 @@ export const FAMILY_SEATING: AirlineSeating[] = [
     quote: "During the check-in process, the adult and the child will automatically be assigned seats next to each other.",
     checkedOn: "2026-11-01",
   },
+  {
+    // jet2.com FAQ. ("Sitting together" sold with Jet2holidays guarantees the whole party; a child
+    // under 12 next to an adult needs no purchase.)
+    airline: "Jet2",
+    aliases: ["Jet2", "Jet2holidays", "Jet2.com"],
+    policy: "free",
+    sourceUrl: "https://www.jet2.com/en/faqs?topic=allocated-seating-and-extra-legroom&category=family-seating-arrangements",
+    quote:
+      "We will seat children under 12 next to an accompanying adult, however, we may only be able to arrange this at the airport or on board if you have not pre-booked seats.",
+    checkedOn: "2026-11-01",
+  },
+  {
+    airline: "Norwegian",
+    aliases: ["Norwegian"],
+    policy: "free",
+    sourceUrl: "https://www.norwegian.com/en/travel-info/travelling-with-children/seats-for-children/",
+    quote:
+      "our booking system will find you suitable seats for the minor between 2 and 11 and the accompanying adult, free of charge",
+    checkedOn: "2026-11-01",
+  },
 ];
 
 export function familySeatingFor(name: string | undefined): AirlineSeating | undefined {

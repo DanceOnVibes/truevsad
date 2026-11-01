@@ -34,7 +34,10 @@ function nice(d: string): string {
 }
 
 function short(d: string): string {
-  return new Date(`${d}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+  // Non-breaking space: "17 Oct" never splits across two lines on a phone.
+  return new Date(`${d}T00:00:00Z`)
+    .toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" })
+    .replace(" ", "\u00a0");
 }
 
 export default async function SchoolWindowPage({ searchParams }: { searchParams: Search }) {

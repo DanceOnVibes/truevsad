@@ -29,6 +29,10 @@ export interface BagAllowance {
   priceNote?: string;
   /** The airline's own published gate fee, exactly as published (currency included). */
   gateFee?: string;
+  /** What the airline charges to add this bag, as published on its own fees page. */
+  buyPrice?: string;
+  /** Where buyPrice / gateFee come from, when that's a different page from sourceUrl. */
+  feeSourceUrl?: string;
   /** Paid cabin bag includes priority boarding. */
   priority?: boolean;
   sourceUrl: string;
@@ -54,7 +58,7 @@ export const AIRLINE_BAGS: AirlineBags[] = [
     aliases: ["Aer Lingus"],
     bags: [
       { kind: "underseat", dims: [40, 30, 20], maxKg: null, wheelsCount: "yes", price: "free", sourceUrl: "https://www.aerlingus.com/prepare/bags/carry-on-baggage", quote: "It must fit inside the gauge units at the airport (including wheels and handles).", checkedOn: C, verified: true },
-      { kind: "cabin", dims: [55, 40, 24], maxKg: 10, wheelsCount: "yes", price: "some_fares", priceNote: "Included with Plus, Advantage and AerSpace; not with Saver (from €9.99/£9.99 to add)", sourceUrl: "https://www.aerlingus.com/prepare/bags/carry-on-baggage", quote: "Fare Types - All Plus, Advantage, AerSpace and Economy fares purchased via British Airways (Not included in Saver fares)", checkedOn: C, verified: true },
+      { kind: "cabin", dims: [55, 40, 24], maxKg: 10, wheelsCount: "yes", price: "some_fares", priceNote: "Included with Plus, Advantage and AerSpace; not with Saver (from €9.99/£9.99 to add)", gateFee: "€35 to put a 10kg bag in the hold", feeSourceUrl: "https://www.aerlingus.com/localized/en/modals/baggage-information.html", sourceUrl: "https://www.aerlingus.com/prepare/bags/carry-on-baggage", quote: "Fare Types - All Plus, Advantage, AerSpace and Economy fares purchased via British Airways (Not included in Saver fares)", checkedOn: C, verified: true },
     ],
     notes: ["Applies to Aer Lingus and Aer Lingus Regional flights within Europe."],
   },
@@ -74,7 +78,7 @@ export const AIRLINE_BAGS: AirlineBags[] = [
     aliases: ["easyJet"],
     bags: [
       { kind: "underseat", dims: [45, 36, 20], maxKg: 15, wheelsCount: "yes", price: "free", sourceUrl: "https://www.easyjet.com/en/help/baggage/cabin-bags", quote: "It can be a maximum size of 45 x 36 x 20 cm (including any handles and wheels) and must be kept under the seat in front of you.", checkedOn: C, verified: true },
-      { kind: "cabin", dims: [56, 45, 25], maxKg: 15, wheelsCount: "yes", price: "paid", priceNote: "Included with some seats and memberships", gateFee: "£60", priority: true, sourceUrl: "https://www.easyjet.com/en/help/baggage/cabin-bags", quote: "It's always cheaper to add a large cabin bag online than at the boarding gate, where it costs £60.", checkedOn: C, verified: true },
+      { kind: "cabin", dims: [56, 45, 25], maxKg: 15, wheelsCount: "yes", price: "paid", priceNote: "Included with some seats and memberships", buyPrice: "from £5.99 online", feeSourceUrl: "https://www.easyjet.com/en/terms-and-conditions/fees", gateFee: "£60", priority: true, sourceUrl: "https://www.easyjet.com/en/help/baggage/cabin-bags", quote: "It's always cheaper to add a large cabin bag online than at the boarding gate, where it costs £60.", checkedOn: C, verified: true },
     ],
     notes: ["Hold bags paid at the airport bag drop cost £60 (easyJet's own page)."],
   },
@@ -101,7 +105,7 @@ export const AIRLINE_BAGS: AirlineBags[] = [
     aliases: ["Norwegian"],
     bags: [
       { kind: "underseat", dims: [30, 40, 20], maxKg: 10, wheelsCount: "not stated", price: "free", priceNote: "On every ticket; 10kg on LowFare", sourceUrl: "https://www.norwegian.com/en/travel-info/baggage/hand-baggage", quote: "Small underseat cabin bag (30x40x20cm)", checkedOn: C, verified: true },
-      { kind: "cabin", dims: [55, 40, 23], maxKg: 10, wheelsCount: "not stated", price: "some_fares", priceNote: "Included with LowFare+ (10kg combined) and Flex (15kg combined); not with LowFare", sourceUrl: "https://www.norwegian.com/en/travel-info/baggage/hand-baggage", quote: "Overhead cabin bag (55x40x23cm)", checkedOn: C, verified: true },
+      { kind: "cabin", dims: [55, 40, 23], maxKg: 10, wheelsCount: "not stated", price: "some_fares", priceNote: "Included with LowFare+ (10kg combined) and Flex (15kg combined); not with LowFare", buyPrice: "£5–£9 on LowFare", feeSourceUrl: "https://www.norwegian.com/us/travel-info/baggage/changed-bag-rules/", sourceUrl: "https://www.norwegian.com/en/travel-info/baggage/hand-baggage", quote: "Overhead cabin bag (55x40x23cm)", checkedOn: C, verified: true },
     ],
     notes: ["Norwegian counts the combined weight of all your hand baggage."],
   },
@@ -110,10 +114,10 @@ export const AIRLINE_BAGS: AirlineBags[] = [
     aliases: ["Ryanair"],
     bags: [
       { kind: "underseat", dims: [40, 30, 20], maxKg: null, wheelsCount: "not stated", price: "free", sourceUrl: "https://help.ryanair.com/hc/en-gb/articles/12888036565521-Ryanair-s-Bag-Policy", quote: "All our fares include one small personal bag which can be brought on board, such as a handbag or laptop bag (40 x 30 x 20 cm), which must fit under the seat in front of you.", checkedOn: C, verified: true },
-      { kind: "cabin", dims: [55, 40, 20], maxKg: 10, wheelsCount: "not stated", price: "paid", priceNote: "Sold as Priority & 2 Cabin Bags", priority: true, sourceUrl: "https://help.ryanair.com/hc/en-gb/articles/12888036565521-Ryanair-s-Bag-Policy", quote: "This allows you to carry a small personal bag (40 x 30 x 20 cm), which must fit under the seat in front of you and a 10kg bag (55x40x20cm) onboard", checkedOn: C, verified: true },
+      { kind: "cabin", dims: [55, 40, 20], maxKg: 10, wheelsCount: "not stated", price: "paid", priceNote: "Sold as Priority & 2 Cabin Bags", buyPrice: "£12.49–£36 when you book, £19.99–£45.50 if added later (varies by route and date)", gateFee: "£46–£75 to put a 10kg bag in the hold", feeSourceUrl: "https://www.ryanair.com/gb/en/useful-info/help-centre/fees", priority: true, sourceUrl: "https://help.ryanair.com/hc/en-gb/articles/12888036565521-Ryanair-s-Bag-Policy", quote: "This allows you to carry a small personal bag (40 x 30 x 20 cm), which must fit under the seat in front of you and a 10kg bag (55x40x20cm) onboard", checkedOn: C, verified: true },
     ],
     notes: [
-      "A bag that doesn't fit Ryanair's sizer is refused at the gate or put in the hold for a fee set in Ryanair's regulations (the amount isn't on its bag page).",
+      "A bag that doesn't fit Ryanair's sizer is refused at the gate or put in the hold for a fee (Ryanair's fees page: £46–£75 for a 10kg bag).",
       "Lap infants get no cabin bag, but a baby bag up to 5kg (45×35×20cm) is allowed.",
     ],
   },
