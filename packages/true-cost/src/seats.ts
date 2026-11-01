@@ -26,15 +26,15 @@ export interface AirlineSeating {
 
 export const FAMILY_SEATING: AirlineSeating[] = [
   {
-    // Changed after the CMA opened its case (11 Jun 2026): Ryanair's own policy page now seats
-    // children next to an adult free under random allocation (announced 25 Jun 2026).
+    // Changed after the CMA opened its case (11 Jun 2026). Ryanair's announcement of 25 Jun 2026;
+    // its help page says the same: "If random allocation is selected, children will be seated next
+    // to an accompanying adult on the same reservation free of charge."
     airline: "Ryanair",
     aliases: ["Ryanair"],
     policy: "free",
-    sourceUrl: "https://help.ryanair.com/hc/en-gb/articles/12892557860369-What-is-Ryanair-s-Family-Seat-Policy",
-    quote:
-      "If random allocation is selected, children will be seated next to an accompanying adult on the same reservation free of charge.",
-    checkedOn: "2026-10-31",
+    sourceUrl: "https://corporate.ryanair.com/news/ryanair-tweaks-seat-allocation-for-families-to-match-industry-standard/",
+    quote: "Ryanair does not charge any fee for children to sit beside their parent or accompanying adult.",
+    checkedOn: "2026-11-01",
   },
   {
     airline: "easyJet",
@@ -51,6 +51,17 @@ export const FAMILY_SEATING: AirlineSeating[] = [
     sourceUrl: "https://www.britishairways.com/content/information/seating/reserving-your-seat",
     quote: "We'll make sure each child under 12 years sits next to an adult from your booking",
     checkedOn: "2026-10-31",
+  },
+  {
+    // TUI Airways flights. Same FAQ on tui.co.uk and tuiholidays.ie.
+    airline: "TUI",
+    aliases: ["TUI", "TUI Airways"],
+    policy: "free",
+    sourceUrl:
+      "https://www.tui.co.uk/destinations/faq/airport-flights-and-luggage/seats/im-travelling-with-my-family-do-i-need-to-reserve-our-seats-together",
+    quote:
+      "If you're flying with TUI Airways and there's a child under the age of 12 on your booking, we'll make sure they're seated with at least one adult in your party.",
+    checkedOn: "2026-11-01",
   },
 ];
 

@@ -355,6 +355,11 @@ describe("seats: only what a family must pay to sit together", () => {
     expect(r.trueCostPence).toBe(200000);
     expect(familySeatingFor("easyJet holidays")!.policy).toBe("free");
   });
+  it("TUI seats a child under 12 with an adult for free", () => {
+    const r = calculateTrueCost({ party: family, offer: { ...offer, supplierName: "TUI" }, rules: [seat("TUI")] });
+    expect(r.trueCostPence).toBe(200000);
+    expect(familySeatingFor("TUI Airways")!.policy).toBe("free");
+  });
   it("airline policy unknown: per adult, as before", () => {
     const r = calculateTrueCost({ party: family, offer, rules: [seat(undefined)] });
     expect(r.trueCostPence).toBe(200000 + 2 * 1400);
