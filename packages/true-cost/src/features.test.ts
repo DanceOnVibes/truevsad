@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  AIRPORT_DROPOFF,
+  dropOffFor,
+  transferFor,
   calculateTrueCost,
   childExtras,
   receiptScope,
@@ -355,6 +358,19 @@ describe("seats: only what a family must pay to sit together", () => {
     expect(r.trueCostPence).toBe(200000);
     expect(familySeatingFor("easyJet holidays")!.policy).toBe("free");
   });
+  it("TUI seats a child under 12 with an adult for free", () => {
+    const r = calculateTrueCost({ party: family, offer: { ...offer, supplierName: "TUI" }, rules: [seat("TUI")] });
+    expect(r.trueCostPence).toBe(200000);
+    expect(familySeatingFor("TUI Airways")!.policy).toBe("free");
+  });
+  it("Wizz Air puts a child next to an adult at check-in for free", () => {
+    const r = calculateTrueCost({ party: family, offer, rules: [seat("Wizz Air")] });
+    expect(r.trueCostPence).toBe(200000);
+  });
+  it("Jet2 (sitting together is a paid extra): still per adult", () => {
+    const r = calculateTrueCost({ party: family, offer, rules: [seat("Jet2")] });
+    expect(r.trueCostPence).toBe(200000 + 2 * 1400);
+  });
   it("airline policy unknown: per adult, as before", () => {
     const r = calculateTrueCost({ party: family, offer, rules: [seat(undefined)] });
     expect(r.trueCostPence).toBe(200000 + 2 * 1400);
@@ -372,5 +388,31 @@ describe("infant fees", () => {
     const rules = selectRules([infant], offer);
     expect(calculateTrueCost({ party: { adults: 2, childAges: [1, 0, 4] }, offer, rules }).trueCostPence).toBe(200000 + 2 * 5000);
     expect(calculateTrueCost({ party: { adults: 2, childAges: [2] }, offer, rules }).trueCostPence).toBe(200000);
+  });
+});
+
+describe("airport drop-off (good to know, never in the total)", () => {
+  it("finds an airport by name or code", () => {
+    expect(dropOffFor("London Gatwick")!.airport).toBe("Gatwick");
+    expect(dropOffFor("LHR")!.airport).toBe("Heathrow");
+    expect(dropOffFor("Leeds Bradford")!.airport).toBe("Leeds Bradford");
+    expect(dropOffFor("Belfast")).toBeUndefined();
+    expect(dropOffFor(undefined)).toBeUndefined();
+  });
+  it("every airport has its own source, a quote and a free option where it offers one", () => {
+    for (const a of AIRPORT_DROPOFF) {
+      expect(a.sourceUrl.startsWith("https://")).toBe(true);
+      expect(a.quote.length > 10).toBe(true);
+      expect(/^\d{4}-\d{2}-\d{2}$/.test(a.checkedOn)).toBe(true);
+    }
+  });
+});
+
+describe("resort transfers (good to know, never in the total)", () => {
+  it("matches the resort in the advert", () => {
+    expect(transferFor("Kato Paphos, Cyprus")!.airport).toBe("Paphos airport");
+    expect(transferFor("Agia Napa")!.airport).toBe("Larnaca airport");
+    expect(transferFor("Sidari, Corfu")!.options[0]!.mode).toBe("bus");
+    expect(transferFor("Benidorm")).toBeUndefined();
   });
 });

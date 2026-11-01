@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { INCLUSIONS, type FairMark, type Inclusion, type TrueCostResult } from "@truevsad/true-cost";
+import { AIRPORT_DROPOFF, INCLUSIONS, type FairMark, type Inclusion, type TrueCostResult } from "@truevsad/true-cost";
 import { INCLUSION_LABELS, supplierDefaults } from "@/lib/supplier-defaults";
 import { ReceiptView } from "@/components/ReceiptView";
 import { FairSharePanel } from "@/components/FairSharePanel";
@@ -51,6 +51,7 @@ export default function XrayPage() {
   const [councils, setCouncils] = useState<string[]>([]);
   const [airline, setAirline] = useState("");
   const [departMonth, setDepartMonth] = useState("");
+  const [departAirport, setDepartAirport] = useState("");
   const [holdBags, setHoldBags] = useState("");
   /** Fields the server wants the family to double-check. */
   const [check, setCheck] = useState<string[]>([]);
@@ -354,6 +355,17 @@ export default function XrayPage() {
                 </select>
               </div>
             )}
+            <div>
+              <label htmlFor="from">Flying from (optional)</label>
+              <select id="from" value={departAirport} onChange={(e) => setDepartAirport(e.target.value)}>
+                <option value="">Not sure / other</option>
+                {AIRPORT_DROPOFF.map((a) => (
+                  <option key={a.airport} value={a.airport}>
+                    {a.airport}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <label className={`check ${flag("excludes") ?? ""}`}>
@@ -486,6 +498,8 @@ export default function XrayPage() {
             excludesTaxesAndFees={excludesFees}
             fairMark={fairMark ?? undefined}
             airline={airline || supplier || null}
+            departAirport={departAirport || null}
+            destination={destination || null}
           />
           <ChildCostsNote costs={childCosts} />
 
