@@ -226,7 +226,7 @@ export function ReceiptView(props: ReceiptViewProps) {
                   <a href={localTax.temporary.sourceUrl} target="_blank" rel="noopener noreferrer">Source</a>.{" "}
                 </>
               )}
-              We can&apos;t work it out from a package price, so it isn&apos;t added.{" "}
+              It isn&apos;t added to this total.{" "}
               <a href={localTax.sourceUrl} target="_blank" rel="noopener noreferrer">Official rules</a>, checked{" "}
               {checkedLabel(localTax.checkedOn)}.
             </p>
