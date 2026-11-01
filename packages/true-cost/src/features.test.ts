@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  AIRPORT_DROPOFF,
+  dropOffFor,
   calculateTrueCost,
   childExtras,
   receiptScope,
@@ -385,5 +387,22 @@ describe("infant fees", () => {
     const rules = selectRules([infant], offer);
     expect(calculateTrueCost({ party: { adults: 2, childAges: [1, 0, 4] }, offer, rules }).trueCostPence).toBe(200000 + 2 * 5000);
     expect(calculateTrueCost({ party: { adults: 2, childAges: [2] }, offer, rules }).trueCostPence).toBe(200000);
+  });
+});
+
+describe("airport drop-off (good to know, never in the total)", () => {
+  it("finds an airport by name or code", () => {
+    expect(dropOffFor("London Gatwick")!.airport).toBe("Gatwick");
+    expect(dropOffFor("LHR")!.airport).toBe("Heathrow");
+    expect(dropOffFor("Leeds Bradford")!.airport).toBe("Leeds Bradford");
+    expect(dropOffFor("Belfast")).toBeUndefined();
+    expect(dropOffFor(undefined)).toBeUndefined();
+  });
+  it("every airport has its own source, a quote and a free option where it offers one", () => {
+    for (const a of AIRPORT_DROPOFF) {
+      expect(a.sourceUrl.startsWith("https://")).toBe(true);
+      expect(a.quote.length > 10).toBe(true);
+      expect(/^\d{4}-\d{2}-\d{2}$/.test(a.checkedOn)).toBe(true);
+    }
   });
 });

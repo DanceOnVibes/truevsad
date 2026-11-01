@@ -1,4 +1,4 @@
-import { ADVISORY_CATEGORIES, airlineBagsFor, formatGBP, receiptScope, type CostCategory, type CostLine, type FairMark, type Inclusion } from "@truevsad/true-cost";
+import { ADVISORY_CATEGORIES, airlineBagsFor, dropOffFor, formatGBP, receiptScope, type CostCategory, type CostLine, type FairMark, type Inclusion } from "@truevsad/true-cost";
 import { FairMarkBadge, FairMarkDetail } from "./FairMarkBadge";
 import { EMAILS } from "@/lib/company";
 import { INCLUSION_LABELS } from "@/lib/supplier-defaults";
@@ -29,6 +29,8 @@ export interface ReceiptViewProps {
   fairMark?: FairMark;
   /** Airline (or seller) name, to show its cabin bag sizes. */
   airline?: string | null;
+  /** UK airport the family flies from, to show what being dropped off there costs. */
+  departAirport?: string | null;
 }
 
 function checkedLabel(iso: string): string {
@@ -51,6 +53,7 @@ export function ReceiptView(props: ReceiptViewProps) {
   const { advertisedPence, trueCostPence, gapPence, confidence, usedDemoRules, lines, includes, excludesTaxesAndFees, notes, fairMark } =
     props;
   const bags = airlineBagsFor(props.airline ?? undefined);
+  const dropOff = dropOffFor(props.departAirport);
   const underseat = bags?.bags.find((b) => b.kind === "underseat" && b.verified && b.dims);
   const cabin = bags?.bags.find((b) => b.kind === "cabin" && b.verified && b.dims);
   const gapRatio = advertisedPence > 0 ? gapPence / advertisedPence : 0;
@@ -200,6 +203,20 @@ export function ReceiptView(props: ReceiptViewProps) {
             <p className="hint">
               Sizes include wheels and handles unless the airline says otherwise.{" "}
               <a href="/cabin-bags">Check your bag →</a>
+            </p>
+          </>
+        )}
+        {dropOff && (
+          <>
+            <h4>Being dropped off at {dropOff.airport}</h4>
+            <ul>
+              <li>Drop-off zone: {dropOff.charge}.{dropOff.payBy ? ` Pay by ${dropOff.payBy}.` : ""}</li>
+              {dropOff.free && <li>Free option: {dropOff.free}.</li>}
+            </ul>
+            <p className="hint">
+              Not added to your true price: many families park, take the train or use the free option.
+              From the airport&apos;s own page, checked {checkedLabel(dropOff.checkedOn)}.{" "}
+              <a href={dropOff.sourceUrl} target="_blank" rel="noopener noreferrer">Source</a>
             </p>
           </>
         )}
