@@ -17,8 +17,9 @@ const PRICE: Record<BagAllowance["price"], string> = {
 
 function size(b: BagAllowance): string {
   if (!b.dims || !b.verified) return "Not checked yet";
-  const kg = b.maxKg ? `, up to ${b.maxKg}kg` : "";
-  return `${b.dims.join(" × ")} cm${kg}`;
+  const kg = b.maxKg ? `, up to\u00a0${b.maxKg}kg` : "";
+  // Non-breaking spaces keep "55 × 40 × 20 cm" on one line on phones.
+  return `${b.dims.join("\u00a0×\u00a0")}\u00a0cm${kg}`;
 }
 
 function wheels(b: BagAllowance): string {

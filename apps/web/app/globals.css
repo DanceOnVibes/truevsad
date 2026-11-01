@@ -193,3 +193,15 @@ button.chip.sel { border-color: var(--accent); color: var(--accent); font-weight
 .fit-fits_if_wheels, .fit-too_heavy { color: var(--warn-fg); }
 .fit-too_big { color: var(--gap); }
 .fit-not_checked { color: var(--muted); font-weight: 400; }
+
+/* Layout fixes (Nov 2026): same look, nothing redesigned. */
+/* Form rows: when a label wraps onto two lines, keep the boxes in the row level. */
+.row > div { display: flex; flex-direction: column; justify-content: flex-end; }
+/* Long words and links (URLs, emails) never push the page wider than a phone. */
+main, .site-footer { overflow-wrap: break-word; }
+@media (max-width: 560px) {
+  /* Long right-hand cells ("£2.75 per person, per night", bag sizes) wrap instead of squeezing the text column. */
+  table.receipt td.amt { white-space: normal; }
+  /* Board cards: once the price drops under the title, line it up on the left with the title. */
+  .deal-card .price { text-align: left; }
+}
