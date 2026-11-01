@@ -60,3 +60,4 @@ export { AIRLINE_BAGS, airlineBagsFor, BAGS_NOT_CHECKED, bagFits, type AirlineBa
 export { FAMILY_SEATING, familySeatingFor, seatUnits, type AirlineSeating, type FamilySeatPolicy } from "./seats";
 export { familyWindows, quoteDifference, type DaysOff, type FamilyWindow } from "./fairfam";
 export { AIRPORT_DROPOFF, dropOffFor, type AirportDropOff } from "./dropoff";
+export { RESORT_TRANSFERS, transferFor, type ResortTransfer, type TransferOption } from "./transfers";

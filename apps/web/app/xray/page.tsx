@@ -499,6 +499,7 @@ export default function XrayPage() {
             fairMark={fairMark ?? undefined}
             airline={airline || supplier || null}
             departAirport={departAirport || null}
+            destination={destination || null}
           />
           <ChildCostsNote costs={childCosts} />
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   AIRPORT_DROPOFF,
   dropOffFor,
+  transferFor,
   calculateTrueCost,
   childExtras,
   receiptScope,
@@ -404,5 +405,14 @@ describe("airport drop-off (good to know, never in the total)", () => {
       expect(a.quote.length > 10).toBe(true);
       expect(/^\d{4}-\d{2}-\d{2}$/.test(a.checkedOn)).toBe(true);
     }
+  });
+});
+
+describe("resort transfers (good to know, never in the total)", () => {
+  it("matches the resort in the advert", () => {
+    expect(transferFor("Kato Paphos, Cyprus")!.airport).toBe("Paphos airport");
+    expect(transferFor("Agia Napa")!.airport).toBe("Larnaca airport");
+    expect(transferFor("Sidari, Corfu")!.options[0]!.mode).toBe("bus");
+    expect(transferFor("Benidorm")).toBeUndefined();
   });
 });

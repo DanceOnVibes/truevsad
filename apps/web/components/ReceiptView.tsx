@@ -1,4 +1,4 @@
-import { ADVISORY_CATEGORIES, airlineBagsFor, dropOffFor, formatGBP, receiptScope, type CostCategory, type CostLine, type FairMark, type Inclusion } from "@truevsad/true-cost";
+import { ADVISORY_CATEGORIES, airlineBagsFor, dropOffFor, formatGBP, transferFor, receiptScope, type CostCategory, type CostLine, type FairMark, type Inclusion } from "@truevsad/true-cost";
 import { FairMarkBadge, FairMarkDetail } from "./FairMarkBadge";
 import { EMAILS } from "@/lib/company";
 import { INCLUSION_LABELS } from "@/lib/supplier-defaults";
@@ -31,6 +31,8 @@ export interface ReceiptViewProps {
   airline?: string | null;
   /** UK airport the family flies from, to show what being dropped off there costs. */
   departAirport?: string | null;
+  /** Where the holiday is, to show official public transfer fares when transfers aren't included. */
+  destination?: string | null;
 }
 
 function checkedLabel(iso: string): string {
@@ -54,6 +56,7 @@ export function ReceiptView(props: ReceiptViewProps) {
     props;
   const bags = airlineBagsFor(props.airline ?? undefined);
   const dropOff = dropOffFor(props.departAirport);
+  const transfer = includes?.includes("transfers") ? undefined : transferFor(props.destination);
   const underseat = bags?.bags.find((b) => b.kind === "underseat" && b.verified && b.dims);
   const cabin = bags?.bags.find((b) => b.kind === "cabin" && b.verified && b.dims);
   const gapRatio = advertisedPence > 0 ? gapPence / advertisedPence : 0;
@@ -203,6 +206,23 @@ export function ReceiptView(props: ReceiptViewProps) {
             <p className="hint">
               Sizes include wheels and handles unless the airline says otherwise.{" "}
               <a href="/cabin-bags">Check your bag →</a>
+            </p>
+          </>
+        )}
+        {transfer && (
+          <>
+            <h4>Getting from {transfer.airport} without a transfer</h4>
+            <ul>
+              {transfer.options.map((o) => (
+                <li key={o.mode + o.fare}>
+                  {o.mode === "bus" ? "Public bus" : "Taxi"}: {o.fare}.{" "}
+                  <a href={o.sourceUrl} target="_blank" rel="noopener noreferrer">Source</a>
+                </li>
+              ))}
+            </ul>
+            <p className="hint">
+              Not added to your true price: it depends on where you stay and how you travel. Official
+              published fares, checked {checkedLabel(transfer.checkedOn)}.
             </p>
           </>
         )}
