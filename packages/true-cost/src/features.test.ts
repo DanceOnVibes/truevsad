@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   AIRPORT_DROPOFF,
+  cardFeeNote,
+  localTaxNoteFor,
   dropOffFor,
   transferFor,
   calculateTrueCost,
@@ -367,8 +369,12 @@ describe("seats: only what a family must pay to sit together", () => {
     const r = calculateTrueCost({ party: family, offer, rules: [seat("Wizz Air")] });
     expect(r.trueCostPence).toBe(200000);
   });
-  it("Jet2 (sitting together is a paid extra): still per adult", () => {
-    const r = calculateTrueCost({ party: family, offer, rules: [seat("Jet2")] });
+  it("Jet2 and Norwegian seat children under 12 next to an adult for free", () => {
+    const r = calculateTrueCost({ party: family, offer, rules: [seat("Jet2"), seat("Norwegian")] });
+    expect(r.trueCostPence).toBe(200000);
+  });
+  it("Aer Lingus (families pay; children get 50% off): still per adult", () => {
+    const r = calculateTrueCost({ party: family, offer, rules: [seat("Aer Lingus")] });
     expect(r.trueCostPence).toBe(200000 + 2 * 1400);
   });
   it("airline policy unknown: per adult, as before", () => {
@@ -414,5 +420,19 @@ describe("resort transfers (good to know, never in the total)", () => {
     expect(transferFor("Agia Napa")!.airport).toBe("Larnaca airport");
     expect(transferFor("Sidari, Corfu")!.options[0]!.mode).toBe("bus");
     expect(transferFor("Benidorm")).toBeUndefined();
+  });
+});
+
+describe("card fees and percentage taxes (good to know, never in the total)", () => {
+  it("card-fee range only for prices not in pounds", () => {
+    expect(cardFeeNote("GBP", 100000)).toBeNull();
+    const n = cardFeeNote("EUR", 100000)!;
+    expect(n.lowPence).toBe(2750);
+    expect(n.highPence).toBe(2990);
+  });
+  it("names Amsterdam's and Turkey's room-price taxes without adding them", () => {
+    expect(localTaxNoteFor("Amsterdam, Netherlands")!.name).toBe("Amsterdam tourist tax");
+    expect(localTaxNoteFor("Belek, Antalya")!.name).toBe("Turkey accommodation tax");
+    expect(localTaxNoteFor("West Side, New York")).toBeUndefined();
   });
 });

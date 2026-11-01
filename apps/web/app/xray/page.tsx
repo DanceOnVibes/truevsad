@@ -500,6 +500,7 @@ export default function XrayPage() {
             airline={airline || supplier || null}
             departAirport={departAirport || null}
             destination={destination || null}
+            advertisedCurrency={currency}
           />
           <ChildCostsNote costs={childCosts} />
 

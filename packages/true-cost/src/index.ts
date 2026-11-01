@@ -61,3 +61,5 @@ export { FAMILY_SEATING, familySeatingFor, seatUnits, type AirlineSeating, type 
 export { familyWindows, quoteDifference, type DaysOff, type FamilyWindow } from "./fairfam";
 export { AIRPORT_DROPOFF, dropOffFor, type AirportDropOff } from "./dropoff";
 export { RESORT_TRANSFERS, transferFor, type ResortTransfer, type TransferOption } from "./transfers";
+export { CARD_FEES, NO_FEE_CARDS, SURCHARGE_BAN_URL, CARD_FEES_CHECKED_ON, cardFeeNote, type CardFee, type CardFeeNote } from "./payment";
+export { LOCAL_TAX_NOTES, localTaxNoteFor, type LocalTaxNote } from "./localtax";

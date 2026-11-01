@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FAIRMARK_LABELS, FAIRMARK_SCALE, formatFairMarkPercent, formatGBP, REFERENCE_PARTY } from "@truevsad/true-cost";
 import { FairMarkBadge } from "@/components/FairMarkBadge";
+import { INCLUSION_LABELS } from "@/lib/supplier-defaults";
 import {
   LEADERBOARD_DAYS,
   LEADERBOARD_MIN_DEALS,
@@ -168,6 +169,9 @@ export default async function FairMarkPage({ searchParams }: { searchParams: Sea
                 {d.nights} night{d.nights === 1 ? "" : "s"} · {d.adults} adult{d.adults === 1 ? "" : "s"}
                 {d.children ? `, ${d.children} child${d.children === 1 ? "" : "ren"}` : ""}
               </div>
+              {d.includes.length > 0 && (
+                <div className="hint">Includes: {d.includes.map((i) => INCLUSION_LABELS[i]).join(", ").toLowerCase()}</div>
+              )}
             </div>
             <div className="price">
               <div className="hint">

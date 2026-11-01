@@ -57,6 +57,7 @@ export default function CabinBagsPage() {
                       {b.priceNote ? ` · ${b.priceNote}` : ""}
                       {b.priority ? " · includes priority boarding" : ""}
                       {b.dims && b.verified ? ` · ${wheels(b)}` : ""}
+                      {b.price !== "free" && b.buyPrice ? ` · to add it: ${b.buyPrice}` : ""}
                       {b.gateFee ? ` · too big at the gate: ${b.gateFee}` : ""}
                     </div>
                     <div className="working">
@@ -64,6 +65,14 @@ export default function CabinBagsPage() {
                         {a.airline}&apos;s page
                       </a>
                       {b.verified && b.quote ? <> · &ldquo;{b.quote}&rdquo;</> : ""} · checked {checked(b.checkedOn)}
+                      {b.feeSourceUrl ? (
+                        <>
+                          {" · "}
+                          <a href={b.feeSourceUrl} target="_blank" rel="noopener noreferrer">
+                            fees page
+                          </a>
+                        </>
+                      ) : null}
                     </div>
                   </td>
                   <td className="amt">{size(b)}</td>
