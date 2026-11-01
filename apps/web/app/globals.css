@@ -199,6 +199,8 @@ button.chip.sel { border-color: var(--accent); color: var(--accent); font-weight
 .row > div { display: flex; flex-direction: column; justify-content: flex-end; }
 /* Long words and links (URLs, emails) never push the page wider than a phone. */
 main, .site-footer { overflow-wrap: break-word; }
+/* Two outline buttons side by side ("Edit details", "Split it fairly") get a small gap. */
+button + button.secondary { margin-left: 8px; }
 @media (max-width: 560px) {
   /* Long right-hand cells ("£2.75 per person, per night", bag sizes) wrap instead of squeezing the text column. */
   table.receipt td.amt { white-space: normal; }

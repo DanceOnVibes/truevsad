@@ -117,7 +117,7 @@ export const AIRLINE_BAGS: AirlineBags[] = [
       { kind: "cabin", dims: [55, 40, 20], maxKg: 10, wheelsCount: "not stated", price: "paid", priceNote: "Sold as Priority & 2 Cabin Bags", buyPrice: "£12.49–£36 when you book, £19.99–£45.50 if added later (varies by route and date)", gateFee: "£46–£75 to put a 10kg bag in the hold", feeSourceUrl: "https://www.ryanair.com/gb/en/useful-info/help-centre/fees", priority: true, sourceUrl: "https://help.ryanair.com/hc/en-gb/articles/12888036565521-Ryanair-s-Bag-Policy", quote: "This allows you to carry a small personal bag (40 x 30 x 20 cm), which must fit under the seat in front of you and a 10kg bag (55x40x20cm) onboard", checkedOn: C, verified: true },
     ],
     notes: [
-      "A bag that doesn't fit Ryanair's sizer is refused at the gate or put in the hold for a fee set in Ryanair's regulations (the amount isn't on its bag page).",
+      "A bag that doesn't fit Ryanair's sizer is refused at the gate or put in the hold for a fee (Ryanair's fees page: £46–£75 for a 10kg bag).",
       "Lap infants get no cabin bag, but a baby bag up to 5kg (45×35×20cm) is allowed.",
     ],
   },

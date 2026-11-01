@@ -10,6 +10,8 @@ export interface LocalTaxNote {
   name: string;
   text: string;
   sourceUrl: string;
+  /** A temporary change, shown only until it ends, with its own source. */
+  temporary?: { text: string; until: string; sourceUrl: string };
   checkedOn: string;
 }
 
@@ -23,12 +25,17 @@ export const LOCAL_TAX_NOTES: LocalTaxNote[] = [
   },
   {
     places: [
-      "Turkey", "Türkiye", "Turkiye", "Antalya", "Belek", "Lara", "Kemer", "Alanya", "Bodrum", "Marmaris",
+      "Turkey", "Türkiye", "Turkiye", "Antalya", "Belek", "Lara Beach", "Kemer", "Alanya", "Bodrum", "Marmaris",
       "Icmeler", "Fethiye", "Oludeniz", "Ölüdeniz", "Dalaman", "Dalyan", "Kusadasi", "Kuşadası", "Istanbul", "Gocek", "Göcek",
     ],
     name: "Turkey accommodation tax",
-    text: "2% of the hotel bill, including board and other services sold with the room (cut to 1% from 1 May to 31 December 2026). The hotel adds it to its bill, so ask the seller whether it's in your price.",
+    text: "2% of the hotel bill, including board and other services sold with the room. The hotel adds it to its bill, so ask the seller whether it's in your price.",
     sourceUrl: "https://intvrg.gib.gov.tr/KONAKLAMA_VERGISI_BEYANNAMESI_DUZENLEME_KILAVUZU.pdf",
+    temporary: {
+      text: "Cut to 1% from 1 May to 31 December 2026 (Presidential Decision 11263).",
+      until: "2026-12-31",
+      sourceUrl: "https://www.turmob.org.tr/ekutuphane/Read/2fb71798-8698-460a-97fd-d0f9013fb9ba",
+    },
     checkedOn: "2026-11-01",
   },
 ];

@@ -60,7 +60,8 @@ export function ReceiptView(props: ReceiptViewProps) {
   const dropOff = dropOffFor(props.departAirport);
   const transfer = includes?.includes("transfers") ? undefined : transferFor(props.destination);
   const cardFee = cardFeeNote(props.advertisedCurrency, advertisedPence);
-  const localTax = localTaxNoteFor(props.destination);
+  const localTax = includes?.includes("local_taxes") ? undefined : localTaxNoteFor(props.destination);
+  const today = new Date().toISOString().slice(0, 10);
   const underseat = bags?.bags.find((b) => b.kind === "underseat" && b.verified && b.dims);
   const cabin = bags?.bags.find((b) => b.kind === "cabin" && b.verified && b.dims);
   const gapRatio = advertisedPence > 0 ? gapPence / advertisedPence : 0;
@@ -218,7 +219,14 @@ export function ReceiptView(props: ReceiptViewProps) {
           <>
             <h4>{localTax.name}: not in this total</h4>
             <p className="hint">
-              {localTax.text} We can&apos;t work it out from a package price, so it isn&apos;t added.{" "}
+              {localTax.text}{" "}
+              {localTax.temporary && today <= localTax.temporary.until && (
+                <>
+                  {localTax.temporary.text}{" "}
+                  <a href={localTax.temporary.sourceUrl} target="_blank" rel="noopener noreferrer">Source</a>.{" "}
+                </>
+              )}
+              We can&apos;t work it out from a package price, so it isn&apos;t added.{" "}
               <a href={localTax.sourceUrl} target="_blank" rel="noopener noreferrer">Official rules</a>, checked{" "}
               {checkedLabel(localTax.checkedOn)}.
             </p>
@@ -234,7 +242,7 @@ export function ReceiptView(props: ReceiptViewProps) {
               </li>
               <li>Some cards charge nothing for this, for example {NO_FEE_CARDS.map((c) => c.provider).join(", ")}.</li>
               <li>
-                A seller can&apos;t add a fee for paying by a personal card in the UK (
+                A UK seller can&apos;t add a fee for paying by a personal card (
                 <a href={SURCHARGE_BAN_URL} target="_blank" rel="noopener noreferrer">Payment Surcharges Regulations, reg 6A</a>).
               </li>
             </ul>
