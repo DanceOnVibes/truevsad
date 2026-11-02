@@ -20,6 +20,7 @@ import {
   scorePlace,
   selectRules,
   shoulderWeeks,
+  publishedSpan,
   type FeeRule,
   type Offer,
   type PlaceCounts,
@@ -51,6 +52,7 @@ describe("seasonal rules", () => {
 
 describe("School Window", () => {
   const hols: SchoolHoliday[] = [
+    { authority: "Test", name: "Summer holidays", startsOn: "2026-07-23", endsOn: "2026-08-31" },
     { authority: "Test", name: "October half term", startsOn: "2026-10-24", endsOn: "2026-11-01" },
     { authority: "Test", name: "Summer holidays", startsOn: "2027-07-22", endsOn: "2027-09-01" },
   ];
@@ -68,8 +70,22 @@ describe("School Window", () => {
   it("far from any holiday is term time", () => {
     expect(classifyTrip("2027-03-01", 7, hols).status).toBe("term_time");
   });
+  it("doesn't guess past the council's published dates", () => {
+    // Published up to summer 2027 only: a trip in October 2027 isn't "term time", it's unknown.
+    const t = classifyTrip("2027-10-20", 7, hols);
+    expect(t.status).toBe("unpublished");
+    expect(t.schoolDaysMissed).toBe(0);
+    // A trip that starts inside the last holiday but flies home after it is unknown too.
+    expect(classifyTrip("2027-08-28", 7, hols).status).toBe("unpublished");
+    // Nothing published at all.
+    expect(classifyTrip("2027-03-01", 7, []).status).toBe("unpublished");
+  });
+  it("says how far the published dates run", () => {
+    expect(publishedSpan(hols)).toEqual({ from: "2026-07-23", until: "2027-09-01" });
+    expect(publishedSpan([])).toBe(null);
+  });
   it("lists shoulder weeks", () => {
-    expect(shoulderWeeks(hols[0]!)).toEqual({
+    expect(shoulderWeeks(hols[1]!)).toEqual({
       before: ["2026-10-17", "2026-10-23"],
       after: ["2026-11-02", "2026-11-08"],
     });
