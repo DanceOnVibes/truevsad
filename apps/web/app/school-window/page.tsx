@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { classifyTrip, shoulderWeeks, toOutwardPostcode, type TripWindow } from "@truevsad/true-cost";
+import { classifyTrip, publishedSpan, shoulderWeeks, toOutwardPostcode, type TripWindow } from "@truevsad/true-cost";
 import { loadAuthorities, loadHolidays, type HolidayRow } from "@/lib/school";
 import { EMAILS } from "@/lib/company";
 import { councilsForOutcode, matchSupported } from "@/lib/councils";
@@ -21,7 +21,18 @@ const STATUS_LABEL: Record<TripWindow["status"], string> = {
   school_holiday: "School holiday",
   shoulder: "Shoulder dates",
   term_time: "Term time",
+  unpublished: "Dates not published yet",
 };
+
+// The usual order of holidays in a school year, so we can show which ones a council hasn't published yet.
+const HOLIDAY_ORDER = [
+  "October half term",
+  "Christmas holidays",
+  "February half term",
+  "Easter holidays",
+  "May half term",
+  "Summer holidays",
+];
 
 function nice(d: string): string {
   return new Date(`${d}T00:00:00Z`).toLocaleDateString("en-GB", {
@@ -74,6 +85,13 @@ export default async function SchoolWindowPage({ searchParams }: { searchParams:
 
   const byYear = new Map<string, HolidayRow[]>();
   for (const h of holidays) byYear.set(h.schoolYear, [...(byYear.get(h.schoolYear) ?? []), h]);
+  const span = publishedSpan(holidays);
+
+  /** Holidays that come after the last one listed for a year, i.e. not published yet. */
+  function notYetPublished(list: HolidayRow[]): string[] {
+    const last = Math.max(...list.map((h) => HOLIDAY_ORDER.indexOf(h.name)));
+    return last < 0 ? [] : HOLIDAY_ORDER.slice(last + 1);
+  }
 
   return (
     <main>
@@ -144,6 +162,9 @@ export default async function SchoolWindowPage({ searchParams }: { searchParams:
           <p style={{ margin: "4px 0 0" }}>{trip.summary}</p>
           <p className="hint">
             {nice(date)} for {nights} night{nights === 1 ? "" : "s"}.
+            {trip.status === "unpublished" && span
+              ? ` ${council} has published dates from ${nice(span.from)} to ${nice(span.until)}.`
+              : ""}
           </p>
         </div>
       )}
@@ -170,6 +191,12 @@ export default async function SchoolWindowPage({ searchParams }: { searchParams:
                   </tr>
                 );
               })}
+              {notYetPublished(list).map((name) => (
+                <tr key={name}>
+                  <td>{name}</td>
+                  <td className="amt">Not published yet</td>
+                </tr>
+              ))}
             </tbody>
           </table>
           <p className="hint">
@@ -183,6 +210,12 @@ export default async function SchoolWindowPage({ searchParams }: { searchParams:
         </div>
       ))}
 
+      {council && span && (
+        <p className="hint">
+          {council} has published dates up to {nice(span.until)}. Later holidays will appear here once the
+          council publishes them.
+        </p>
+      )}
       <p className="hint">
         Taking a child out of school in term time needs the head teacher&apos;s agreement, and councils
         can fine for unauthorised absence. Shoulder weeks are shown so you can compare prices, not as

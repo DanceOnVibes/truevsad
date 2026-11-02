@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { familyWindows, quoteDifference, formatGBP, type DaysOff, type FamilyWindow } from "@truevsad/true-cost";
+import { familyWindows, publishedSpan, quoteDifference, formatGBP, type DaysOff, type FamilyWindow } from "@truevsad/true-cost";
 
 /**
  * FairFam: your school dates, your family, one honest price.
@@ -252,6 +252,9 @@ export function FairFamClient({ councils }: { councils: string[] }) {
               council&apos;s own page
             </a>
             {source.checkedOn ? `, checked ${nice(source.checkedOn)}` : ""}.
+            {publishedSpan(holidays)
+              ? ` The council has published dates up to ${nice(publishedSpan(holidays)!.until)}; later holidays aren't shown until it does.`
+              : ""}
           </p>
         )}
 

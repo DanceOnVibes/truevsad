@@ -21,6 +21,7 @@ export {
   classifyTrip,
   formatDay,
   parseDay,
+  publishedSpan,
   SHOULDER_DAYS,
   shoulderWeeks,
   type SchoolHoliday,

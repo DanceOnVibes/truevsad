@@ -16,7 +16,11 @@ export interface SchoolHoliday {
   endsOn: string;
 }
 
-export type SchoolStatus = "school_holiday" | "shoulder" | "term_time";
+/**
+ * "unpublished": part of the trip falls outside the dates the council has published so far, so we
+ * can't say whether it's holiday or term time.
+ */
+export type SchoolStatus = "school_holiday" | "shoulder" | "term_time" | "unpublished";
 
 export interface TripWindow {
   status: SchoolStatus;
@@ -58,15 +62,45 @@ function isWeekend(day: number): boolean {
 }
 
 /**
+ * The span of dates a council's holidays let us vouch for: from the first day off in the list to the
+ * last. Outside it we don't know where term time ends and the next holiday begins (for example, a
+ * council that has published up to May half term 2028 but not its summer 2028 holiday yet).
+ */
+export function publishedSpan(
+  holidays: Pick<SchoolHoliday, "startsOn" | "endsOn">[],
+): { from: string; until: string } | null {
+  if (holidays.length === 0) return null;
+  let s = Infinity;
+  let e = -Infinity;
+  for (const h of holidays) {
+    s = Math.min(s, parseDay(h.startsOn));
+    e = Math.max(e, parseDay(h.endsOn));
+  }
+  return { from: formatDay(s), until: formatDay(e) };
+}
+
+/**
  * Classify a trip (first day + nights) against a council's holidays.
  * - school_holiday: at least one weekday of the trip is inside a school holiday and none are term-time weekdays
  * - shoulder: the trip misses school, but only within SHOULDER_DAYS of a holiday (often cheaper, little school missed)
  * - term_time: the trip misses school away from any holiday
+ * - unpublished: some of the trip is outside the dates the council has published, so we don't guess
  * Weekends never count as missed school.
  */
 export function classifyTrip(departDate: string, nights: number, holidays: SchoolHoliday[]): TripWindow {
   const start = parseDay(departDate);
   const end = start + Math.max(0, nights); // the day you fly home
+  const span = publishedSpan(holidays);
+  if (!span || start < parseDay(span.from) || end > parseDay(span.until)) {
+    return {
+      status: "unpublished",
+      daysInHoliday: 0,
+      schoolDaysMissed: 0,
+      summary: span
+        ? "Part of this trip is outside the dates the council has published so far, so we can't say whether it's school holiday or term time yet."
+        : "We don't have this council's dates yet.",
+    };
+  }
   const ranges = holidays.map((h) => ({ h, s: parseDay(h.startsOn), e: parseDay(h.endsOn) }));
   const inHoliday = (d: number) => ranges.find((r) => d >= r.s && d <= r.e);
 
