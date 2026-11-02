@@ -434,5 +434,7 @@ describe("card fees and percentage taxes (good to know, never in the total)", ()
     expect(localTaxNoteFor("Amsterdam, Netherlands")!.name).toBe("Amsterdam tourist tax");
     expect(localTaxNoteFor("Belek, Antalya")!.name).toBe("Turkey accommodation tax");
     expect(localTaxNoteFor("West Side, New York")).toBeUndefined();
+    expect(localTaxNoteFor("Edinburgh, Scotland")!.name).toBe("Edinburgh visitor levy");
+    expect(localTaxNoteFor("Cardiff Bay")!.name).toBe("Cardiff visitor levy");
   });
 });
