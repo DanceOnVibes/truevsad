@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { FAIRMARK_SCALE, type FairMarkLevel } from "@truevsad/true-cost";
 import { loadListedDeals, type ListedDeal } from "@/lib/quotes";
@@ -69,7 +70,11 @@ export default async function Home() {
             </p>
           </div>
 
-          <div className="hero-receipt-wrap">
+          <div className="hero-visual">
+            <div className="hero-photo">
+              {/* Adalbert's own photo. Decorative, so it has no alt text. */}
+              <Image src="/images/hero-beach.jpg" alt="" fill priority sizes="(max-width: 900px) 100vw, 560px" />
+            </div>
             <div className="paper hero-receipt">
               <Zigzag />
               <div className="paper-body">
