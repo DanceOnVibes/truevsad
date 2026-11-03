@@ -4,11 +4,18 @@ import { useRef, useState } from "react";
 import {
   CARD_PHRASES,
   CONSULAR_HELP,
+  FCDO_ALERT_TEXT,
   FCDO_LONDON,
+  FCDO_NOT_CHECKED,
+  compareNumbers,
+  fcdoFreshness,
+  shortHazard,
+  type FcdoAlert,
   PLAN_B_ADVICE,
   PLAN_B_NOT_CHECKED,
   type PlanB,
 } from "@truevsad/true-cost";
+import type { FcdoCard } from "@/lib/fcdo";
 /** A hospital line on the card, from Spain's official register or from the map. */
 export interface CardHospital {
   name: string;
@@ -42,6 +49,10 @@ export const CARD_CSS = `
 .planb-blank{color:#8a909a}
 .planb-small{font-size:.75rem;color:#5d6470}
 .planb-hazard{border-color:#16181d;border-width:1.5px}
+.planb-numbers{list-style:none;margin:4px 0 8px;padding:0;display:grid;gap:2px}
+.planb-numbers li{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dashed #d8d8d0;padding:3px 0}
+.planb-numbers strong{font-size:1.5rem;color:#b42318;font-variant-numeric:tabular-nums}
+.planb-alert{border:2px solid #b42318;background:#fff5f4}
 .planb-hazard h3{color:#16181d}
 .planb-ok{font-size:.8rem;font-weight:600;color:#0b6e4f}
 .planb-children{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}
@@ -64,6 +75,8 @@ interface Props {
   /** What the distances are measured from, e.g. "Corralejo". */
   distanceFrom: string;
   initialChildren: number;
+  /** Outside our deep coverage: the FCDO's own advice for the country, refreshed daily. */
+  fcdo?: FcdoCard | null;
 }
 
 function dateLabel(iso: string): string {
@@ -88,7 +101,7 @@ function escapeHtml(s: string): string {
   return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 }
 
-export function PlanBCard({ placeName, plan, hospitals, hospitalSource, register, hospitalsCheckedOn, distanceFrom, initialChildren }: Props) {
+export function PlanBCard({ placeName, plan, hospitals, hospitalSource, register, hospitalsCheckedOn, distanceFrom, initialChildren, fcdo = null }: Props) {
   const [hotel, setHotel] = useState("");
   const [address, setAddress] = useState("");
   const [meeting, setMeeting] = useState("");
@@ -100,6 +113,11 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalSource, register
   const sheet = useRef<HTMLDivElement>(null);
 
   const country = plan?.country ?? null;
+  // The FCDO layer only fills in where our deep country data doesn't exist.
+  const gov = country ? null : fcdo;
+  const numbers = gov?.emergency?.numbers ?? [];
+  const check = gov ? compareNumbers(numbers, gov.verified ?? undefined) : "unchecked";
+  const stale = gov ? fcdoFreshness(gov.fetchedAt) === "stale" : false;
   const en = CARD_PHRASES.en!;
   const local = country ? CARD_PHRASES[country.language] : undefined;
   const made = new Date().toISOString().slice(0, 10);
@@ -140,6 +158,11 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalSource, register
   if (scs) sources.push({ name: "Servicio Canario de la Salud", url: scs.sourceUrl, checkedOn: scs.checkedOn });
   if (plan?.consulate) sources.push({ name: "GOV.UK", url: plan.consulate.sourceUrl, checkedOn: plan.consulate.checkedOn });
   sources.push({ name: "GOV.UK (FCDO)", url: FCDO_LONDON.sourceUrl, checkedOn: FCDO_LONDON.checkedOn });
+  if (!country && fcdo) {
+    sources.push({ name: `GOV.UK travel advice: ${fcdo.name}`, url: fcdo.url, checkedOn: fcdo.fetchedAt.slice(0, 10) });
+    if (fcdo.verified && compareNumbers(fcdo.emergency?.numbers ?? [], fcdo.verified) === "agree")
+      for (const v of fcdo.verified.sources) if (!sources.some((x) => x.url === v.url)) sources.push({ name: v.name, url: v.url, checkedOn: fcdo.verified.checkedOn });
+  }
 
   return (
     <>
@@ -205,11 +228,41 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalSource, register
               <p>{country.emergency.text}</p>
               <p className="planb-small">{country.emergencyNoSignal.text}</p>
             </div>
+          ) : gov && numbers.length > 0 ? (
+            <div className="planb-box planb-sos">
+              <h3>Emergency in {gov.name}</h3>
+              <ul className="planb-numbers">
+                {numbers.map((n) => (
+                  <li key={n.service + n.number}>
+                    <span>{n.service}</span> <strong>{n.number}</strong>
+                  </li>
+                ))}
+              </ul>
+              <p className="planb-small">
+                {check === "agree"
+                  ? `✓ Double-checked by us against ${gov.verified!.sources.map((x) => x.name).join(" and ")} (${dateLabel(gov.verified!.checkedOn)}).`
+                  : check === "differ"
+                    ? "As the FCDO lists them. Our own check found a difference, so confirm the numbers with your hotel when you arrive."
+                    : "As the FCDO lists them on GOV.UK. We haven't double-checked these ourselves yet."}
+              </p>
+            </div>
           ) : (
             <div className="planb-box planb-sos">
               <h3>Emergency</h3>
               <p>Find this country&apos;s emergency number on GOV.UK&apos;s travel advice before you fly, and write it here:</p>
               <p className="planb-big">______</p>
+            </div>
+          )}
+
+          {gov && gov.alertStatus.length > 0 && (
+            <div className="planb-box planb-alert">
+              <h3>FCDO travel warning</h3>
+              {gov.alertStatus.map((a) => (
+                <p key={a}>
+                  <strong>{FCDO_ALERT_TEXT[a as FcdoAlert]}</strong>
+                </p>
+              ))}
+              <p className="planb-small">Check which areas on the FCDO&apos;s map before you book or travel: {gov.url.replace(/^https:\/\/(www\.)?/, "")}</p>
             </div>
           )}
 
@@ -294,6 +347,11 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalSource, register
                 British Embassy and consulates in {country.country}:{" "}
                 <a href={country.ukHelpUrl}>{country.ukHelpUrl.replace(/^https:\/\/(www\.)?/, "")}</a>
               </p>
+            ) : gov ? (
+              <p>
+                British Embassy and consulates in {gov.name}:{" "}
+                <a href={`${gov.url}/getting-help`}>{`${gov.url}/getting-help`.replace(/^https:\/\/(www\.)?/, "")}</a>
+              </p>
             ) : null}
             <p>
               Family back home: <strong>{FCDO_LONDON.phone}</strong>
@@ -335,6 +393,20 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalSource, register
             </div>
           )}
 
+          {gov && gov.hazards.length > 0 && (
+            <div className="planb-box planb-hazard">
+              <h3>Natural hazards: what the FCDO says</h3>
+              <ul>
+                {gov.hazards.map((h) => (
+                  <li key={h.title}>
+                    <strong>{h.title}.</strong> {shortHazard(h.text)}
+                  </li>
+                ))}
+              </ul>
+              <p className="planb-small">From GOV.UK&apos;s travel advice for {gov.name}. The full advice: {gov.url.replace(/^https:\/\/(www\.)?/, "")}</p>
+            </div>
+          )}
+
           {country?.hazards.map((h) => (
             <div className="planb-box planb-hazard" key={h.id}>
               <h3>{h.title}: what to do</h3>
@@ -360,7 +432,7 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalSource, register
             <h3>Before you fly (our advice)</h3>
             <ul>
               {PLAN_B_ADVICE.beforeYouFly.map((a) => (
-                <li key={a}>{a}</li>
+                <li key={a}>{country ? a : a.replace("in euros", "in the local currency")}</li>
               ))}
             </ul>
           </div>
@@ -402,11 +474,17 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalSource, register
                     )}
                     {blank(phone, "____________________")}
                   </p>
-                  {country && (
+                  {country ? (
                     <p className="planb-small">
                       {en.speaksEnglish}
                       {local && local !== en ? ` · ${local.speaksEnglish}` : ""} · {country.emergency.number}
                     </p>
+                  ) : (
+                    numbers.length > 0 && (
+                      <p className="planb-small">
+                        {en.speaksEnglish} · {numbers.map((n) => `${n.service} ${n.number}`).join(" · ")}
+                      </p>
+                    )
                   )}
                 </div>
               ))}
@@ -424,7 +502,16 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalSource, register
           ))}
           .
           <br />
-          <strong>What this card doesn&apos;t check:</strong> {PLAN_B_NOT_CHECKED.join(" ")}
+          {gov && (
+            <>
+              GOV.UK travel advice for {gov.name}{gov.updatedAt ? `, updated by the FCDO on ${dateLabel(gov.updatedAt.slice(0, 10))}` : ""}; our copy
+              refreshed {dateLabel(gov.fetchedAt.slice(0, 10))}.{" "}
+              {stale ? "We couldn't refresh it recently: check the GOV.UK page before you fly. " : ""}
+              Contains public sector information licensed under the Open Government Licence v3.0.
+              <br />
+            </>
+          )}
+          <strong>What this card doesn&apos;t check:</strong> {(country ? PLAN_B_NOT_CHECKED : gov ? FCDO_NOT_CHECKED : PLAN_B_NOT_CHECKED).join(" ")}
         </div>
       </div>
     </>

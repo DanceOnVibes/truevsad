@@ -1,0 +1,4 @@
+{
+  "about": "Emergency numbers double-checked by us against two sources (the country's own government and GOV.UK). Built from data/emergency-numbers/emergency-numbers.csv by scripts/import-emergency-numbers.py. Spain is covered by the deep Plan B layer.",
+  "countries": []
+}
