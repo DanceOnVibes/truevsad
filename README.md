@@ -83,7 +83,8 @@ supabase db push
 - [x] Engine: per-room-per-night fees, night caps (e.g. Catalonia's 7 nights), airline-specific fee beats the generic one
 - [x] Fee rules round 2 (30 rows): Balearics, Catalonia/Barcelona, Mogán, Greece, Croatia, Lisbon, Porto, Algarve, Rome, Florence, Venice, Malta; Ryanair/easyJet/TUI/Wizz/BA bags and seats; ESTA, Canada eTA, Egypt, Cape Verde. Load after merge
 - [x] Paris (fee rule); Amsterdam and Turkey (% of the room price) shown as sourced "Good to know" notes, never added to the total
-- [ ] Still open: Bulgaria (Nessebar, Varna), Tunisia (needs an official TND rate), Wizz Air paid cabin bag; paid cabin bags parked (see data/fee-rules/README.md)
+- [x] Bulgaria (3 Nov 2026): Nessebar/Sunny Beach EUR 0.38 and Varna/Golden Sands 0.90 lev per person per night (4-star); Wizz Air Priority cabin bag sourced (EUR 10–60 online, 65–75 at the airport) and kept parked with the other paid cabin bags
+- [ ] Still open: Tunisia (official TND rate found; the hotel tax amount itself is still needed)
 - [x] Travel date on the X-ray (AI reads it too); seasonal fee rates by month (summer assumed without a date, and the receipt says so)
 - [x] School Window core: `school_holiday` table, `pnpm import-holidays`, /school-window (holidays, shoulder weeks, trip check)
 - [x] School Window data (loaded): 10 councils for 2026-27 (Lambeth, Southwark, Wandsworth, Lewisham, Croydon, Westminster, Birmingham, Leeds, Bristol, Cardiff) and 8 of them for 2027-28
