@@ -61,6 +61,11 @@ function host(url: string): string {
   }
 }
 
+/** "Give legal advice" → "give legal advice", keeping names like "HM Passport Office". */
+function lower(s: string): string {
+  return s.charAt(0).toLowerCase() + s.slice(1);
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 }
@@ -240,7 +245,7 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalsCheckedOn, init
             ) : country ? (
               <p>
                 British Embassy and consulates in {country.country}:{" "}
-                <a href={country.ukHelpUrl}>{host(country.ukHelpUrl)}/foreign-travel-advice</a>
+                <a href={country.ukHelpUrl}>{country.ukHelpUrl.replace(/^https:\/\/(www\.)?/, "")}</a>
               </p>
             ) : null}
             <p>
@@ -249,7 +254,7 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalsCheckedOn, init
               <span className="planb-small">{FCDO_LONDON.text}</span>
             </p>
             <p className="planb-small">
-              They can: {CONSULAR_HELP.can.join("; ").toLowerCase()}. They can&apos;t: {CONSULAR_HELP.cannot.join("; ").toLowerCase()}.
+              They can: {CONSULAR_HELP.can.map(lower).join("; ")}. They can&apos;t: {CONSULAR_HELP.cannot.map(lower).join("; ")}.
             </p>
           </div>
 
