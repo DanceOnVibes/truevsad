@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
 import { COMPANY, EMAILS } from "@/lib/company";
+import { SiteHeader } from "@/components/SiteHeader";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -10,10 +12,15 @@ export const metadata: Metadata = {
     "See the true all-in price for your exact family party, versus the advertised headline.",
 };
 
+// Served from our own domain at build time: visitors' browsers never contact Google.
+const display = Space_Grotesk({ subsets: ["latin", "latin-ext"], weight: ["400", "500", "700"], variable: "--font-display-loaded", display: "swap" });
+const mono = IBM_Plex_Mono({ subsets: ["latin", "latin-ext"], weight: ["400", "500", "600"], variable: "--font-mono-loaded", display: "swap" });
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-GB">
+    <html lang="en-GB" className={`${display.variable} ${mono.variable}`}>
       <body>
+        <SiteHeader />
         {children}
         <footer className="site-footer">
           <Link href="/">TrueVsAd</Link> · <Link href="/xray">Deal X-ray</Link> · <Link href="/fairfam">FairFam</Link> · <Link href="/cabin-bags">Cabin bags</Link> ·{" "}

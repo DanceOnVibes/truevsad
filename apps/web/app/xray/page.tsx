@@ -64,6 +64,15 @@ export default function XrayPage() {
   const [fromFairFam, setFromFairFam] = useState(false);
 
   useEffect(() => {
+    // Pasted on the homepage: the deal arrives as ?deal=… and fills the first step.
+    const pasted = new URLSearchParams(window.location.search).get("deal")?.trim();
+    if (pasted) {
+      if (/^https?:\/\/\S+$/i.test(pasted)) setUrl(pasted.slice(0, 2000));
+      else setText(pasted.slice(0, 5000));
+    }
+  }, []);
+
+  useEffect(() => {
     // One-time hand-over from FairFam in this tab: read once, then delete.
     let raw: string | null = null;
     try {
