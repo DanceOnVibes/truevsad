@@ -301,8 +301,8 @@ export function pickHospitals(elements: OverpassHospital[], lat: number, lon: nu
 }
 
 /** One Overpass query, trying the backup servers if the main one is busy. Null if all fail. */
-async function overpassJson<T>(query: string, perServerMs: number): Promise<T | null> {
-  for (const server of OVERPASS_SERVERS) {
+async function overpassJson<T>(query: string, perServerMs: number, maxServers = OVERPASS_SERVERS.length): Promise<T | null> {
+  for (const server of OVERPASS_SERVERS.slice(0, maxServers)) {
     try {
       const res = await fetch(server, {
         method: "POST",
@@ -317,6 +317,74 @@ async function overpassJson<T>(query: string, perServerMs: number): Promise<T | 
     }
   }
   return null;
+}
+
+type NominatimPlace = {
+  lat?: string;
+  lon?: string;
+  name?: string;
+  category?: string;
+  type?: string;
+  extratags?: Record<string, string> | null;
+  address?: Record<string, string> | null;
+};
+
+/**
+ * Hospitals from a Nominatim answer: only places mapped as a hospital AND tagged
+ * emergency=yes, so we never call a hospital an emergency department when the map doesn't.
+ * Exported for tests.
+ */
+export function pickNominatimHospitals(list: NominatimPlace[], lat: number, lon: number): NearbyHospital[] {
+  const elements: OverpassHospital[] = list
+    .filter((p) => p.category === "amenity" && p.type === "hospital" && p.extratags?.emergency === "yes")
+    .map((p) => {
+      const a = p.address ?? {};
+      return {
+        lat: Number(p.lat),
+        lon: Number(p.lon),
+        tags: Object.fromEntries(
+          Object.entries({
+            name: p.name ?? "",
+            "addr:street": a.road,
+            "addr:housenumber": a.house_number,
+            "addr:postcode": a.postcode,
+            "addr:city": a.city ?? a.town ?? a.village ?? a.municipality,
+          }).filter(([, v]) => v),
+        ) as Record<string, string>,
+      };
+    })
+    .filter((e) => Number.isFinite(e.lat) && Number.isFinite(e.lon));
+  return pickHospitals(elements, lat, lon);
+}
+
+/** Hospitals within about 40 km, from Nominatim's search. Null if Nominatim doesn't answer. */
+async function nominatimHospitals(lat: number, lon: number): Promise<NearbyHospital[] | null> {
+  const dLat = 0.36; // about 40 km
+  const dLon = 0.45;
+  const url = `${NOMINATIM}?${new URLSearchParams({
+    q: "hospital",
+    format: "jsonv2",
+    viewbox: `${(lon - dLon).toFixed(4)},${(lat + dLat).toFixed(4)},${(lon + dLon).toFixed(4)},${(lat - dLat).toFixed(4)}`,
+    bounded: "1",
+    limit: "40",
+    extratags: "1",
+    addressdetails: "1",
+    "accept-language": "en",
+  })}`;
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": USER_AGENT, Referer: "https://truevsad.co.uk/" },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) {
+      console.error("Nominatim (hospitals) returned", res.status);
+      return null;
+    }
+    return pickNominatimHospitals((await res.json()) as NominatimPlace[], lat, lon);
+  } catch (err) {
+    console.error("Nominatim (hospitals) request failed", (err as Error).name);
+    return null;
+  }
 }
 
 /**
@@ -351,11 +419,17 @@ export async function hospitalsFor(rawQuery: string, allowFetch: boolean): Promi
   if (!geo) return { ok: false, reason: "not_found" };
   const place: HospitalPlace = { query: key, displayName: geo.displayName, lat: geo.lat, lon: geo.lon };
 
-  const json = await overpassJson<{ elements?: OverpassHospital[] }>(hospitalQuery(geo.lat, geo.lon), 12_000);
+  // Nominatim first: it answers our servers reliably. Overpass (often too slow for cloud
+  // servers) only as a backup, with a short wait so the page still loads in time.
+  await new Promise((r) => setTimeout(r, 1_100)); // Nominatim's limit: one request a second
+  let hospitals = await nominatimHospitals(geo.lat, geo.lon);
+  if (hospitals === null) {
+    const json = await overpassJson<{ elements?: OverpassHospital[] }>(hospitalQuery(geo.lat, geo.lon), 7_000, 2);
+    hospitals = json ? pickHospitals(json.elements ?? [], geo.lat, geo.lon) : null;
+  }
   const fetchedAt = new Date().toISOString();
-  if (!json) return { ok: true, place, hospitals: null, fetchedAt };
+  if (!hospitals) return { ok: true, place, hospitals: null, fetchedAt };
 
-  const hospitals = pickHospitals(json.elements ?? [], geo.lat, geo.lon);
   if (db) {
     const { error } = await db.from("hospital_snapshot").upsert({
       query_key: key,
