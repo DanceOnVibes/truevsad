@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { planBFor } from "@truevsad/true-cost";
-import { lookupPlace, nearbyHospitals, type HospitalLookup, type PlaceLookup } from "@/lib/osm";
+import { hospitalsFor, type HospitalLookup } from "@/lib/osm";
 import { allowHeaders } from "@/lib/rate-limit";
 import { PlanBCard } from "./PlanBCard";
 
@@ -24,37 +24,35 @@ export default async function PlanBPage({ searchParams }: { searchParams: Search
   const q = (rawQ ?? "").trim().slice(0, 120);
   const childCount = Math.min(6, Math.max(0, Number.parseInt(rawChildren ?? "", 10) || 0));
 
-  let place: PlaceLookup | null = null;
-  let hospitals: HospitalLookup | null = null;
+  let lookup: HospitalLookup | null = null;
   let limited = false;
   /** Set when the town wasn't found and we looked up the whole island instead. */
   let usedIsland: string | null = null;
   if (q) {
     // Same free OpenStreetMap services and the same per-visitor budget as Visit before you book.
-    place = await lookupPlace(q, false);
-    if (!place.ok && place.reason === "unavailable") {
-      if (await allowHeaders(await headers(), "visit")) place = await lookupPlace(q, true);
+    const h = await headers();
+    lookup = await hospitalsFor(q, false);
+    if (!lookup.ok && lookup.reason === "unavailable") {
+      if (await allowHeaders(h, "visit")) lookup = await hospitalsFor(q, true);
       else limited = true;
     }
     // The town wasn't found (a typo, or a tiny place), but we know the island: look up the island
     // instead, so the family still gets the nearest hospitals.
     const island = planBFor(q)?.island;
-    if (!place.ok && place.reason === "not_found" && island && !limited) {
+    if (!lookup.ok && lookup.reason === "not_found" && island && !limited) {
       const islandQuery = `${island}, Spain`;
-      const fromCache = await lookupPlace(islandQuery, false);
-      if (fromCache.ok) place = fromCache;
-      else if (await allowHeaders(await headers(), "visit")) place = await lookupPlace(islandQuery, true);
-      if (place.ok) usedIsland = island;
-    }
-    if (place.ok) {
-      hospitals = await nearbyHospitals(place.place, false);
-      if (!hospitals.ok && !limited && (await allowHeaders(await headers(), "visit"))) {
-        hospitals = await nearbyHospitals(place.place, true);
+      let byIsland = await hospitalsFor(islandQuery, false);
+      if (!byIsland.ok && byIsland.reason === "unavailable" && (await allowHeaders(h, "visit"))) {
+        byIsland = await hospitalsFor(islandQuery, true);
+      }
+      if (byIsland.ok) {
+        lookup = byIsland;
+        usedIsland = island;
       }
     }
   }
 
-  const found = place?.ok ? place.place : null;
+  const found = lookup?.ok ? lookup.place : null;
   const plan = q ? planBFor(q) ?? (found ? planBFor(found.displayName) : undefined) : undefined;
   const placeName = plan?.island ?? q.split(",")[0]?.trim() ?? "";
 
@@ -85,7 +83,7 @@ export default async function PlanBPage({ searchParams }: { searchParams: Search
             Check the spelling to get the closest ones to your hotel.
           </p>
         )}
-        {q && place && !place.ok && !limited && place.reason === "not_found" && (
+        {q && lookup && !lookup.ok && !limited && lookup.reason === "not_found" && (
           <p className="error">We couldn&apos;t find that place on the map. Try adding the island or country, e.g. &ldquo;Corralejo, Fuerteventura&rdquo;.</p>
         )}
         {q && !plan && (
@@ -104,8 +102,8 @@ export default async function PlanBPage({ searchParams }: { searchParams: Search
         <PlanBCard
           placeName={placeName}
           plan={plan ?? null}
-          hospitals={hospitals?.ok ? hospitals.hospitals : null}
-          hospitalsCheckedOn={hospitals?.ok ? hospitals.fetchedAt.slice(0, 10) : null}
+          hospitals={lookup?.ok ? lookup.hospitals : null}
+          hospitalsCheckedOn={lookup?.ok && lookup.hospitals ? lookup.fetchedAt.slice(0, 10) : null}
           initialChildren={childCount}
         />
       )}

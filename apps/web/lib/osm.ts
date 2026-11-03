@@ -190,6 +190,17 @@ export function placeLinks(lat: number, lon: number) {
 // ---------------------------------------------------------------------------
 // Plan B: hospitals with an emergency department near a place
 // ---------------------------------------------------------------------------
+//
+// Plan B does its own small lookup (find the place, then one hospital query) instead of reusing
+// Visit before you book's big counting query: a hospital card shouldn't fail because counting
+// playgrounds timed out. Results are cached in their own table for 30 days.
+
+/** The main Overpass server first, then public mirrors listed on the OpenStreetMap wiki. */
+const OVERPASS_SERVERS = [
+  OVERPASS,
+  "https://overpass.private.coffee/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+];
 
 export interface NearbyHospital {
   name: string;
@@ -201,9 +212,16 @@ export interface NearbyHospital {
   km: number;
 }
 
+export interface HospitalPlace {
+  query: string;
+  displayName: string;
+  lat: number;
+  lon: number;
+}
+
 export type HospitalLookup =
-  | { ok: true; hospitals: NearbyHospital[]; fetchedAt: string }
-  | { ok: false; reason: "unavailable" };
+  | { ok: true; place: HospitalPlace; hospitals: NearbyHospital[] | null; fetchedAt: string }
+  | { ok: false; reason: "not_found" | "unavailable" | "invalid" };
 
 /** How far we look. Islands are small, but rural hotels can be a long way from a town. */
 const HOSPITAL_RADIUS_M = 40_000;
@@ -211,7 +229,7 @@ const HOSPITAL_RADIUS_M = 40_000;
 /** Overpass: hospitals mapped as having an emergency department, with their names and addresses. */
 export function hospitalQuery(lat: number, lon: number): string {
   const at = `${lat.toFixed(5)},${lon.toFixed(5)}`;
-  return `[out:json][timeout:25];\nnwr["amenity"="hospital"]["emergency"="yes"](around:${HOSPITAL_RADIUS_M},${at});\nout center tags 40;`;
+  return `[out:json][timeout:20];\nnwr["amenity"="hospital"]["emergency"="yes"](around:${HOSPITAL_RADIUS_M},${at});\nout tags center 40;`;
 }
 
 function distanceKm(aLat: number, aLon: number, bLat: number, bLon: number): number {
@@ -249,43 +267,72 @@ export function pickHospitals(elements: OverpassHospital[], lat: number, lon: nu
   return out.sort((a, b) => a.km - b.km).slice(0, 3);
 }
 
+/** One Overpass query, trying the backup servers if the main one is busy. Null if all fail. */
+async function overpassJson<T>(query: string, perServerMs: number): Promise<T | null> {
+  for (const server of OVERPASS_SERVERS) {
+    try {
+      const res = await fetch(server, {
+        method: "POST",
+        headers: { "User-Agent": USER_AGENT, "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ data: query }),
+        signal: AbortSignal.timeout(perServerMs),
+      });
+      if (res.ok) return (await res.json()) as T;
+      console.error("Overpass", new URL(server).hostname, "returned", res.status);
+    } catch (err) {
+      console.error("Overpass", new URL(server).hostname, "failed", (err as Error).name);
+    }
+  }
+  return null;
+}
+
 /**
- * Nearest hospitals with an emergency department around a place we already looked up.
- * Cached with the place for 30 days. `allowFetch` = false never touches OpenStreetMap.
+ * The place and its nearest hospitals with an emergency department.
+ * Cached for 30 days. `allowFetch` = false never touches OpenStreetMap.
+ * If the place is found but the hospital query fails, the place still comes back (hospitals null).
  */
-export async function nearbyHospitals(place: PlaceSnapshot, allowFetch: boolean): Promise<HospitalLookup> {
+export async function hospitalsFor(rawQuery: string, allowFetch: boolean): Promise<HospitalLookup> {
+  const key = placeKey(rawQuery);
+  if (key.length < 2) return { ok: false, reason: "invalid" };
+
   const db = supabaseAdmin();
   if (db) {
-    const { data } = await db.from("place_snapshot").select("hospitals, hospitals_at").eq("query_key", place.query).maybeSingle();
-    if (data?.hospitals && data.hospitals_at && Date.now() - Date.parse(data.hospitals_at as string) < FRESH_DAYS * 86_400_000) {
-      return { ok: true, hospitals: data.hospitals as NearbyHospital[], fetchedAt: data.hospitals_at as string };
+    const { data } = await db
+      .from("hospital_snapshot")
+      .select("display_name, lat, lon, hospitals, fetched_at")
+      .eq("query_key", key)
+      .maybeSingle();
+    if (data && Date.now() - Date.parse(data.fetched_at as string) < FRESH_DAYS * 86_400_000) {
+      return {
+        ok: true,
+        place: { query: key, displayName: data.display_name as string, lat: Number(data.lat), lon: Number(data.lon) },
+        hospitals: data.hospitals as NearbyHospital[],
+        fetchedAt: data.fetched_at as string,
+      };
     }
   }
   if (!allowFetch) return { ok: false, reason: "unavailable" };
-  try {
-    const res = await fetch(OVERPASS, {
-      method: "POST",
-      headers: { "User-Agent": USER_AGENT, "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ data: hospitalQuery(place.lat, place.lon) }),
-      signal: AbortSignal.timeout(28_000),
+
+  const geo = await geocode(key);
+  if (geo === "unavailable") return { ok: false, reason: "unavailable" };
+  if (!geo) return { ok: false, reason: "not_found" };
+  const place: HospitalPlace = { query: key, displayName: geo.displayName, lat: geo.lat, lon: geo.lon };
+
+  const json = await overpassJson<{ elements?: OverpassHospital[] }>(hospitalQuery(geo.lat, geo.lon), 12_000);
+  const fetchedAt = new Date().toISOString();
+  if (!json) return { ok: true, place, hospitals: null, fetchedAt };
+
+  const hospitals = pickHospitals(json.elements ?? [], geo.lat, geo.lon);
+  if (db) {
+    const { error } = await db.from("hospital_snapshot").upsert({
+      query_key: key,
+      display_name: place.displayName.slice(0, 300),
+      lat: place.lat,
+      lon: place.lon,
+      hospitals,
+      fetched_at: fetchedAt,
     });
-    if (!res.ok) {
-      console.error("Overpass (hospitals) returned", res.status);
-      return { ok: false, reason: "unavailable" };
-    }
-    const json = (await res.json()) as { elements?: OverpassHospital[] };
-    const hospitals = pickHospitals(json.elements ?? [], place.lat, place.lon);
-    const fetchedAt = new Date().toISOString();
-    if (db) {
-      const { error } = await db
-        .from("place_snapshot")
-        .update({ hospitals, hospitals_at: fetchedAt })
-        .eq("query_key", place.query);
-      if (error) console.error("hospital cache save failed:", error.message);
-    }
-    return { ok: true, hospitals, fetchedAt };
-  } catch (err) {
-    console.error("Overpass (hospitals) request failed", (err as Error).name);
-    return { ok: false, reason: "unavailable" };
+    if (error) console.error("hospital_snapshot save failed:", error.message);
   }
+  return { ok: true, place, hospitals, fetchedAt };
 }
