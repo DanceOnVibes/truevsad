@@ -372,3 +372,38 @@ main.home-page { max-width: none; padding: 8px 0 64px; }
   .tool-ink { border-color: var(--line); }
   .site-header .signal { background: #2b2f2b; }
 }
+
+/* The receipt itself: white paper in light and dark mode, prices in mono, a verdict stamp. */
+.card.receipt-card { background: transparent; border: 0; padding: 0; }
+.paper {
+  --fg: #111311; --muted: #5f635d; --line: #e4dfd4; --card: #ffffff; --ink: #111311; --on-ink: #f4f1ea;
+  --go: #12823f; --stop: #d92d20; --check: #a15c00; --warn-bg: #fdf0d8; --warn-fg: #7a4a00;
+  --fm-gold: #12823f; --fm-fair: #12823f; --fm-amber: #a15c00; --fm-red: #d92d20;
+}
+.receipt-paper { margin: 8px 0 20px; }
+.receipt-body { padding: 22px 22px 26px; font-size: 0.92rem; }
+.receipt-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.receipt-top .paper-head { flex-direction: column; gap: 2px; justify-content: flex-start; }
+.stamp.receipt-stamp { position: relative; flex: 0 0 auto; width: 104px; height: 104px; margin: -4px -2px 0 0; }
+.stamp.receipt-stamp strong { font-size: 1.15rem; }
+.receipt-body .headline { margin-top: 6px; }
+.receipt-body .headline .hint { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.receipt-body .gap-go { color: var(--go); }
+.receipt-body .gap-check { color: var(--check); }
+.receipt-body .gap-stop, .receipt-body .gap-none { color: var(--stop); }
+.receipt-body h3 { font-family: var(--font-display); margin: 18px 0 6px; padding-top: 12px; border-top: 1.5px dashed #c9c4b9; }
+.receipt-body table.receipt td { border-bottom: 1px dashed #e4dfd4; }
+.receipt-body table.receipt .working { font-size: 0.74rem; }
+.receipt-body table.receipt tr.total td { border-top: 1.5px dashed #c9c4b9; font-size: 1.1rem; }
+.receipt-body .barcode { margin-top: 18px; }
+@media (max-width: 560px) {
+  .stamp.receipt-stamp { width: 88px; height: 88px; }
+  .stamp.receipt-stamp strong { font-size: 0.98rem; }
+  .receipt-body { padding: 18px 16px 22px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .stamp.receipt-stamp { animation: tv-stamp-in 0.5s cubic-bezier(0.2, 1.2, 0.3, 1) 0.35s both; }
+  @keyframes tv-stamp-in { 0% { opacity: 0; transform: scale(1.7) rotate(-4deg); } 70% { opacity: 1; transform: scale(0.94) rotate(-13deg); } 100% { opacity: 1; transform: scale(1) rotate(-12deg); } }
+}
+.receipt-card .scope { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 6px 22px 18px; margin-top: 0; }
+.receipt-body p.hint { font-family: var(--font-display); font-size: 0.88rem; }

@@ -533,7 +533,7 @@ export default function XrayPage() {
       )}
 
       {step === "receipt" && result && (
-        <div className="card">
+        <div className="card receipt-card">
           <ReceiptView
             {...result}
             lines={result.receipt.lines}
