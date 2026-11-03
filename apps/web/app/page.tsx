@@ -224,8 +224,8 @@ export default async function Home() {
             <span className="tool-n">03</span>
             <span className="tool-name">Plan B</span>
             <span>
-              One page for your trip that works when the power and signal don&apos;t: 112, the nearest hospitals, UK help and
-              your family&apos;s meeting point. Nothing you type leaves your phone.
+              One page for wildfires, floods, storms, earthquakes and power cuts: what to do, 112, the nearest hospitals, UK
+              help and your family&apos;s meeting point. Works with no signal. Nothing you type leaves your phone.
             </span>
           </Link>
           <Link href="/fairmark" className="tool">

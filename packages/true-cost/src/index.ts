@@ -92,6 +92,8 @@ export {
   type Consulate,
   type FragileEvent,
   type FragilePlace,
+  type Hazard,
+  type HazardId,
   type HelpLine,
   type Island,
   type PlanB,

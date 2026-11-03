@@ -1,8 +1,8 @@
 import { mentions } from "./scope";
 
 /**
- * Plan B — what a family needs when something goes wrong on holiday: the power is out, the
- * signal is going and the card machine is dead.
+ * Plan B — what a family needs when something goes wrong on holiday: a wildfire, a flood, a storm,
+ * an earthquake or a power cut, often with the signal going and the card machine dead.
  *
  * Three parts:
  *  1. The Plan B card: one page per trip that works offline (built in the family's browser).
@@ -101,6 +101,25 @@ export interface PlanBCountry {
   alerts: Sourced;
   /** GOV.UK's "getting help" page for the country. */
   ukHelpUrl: string;
+  /** What to do in a wildfire, flood, storm or earthquake: official advice only, at least two sources each. */
+  hazards: Hazard[];
+  /** Where the country's official weather warnings are published. */
+  warnings: Sourced;
+}
+
+export type HazardId = "wildfire" | "flood" | "storm" | "earthquake";
+
+/**
+ * One natural hazard and what the authorities tell people to do. Each line is a plain-English
+ * version of the official Spanish (or GOV.UK) wording, never our own advice. We don't say how
+ * likely a hazard is where you're going: that is a judgement we don't make.
+ */
+export interface Hazard {
+  id: HazardId;
+  title: string;
+  lines: string[];
+  sources: { name: string; url: string }[];
+  checkedOn: string;
 }
 
 const C = "2026-11-03";
@@ -215,6 +234,81 @@ export const SPAIN: PlanBCountry = {
     checkedOn: C,
   },
   ukHelpUrl: "https://www.gov.uk/foreign-travel-advice/spain/getting-help",
+  warnings: {
+    text: "Weather warnings (storms, heavy rain, heat, wildfire risk) are published by Spain's weather office, AEMET. Check them before you go out.",
+    sourceUrl: "https://www.aemet.es/en/eltiempo/prediccion/avisos",
+    sourceName: "AEMET (via GOV.UK)",
+    checkedOn: C,
+  },
+  hazards: [
+    {
+      id: "wildfire",
+      title: "Wildfire",
+      lines: [
+        "See smoke or flames? Call 112 straight away.",
+        "Told to leave: take only documents, money and medicines, and follow the route you're given. No shortcuts.",
+        "Caught outside: move away against the wind, onto ground that has already burnt if you can. Never go uphill or into a ravine. Near the sea, go to the water.",
+        "In a car: stop somewhere sheltered, close the windows, turn off the air vents and put your headlights on.",
+        "If the fire surrounds your building, stay inside, close doors and windows and put wet towels under the doors.",
+        "Causing a wildfire is a crime in Spain, even by accident.",
+      ],
+      sources: [
+        { name: "Gobierno de Canarias", url: "https://www.gobiernodecanarias.org/emergencias/alertas/consejos/incendios/incendios.html" },
+        { name: "Protección Civil", url: "https://www.proteccioncivil.es/-/protecci%C3%B3n-civil-y-emergencias-mantiene-la-alerta-por-riesgo-extremo-de-incendios-forestales-y-altas-temperaturas" },
+        { name: "Castilla-La Mancha 112", url: "https://112.castillalamancha.es/proteccion-civil/consejos/incendios-forestales" },
+        { name: "GOV.UK", url: "https://www.gov.uk/foreign-travel-advice/spain/safety-and-security" },
+      ],
+      checkedOn: C,
+    },
+    {
+      id: "flood",
+      title: "Flood or flash flood",
+      lines: [
+        "Never drive or walk through floodwater: you can't see what's under it.",
+        "Don't park or stop in a ravine bed (barranco) or a dry riverbed, even under a clear sky.",
+        "If heavy rain starts, get to higher ground, away from rivers and low ground.",
+        "Don't try to save your car.",
+        "Follow the authorities on local radio. Call 112 only for an emergency, so the lines stay free.",
+      ],
+      sources: [
+        { name: "Gobierno de Canarias", url: "https://www.gobiernodecanarias.org/emergencias/alertas/consejos/inundaciones/inundaciones.html" },
+        { name: "Protección Civil", url: "https://www.proteccioncivil.es/-/protecci%C3%B3n-civil-y-emergencias-alerta-por-fuertes-lluvias-y-tormentas-en-amplias-zonas-de-la-pen%C3%ADnsula-1" },
+        { name: "GOV.UK", url: "https://www.gov.uk/foreign-travel-advice/spain/safety-and-security" },
+      ],
+      checkedOn: C,
+    },
+    {
+      id: "storm",
+      title: "Storm or strong wind",
+      lines: [
+        "Stay indoors if you can. Close doors, windows and awnings, and bring things in from the balcony.",
+        "Outside, keep clear of old buildings, scaffolding, cranes, signs, trees and power lines.",
+        "Keep off clifftops, sea walls and promenades where big waves break.",
+        "In lightning, don't shelter under a lone tree or stay on high ground. A closed car is a good shelter.",
+      ],
+      sources: [
+        { name: "Gobierno de Canarias", url: "https://www.gobiernodecanarias.org/emergencias/alertas/consejos/vientos/vientos.html" },
+        { name: "Protección Civil", url: "https://www.proteccioncivil.es/-/protecci%C3%B3n-civil-y-emergencias-alerta-por-fuertes-lluvias-y-tormentas-en-amplias-zonas-de-la-pen%C3%ADnsula-1" },
+      ],
+      checkedOn: C,
+    },
+    {
+      id: "earthquake",
+      title: "Earthquake",
+      lines: [
+        "Indoors: shelter under a solid table or desk, away from windows and anything that can fall.",
+        "Don't use the lift.",
+        "Outdoors: go to open ground, away from buildings, power lines and signs.",
+        "In a car: stay inside, away from bridges, power lines and slopes that could slide.",
+        "Near the sea, move away from the shore afterwards: big waves can follow. Expect aftershocks.",
+      ],
+      sources: [
+        { name: "Gobierno de Canarias", url: "https://www.gobiernodecanarias.org/emergencias/alertas/consejos/terremoto/terremoto.html" },
+        { name: "Castilla-La Mancha 112", url: "https://112.castillalamancha.es/proteccion-civil/consejos/terremotos" },
+      ],
+      checkedOn: C,
+    },
+  ],
 };
 
 export const PLAN_B_COUNTRIES: PlanBCountry[] = [SPAIN];
@@ -425,6 +519,7 @@ export const PLAN_B_ADVICE = {
 /** What the card does not check, said plainly. */
 export const PLAN_B_NOT_CHECKED = [
   "Live news, weather or outages: in an emergency, call 112 and follow the local authorities.",
+  "How likely a wildfire, flood, storm or earthquake is where you're going: we don't rate places. The advice above is what Spain's authorities tell everyone.",
   "Whether ES-Alert warnings reach a UK phone on roaming: Spain's official pages don't say.",
   "Emergency departments are confirmed only where marked ✓ (Canary Islands public hospitals, from their health service's pages). Elsewhere Spain's register doesn't say, so call 112 and ask your hotel.",
 ] as const;
