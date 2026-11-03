@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AIRLINE_BAGS, BAGS_NOT_CHECKED, type BagAllowance } from "@truevsad/true-cost";
 import { BagChecker } from "./BagChecker";
+import { HolidayScene } from "@/components/HolidayScene";
 
 export const metadata: Metadata = {
   title: "Cabin bag sizes by airline, and will my bag fit? — TrueVsAd",
@@ -35,6 +36,7 @@ function checked(iso: string): string {
 export default function CabinBagsPage() {
   return (
     <main>
+      <HolidayScene mood="morning" focus="center" label="TRUEVSAD · 05 CABIN BAGS" />
       <h1>Cabin bags: will yours fit?</h1>
       <p className="lead">
         Every airline has its own sizes, and a bag that&apos;s too big at the gate costs money. Measure

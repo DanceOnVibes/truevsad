@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { LENSES, looksUnderMapped, planBFor, scorePlace, type Light } from "@truevsad/true-cost";
 import { lookupPlace, placeLinks, type PlaceLookup } from "@/lib/osm";
 import { allowHeaders } from "@/lib/rate-limit";
+import { HolidayScene } from "@/components/HolidayScene";
 
 export const runtime = "nodejs";
 export const preferredRegion = "lhr1";
@@ -41,13 +42,14 @@ export default async function VisitPage({ searchParams }: { searchParams: Search
 
   return (
     <main>
+      <HolidayScene mood="morning" focus="left" label="TRUEVSAD · 07 VISIT BEFORE YOU BOOK" />
       <h1>Visit before you book</h1>
       <p className="lead">
         Is this resort right for your group? See what&apos;s nearby — playgrounds, beaches,
         nightlife, shops and pharmacies — before you pay.
       </p>
 
-      <form className="card" method="get">
+      <form className="card form-ink" method="get">
         <label htmlFor="q">Resort, town or hotel area</label>
         <input id="q" name="q" defaultValue={q} placeholder="e.g. Salou, Spain" required minLength={2} maxLength={120} />
         <button type="submit">Check this place</button>

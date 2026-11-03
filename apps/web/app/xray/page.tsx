@@ -6,6 +6,7 @@ import { INCLUSION_LABELS, supplierDefaults } from "@/lib/supplier-defaults";
 import { ReceiptView } from "@/components/ReceiptView";
 import { FairSharePanel } from "@/components/FairSharePanel";
 import { ChildCostsNote } from "@/components/ChildCostsNote";
+import { HolidayScene } from "@/components/HolidayScene";
 
 const CURRENCIES = { GBP: "£", EUR: "€", USD: "$" } as const;
 /** One tap instead of a guess: the airline decides the bag and seat fees. */
@@ -275,6 +276,7 @@ export default function XrayPage() {
 
   return (
     <main>
+      <HolidayScene mood="golden" focus="center" label="TRUEVSAD · 01 DEAL X-RAY" />
       <h1>Deal X-ray</h1>
       <p className="lead">Paste a holiday deal. We&apos;ll show what it really costs your family.</p>
 

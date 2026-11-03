@@ -6,6 +6,7 @@ import { hospitalsFor, type HospitalLookup } from "@/lib/osm";
 import { HOSPITALS_ES, nearestOfficialHospitals } from "@/lib/hospitals-es";
 import { allowHeaders } from "@/lib/rate-limit";
 import { PlanBCard } from "./PlanBCard";
+import { HolidayScene } from "@/components/HolidayScene";
 
 export const runtime = "nodejs";
 export const preferredRegion = "lhr1";
@@ -81,13 +82,14 @@ export default async function PlanBPage({ searchParams }: { searchParams: Search
   return (
     <main>
       <div className="no-print">
+        <HolidayScene mood="dusk" focus="right" label="TRUEVSAD · 03 PLAN B" />
         <h1>Plan B</h1>
         <p className="lead">
           One page for your trip that still works when the power is out, the signal has gone and the card machine is
           dead. Make it before you fly, save it to your phone and print a copy.
         </p>
 
-        <form className="card" method="get">
+        <form className="card form-ink" method="get">
           <label htmlFor="q">Where are you going?</label>
           <input id="q" name="q" defaultValue={q} placeholder="e.g. Costa Adeje, Tenerife" required minLength={2} maxLength={120} />
           {childCount > 0 && <input type="hidden" name="children" value={childCount} />}

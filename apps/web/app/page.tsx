@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { FAIRMARK_SCALE, type FairMarkLevel } from "@truevsad/true-cost";
 import { loadListedDeals, type ListedDeal } from "@/lib/quotes";
+import { HolidayScene } from "@/components/HolidayScene";
 
 // The public-receipts strip shows real receipts families chose to list, so refresh it now and then.
 export const revalidate = 300;
@@ -137,6 +138,8 @@ export default async function Home() {
       )}
 
       <div className="home">
+        <HolidayScene variant="band" mood="golden" focus="center" label="TRUEVSAD · THE HOLIDAY" />
+
         <section className="answers">
           <div className="section-head">
             <h2>Three answers. Never a guess.</h2>

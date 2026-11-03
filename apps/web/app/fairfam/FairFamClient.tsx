@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { familyWindows, publishedSpan, quoteDifference, formatGBP, type DaysOff, type FamilyWindow } from "@truevsad/true-cost";
+import { HolidayScene } from "@/components/HolidayScene";
 
 /**
  * FairFam: your school dates, your family, one honest price.
@@ -188,6 +189,7 @@ export function FairFamClient({ councils }: { councils: string[] }) {
 
   return (
     <main>
+      <HolidayScene mood="morning" focus="right" label="TRUEVSAD · 02 FAIRFAM" />
       <h1>FairFam</h1>
       <p className="lead">
         Your school dates. Your family. One honest price. Find the weeks your whole family can travel,
