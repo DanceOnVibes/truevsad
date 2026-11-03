@@ -3,6 +3,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { islandAt, planBFor } from "@truevsad/true-cost";
 import { hospitalsFor, type HospitalLookup } from "@/lib/osm";
+import { HOSPITALS_ES, nearestOfficialHospitals } from "@/lib/hospitals-es";
 import { allowHeaders } from "@/lib/rate-limit";
 import { PlanBCard } from "./PlanBCard";
 
@@ -58,10 +59,22 @@ export default async function PlanBPage({ searchParams }: { searchParams: Search
   // On an island, only hospitals on the same island: a 40 km circle can reach across the sea
   // (Corralejo, Fuerteventura is 40 km from Lanzarote), and a family can't drive there.
   const onIsland = found ? islandAt(found.lat, found.lon)?.name : undefined;
-  const hospitals =
+  // First choice: Spain's official hospital register (no map servers involved). The map's own
+  // hospitals only when the register has nothing nearby, or outside Spain.
+  const official = found && plan?.country.country === "Spain" ? nearestOfficialHospitals(found.lat, found.lon) : [];
+  const mapHospitals =
     lookup?.ok && lookup.hospitals
       ? lookup.hospitals.filter((h) => !onIsland || islandAt(h.lat, h.lon)?.name === onIsland).slice(0, 3)
       : null;
+  const hospitals = official.length
+    ? official.map((h) => ({
+        name: h.name,
+        address: `${h.address}, ${h.postcode} ${h.town}`,
+        km: h.km,
+        public: h.public,
+      }))
+    : mapHospitals;
+  const hospitalSource = official.length ? ("register" as const) : ("map" as const);
   const distanceFrom = usedIsland ? `the centre of ${usedIsland}` : q.split(",")[0]?.trim() || placeName;
 
   return (
@@ -111,7 +124,9 @@ export default async function PlanBPage({ searchParams }: { searchParams: Search
           placeName={placeName}
           plan={plan ?? null}
           hospitals={hospitals}
-          hospitalsCheckedOn={lookup?.ok && lookup.hospitals ? lookup.fetchedAt.slice(0, 10) : null}
+          hospitalSource={hospitalSource}
+          register={{ source: HOSPITALS_ES.source, url: HOSPITALS_ES.sourceUrl, asOf: HOSPITALS_ES.asOf }}
+          hospitalsCheckedOn={official.length ? null : lookup?.ok && lookup.hospitals ? lookup.fetchedAt.slice(0, 10) : null}
           distanceFrom={distanceFrom}
           initialChildren={childCount}
         />

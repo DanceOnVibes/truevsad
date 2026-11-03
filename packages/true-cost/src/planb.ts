@@ -426,5 +426,5 @@ export const PLAN_B_ADVICE = {
 export const PLAN_B_NOT_CHECKED = [
   "Live news, weather or outages: in an emergency, call 112 and follow the local authorities.",
   "Whether ES-Alert warnings reach a UK phone on roaming: Spain's official pages don't say.",
-  "Whether the hospitals listed are open right now: map data can be out of date, so ask your hotel.",
+  "Which hospitals have a 24-hour emergency department: Spain's register doesn't say, so call 112 and ask your hotel.",
 ] as const;
