@@ -4,10 +4,10 @@
  * verdict signals ONLY (stop, safe to go, check), and always come with a word and a symbol.
  */
 :root {
-  --bg: #f4f1ea;
+  --bg: #e6f4fe;
   --fg: #111311;
-  --muted: #5f635d;
-  --line: #dcd6cb;
+  --muted: #3b4852;
+  --line: #c9ddeb;
   --card: #ffffff;
   --ink: #111311;
   --on-ink: #f4f1ea;
@@ -24,11 +24,11 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #111311;
+    --bg: #0a1526;
     --fg: #f4f1ea;
-    --muted: #a9b0aa;
-    --line: #2b2f2b;
-    --card: #1b1e1b;
+    --muted: #a8b7c6;
+    --line: #23344c;
+    --card: #12203a;
     --ink: #f4f1ea;
     --on-ink: #111311;
     --accent: #f4f1ea;
@@ -44,7 +44,7 @@
 
 body {
   margin: 0;
-  background: var(--bg);
+  background: transparent;
   color: var(--fg);
   font-family: var(--font-display);
   line-height: 1.5;
@@ -513,3 +513,50 @@ table.board th { font-family: var(--font-mono); font-size: 0.72rem; letter-spaci
 .scene-photo .scene-cam { transform-origin: 50% 62%; }
 @media (max-width: 560px) { .scene-credit-long { display: none; } }
 .scene-photo.scene-banner .scene-frame { height: clamp(200px, 32vw, 420px); }
+
+/* Sky background (Nov 2026): the night version of the sky, and dark objects that match it. */
+@media (prefers-color-scheme: dark) {
+  .scanner, .card.form-ink { background: #12203a; }
+}
+
+/* One sky behind every page: it stays put while the page scrolls over it (a fixed layer, so it
+   works on phones too), with a soft sun glow and a few seagulls gliding across. */
+html { background: var(--bg); }
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -2; pointer-events: none;
+  background:
+    radial-gradient(circle at 88% 6%, rgba(255, 250, 225, 0.85) 0, rgba(255, 244, 205, 0.35) 9%, rgba(255, 244, 205, 0) 26%),
+    linear-gradient(180deg, #74c2fa 0%, #9fd4fd 38%, #c9e8ff 72%, #e4f4ff 100%);
+}
+.sky-gulls { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.gull { position: absolute; left: 0; display: block; width: 34px; height: 12px; }
+.gull::before {
+  content: ""; position: absolute; inset: 0;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 16'><path d='M2 13 Q 11 2 22 10 Q 25 12.5 28 10 Q 39 2 48 13' fill='none' stroke='%23324350' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/></svg>") center / contain no-repeat;
+  opacity: 0.6;
+}
+.g1 { top: 13vh; transform: translateX(12vw) scale(1); }
+.g2 { top: 9vh; transform: translateX(22vw) scale(0.7); }
+.g3 { top: 24vh; transform: translateX(64vw) scale(0.85); }
+.g4 { top: 17vh; transform: translateX(78vw) scale(0.55); }
+.g5 { top: 31vh; transform: translateX(40vw) scale(0.6); }
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes tv-gull-fly { from { transform: translate3d(-8vw, 0, 0) scale(var(--s)); } to { transform: translate3d(108vw, -6vh, 0) scale(var(--s)); } }
+  @keyframes tv-gull-flap { 0%, 100% { transform: scaleY(1) translateY(0); } 50% { transform: scaleY(0.55) translateY(2px); } }
+  .gull { animation: tv-gull-fly var(--t) linear var(--d) infinite both; }
+  .gull::before { animation: tv-gull-flap 1.6s ease-in-out infinite; }
+  .g1 { --s: 1; --t: 46s; --d: -8s; }
+  .g2 { --s: 0.7; --t: 58s; --d: -30s; }
+  .g3 { --s: 0.85; --t: 52s; --d: -18s; }
+  .g4 { --s: 0.55; --t: 70s; --d: -50s; }
+  .g5 { --s: 0.6; --t: 64s; --d: -4s; }
+  .g2::before { animation-duration: 1.9s; animation-delay: -0.4s; }
+  .g4::before { animation-duration: 2.2s; }
+}
+@media (prefers-color-scheme: dark) {
+  /* At night: the same sky, dark, and the gulls have gone to roost. */
+  body::before { background: radial-gradient(circle at 88% 6%, rgba(220, 225, 255, 0.16) 0, rgba(220, 225, 255, 0) 18%), linear-gradient(180deg, #0c1a33 0%, #10234a 55%, #16305c 100%); }
+  .sky-gulls { display: none; }
+}
+@media print { body::before, .sky-gulls { display: none; } }
+@media (max-width: 560px) { .g4, .g5 { display: none; } .gull { width: 26px; height: 9px; } }
