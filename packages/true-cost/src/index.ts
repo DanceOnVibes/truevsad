@@ -83,6 +83,7 @@ export {
   countryFor,
   fragileNoteFor,
   ifItGoesWrong,
+  islandAt,
   islandFor,
   planBFor,
   suggestBookingType,
