@@ -4,6 +4,7 @@ import {
   countryFor,
   fragileNoteFor,
   ifItGoesWrong,
+  islandAt,
   islandFor,
   PACKAGE_HELP,
   planBFor,
@@ -35,6 +36,23 @@ describe("Plan B: where you're going", () => {
     expect(planBFor("Benidorm")?.country.emergency.number).toBe("112");
     expect(planBFor("Paphos, Cyprus")).toBeUndefined();
     expect(planBFor(undefined)).toBeUndefined();
+  });
+});
+
+describe("Plan B: which island a map point is on", () => {
+  it("keeps Corralejo on Fuerteventura and San Bartolomé on Lanzarote", () => {
+    expect(islandAt(28.7295, -13.8746)?.name).toBe("Fuerteventura");
+    expect(islandAt(29.0005, -13.6114)?.name).toBe("Lanzarote");
+    expect(islandAt(28.4963, -13.8626)?.name).toBe("Fuerteventura"); // Puerto del Rosario
+  });
+
+  it("knows the other islands, and nothing outside them", () => {
+    expect(islandAt(28.0833, -16.7333)?.name).toBe("Tenerife"); // Costa Adeje
+    expect(islandAt(27.7606, -15.5860)?.name).toBe("Gran Canaria"); // Maspalomas
+    expect(islandAt(28.0916, -17.1133)?.name).toBe("La Gomera"); // San Sebastián
+    expect(islandAt(28.6585, -17.9182)?.name).toBe("La Palma"); // Los Llanos
+    expect(islandAt(27.8066, -17.9150)?.name).toBe("El Hierro"); // Valverde
+    expect(islandAt(38.5411, -0.1225)).toBeUndefined(); // Benidorm
   });
 });
 

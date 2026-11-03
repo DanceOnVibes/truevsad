@@ -9,7 +9,16 @@ import {
   PLAN_B_NOT_CHECKED,
   type PlanB,
 } from "@truevsad/true-cost";
-import type { NearbyHospital } from "@/lib/osm";
+/** A hospital line on the card, from Spain's official register or from the map. */
+export interface CardHospital {
+  name: string;
+  address: string | null;
+  km: number;
+  /** From the official register; unknown for map results. */
+  public?: boolean;
+  /** Emergency department confirmed on the regional health service's own pages. */
+  urgencias?: { open24h: boolean; children: boolean; sourceUrl: string; checkedOn: string };
+}
 
 /**
  * The Plan B card. Everything the family types stays in this browser tab: nothing is sent to us,
@@ -32,6 +41,7 @@ export const CARD_CSS = `
 .planb-es{font-style:italic;color:#0b6e4f}
 .planb-blank{color:#8a909a}
 .planb-small{font-size:.75rem;color:#5d6470}
+.planb-ok{font-size:.8rem;font-weight:600;color:#0b6e4f}
 .planb-children{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}
 .planb-child{border:2px dashed #16181d;border-radius:10px;padding:12px 14px;break-inside:avoid}
 .planb-child strong,.planb-child .planb-es{display:block}
@@ -44,8 +54,13 @@ export const CARD_CSS = `
 interface Props {
   placeName: string;
   plan: PlanB | null;
-  hospitals: NearbyHospital[] | null;
+  hospitals: CardHospital[] | null;
+  /** "register" = Spain's official hospital catalogue; "map" = OpenStreetMap. */
+  hospitalSource: "register" | "map";
+  register: { source: string; url: string; asOf: string };
   hospitalsCheckedOn: string | null;
+  /** What the distances are measured from, e.g. "Corralejo". */
+  distanceFrom: string;
   initialChildren: number;
 }
 
@@ -71,7 +86,7 @@ function escapeHtml(s: string): string {
   return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 }
 
-export function PlanBCard({ placeName, plan, hospitals, hospitalsCheckedOn, initialChildren }: Props) {
+export function PlanBCard({ placeName, plan, hospitals, hospitalSource, register, hospitalsCheckedOn, distanceFrom, initialChildren }: Props) {
   const [hotel, setHotel] = useState("");
   const [address, setAddress] = useState("");
   const [meeting, setMeeting] = useState("");
@@ -113,6 +128,10 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalsCheckedOn, init
     sources.push({ name: country.emergencyNoSignal.sourceName, url: country.emergencyNoSignal.sourceUrl, checkedOn: country.emergencyNoSignal.checkedOn });
     sources.push({ name: country.alerts.sourceName, url: country.alerts.sourceUrl, checkedOn: country.alerts.checkedOn });
   }
+  if (hospitalSource === "register" && hospitals?.length)
+    sources.push({ name: "Ministerio de Sanidad, hospital catalogue", url: register.url, checkedOn: "2026-11-03" });
+  const scs = hospitals?.find((h) => h.urgencias)?.urgencias;
+  if (scs) sources.push({ name: "Servicio Canario de la Salud", url: scs.sourceUrl, checkedOn: scs.checkedOn });
   if (plan?.consulate) sources.push({ name: "GOV.UK", url: plan.consulate.sourceUrl, checkedOn: plan.consulate.checkedOn });
   sources.push({ name: "GOV.UK (FCDO)", url: FCDO_LONDON.sourceUrl, checkedOn: FCDO_LONDON.checkedOn });
 
@@ -209,25 +228,46 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalsCheckedOn, init
           </div>
 
           <div className="planb-box">
-            <h3>Nearest hospitals with an emergency department</h3>
+            <h3>{hospitalSource === "register" ? "Nearest general hospitals" : "Nearest hospitals with an emergency department"}</h3>
             {hospitals && hospitals.length > 0 ? (
               <>
                 <ul>
                   {hospitals.map((h) => (
                     <li key={h.name}>
                       <strong>{h.name}</strong>
-                      {h.address ? `, ${h.address}` : ""} <span className="planb-small">(about {h.km} km from {placeName || "the centre"})</span>
+                      {h.public === undefined ? "" : h.public ? " (public)" : " (private)"}
+                      {h.address ? `, ${h.address}` : ""} <span className="planb-small">(about {h.km} km from {distanceFrom || "the centre"})</span>
+                      {h.urgencias && (
+                        <>
+                          <br />
+                          <span className="planb-ok">
+                            ✓ Emergency department (Urgencias){h.urgencias.open24h ? ", open 24 hours" : ""}
+                            {h.urgencias.children ? ", children too" : ""}
+                          </span>
+                        </>
+                      )}
                     </li>
                   ))}
                 </ul>
-                <p className="planb-small">
-                  From OpenStreetMap{hospitalsCheckedOn ? `, ${dateLabel(hospitalsCheckedOn)}` : ""}. Map data can be out of date:
-                  check with your hotel when you arrive. © OpenStreetMap contributors.
-                </p>
+                {hospitalSource === "register" ? (
+                  <p className="planb-small">
+                    From Spain&apos;s official hospital register (Ministry of Health catalogue, hospitals open on{" "}
+                    {dateLabel(register.asOf)}).{" "}
+                    {hospitals.some((h) => h.urgencias)
+                      ? "✓ = emergency department confirmed on the Canary Islands health service's own pages. For the others, the register doesn't say."
+                      : "The register doesn't record which have an emergency department."}{" "}
+                    In an emergency, call {country?.emergency.number ?? "the emergency number"} and they&apos;ll send help to the right one.
+                  </p>
+                ) : (
+                  <p className="planb-small">
+                    From OpenStreetMap{hospitalsCheckedOn ? `, ${dateLabel(hospitalsCheckedOn)}` : ""}. Map data can be out of date:
+                    check with your hotel when you arrive. © OpenStreetMap contributors.
+                  </p>
+                )}
               </>
             ) : (
               <p>
-                {hospitals ? "None are mapped near here." : "We couldn't look this up just now."} Ask your hotel for the nearest
+                {hospitals ? `None with an emergency department are mapped near here${plan?.island ? ` on ${plan.island}` : ""}.` : "We couldn't look this up just now."} Ask your hotel for the nearest
                 hospital with an emergency department and write it here: ____________________
               </p>
             )}
