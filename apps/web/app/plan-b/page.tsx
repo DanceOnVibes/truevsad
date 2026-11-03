@@ -72,6 +72,7 @@ export default async function PlanBPage({ searchParams }: { searchParams: Search
         address: `${h.address}, ${h.postcode} ${h.town}`,
         km: h.km,
         public: h.public,
+        urgencias: h.urgencias,
       }))
     : mapHospitals;
   const hospitalSource = official.length ? ("register" as const) : ("map" as const);

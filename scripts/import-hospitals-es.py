@@ -26,6 +26,10 @@ except ImportError:
 ROOT = Path(__file__).resolve().parent.parent
 CNH = ROOT / "data/hospitals/CNH_2025.xlsx"
 GISCO = ROOT / "data/hospitals/eurostat-gisco-healthcare-ES-2026.csv"
+# Hospitals whose emergency department is confirmed on the regional health service's own pages
+# (two research passes). Matched to the catalogue by exact name. Included even when the catalogue
+# doesn't class them as general hospitals (e.g. Hospital del Norte, Tenerife).
+URGENCIAS = [ROOT / "data/hospitals/urgencias-canarias.csv"]
 OUT = ROOT / "apps/web/lib/hospitals-es.json"
 
 wb = openpyxl.load_workbook(CNH, read_only=True, data_only=True)
@@ -37,9 +41,19 @@ geo = {r["id"]: r for r in csv.DictReader(GISCO.open(encoding="utf-8"))}
 def tidy(s):
     return re.sub(r"\s*-\s*$", "", re.sub(r"\s+", " ", str(s or ""))).strip()
 
+confirmed = {}
+for f in URGENCIAS:
+    for r in csv.DictReader(f.open(encoding="utf-8")):
+        confirmed[r["cnh_name"]] = r
+names = {tidy(h["Nombre Centro"]) for h in cnh}
+unknown = [n for n in confirmed if n not in names]
+if unknown:
+    sys.exit(f"Urgencias rows not found in the catalogue (check the exact name): {unknown}")
+
 out, missing = [], []
 for h in cnh:
-    if h["Cód. Clase de Centro"] != "C11":
+    u = confirmed.get(tidy(h["Nombre Centro"]))
+    if h["Cód. Clase de Centro"] != "C11" and not u:
         continue
     g = geo.get("ES_" + str(int(h["CCN"])))
     if not g or not g["lat"] or not g["lon"]:
@@ -56,6 +70,12 @@ for h in cnh:
         "beds": int(h["CAMAS"] or 0),
         "lat": round(float(g["lat"]), 6),
         "lon": round(float(g["lon"]), 6),
+        **({"urgencias": {
+            "open24h": u["open_24h"] == "yes",
+            "children": u["children"] == "yes",
+            "sourceUrl": u["source_url"],
+            "checkedOn": u["checked_on"],
+        }} if u else {}),
     })
 
 out.sort(key=lambda h: h["ccn"])
@@ -66,4 +86,4 @@ OUT.write_text(json.dumps({
     "asOf": "2024-12-31",
     "hospitals": out,
 }, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
-print(f"✓ {len(out)} general hospitals written to {OUT.relative_to(ROOT)}" + (f"; {len(missing)} without a map position: {missing}" if missing else ""))
+print(f"✓ {len(out)} hospitals ({sum(1 for h in out if 'urgencias' in h)} with a confirmed emergency department) written to {OUT.relative_to(ROOT)}" + (f"; {len(missing)} without a map position: {missing}" if missing else ""))

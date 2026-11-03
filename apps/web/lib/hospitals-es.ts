@@ -17,6 +17,8 @@ export interface OfficialHospital {
   beds: number;
   lat: number;
   lon: number;
+  /** Set only when the regional health service's own pages confirm an emergency department. */
+  urgencias?: { open24h: boolean; children: boolean; sourceUrl: string; checkedOn: string };
 }
 
 export const HOSPITALS_ES = data as {
@@ -35,7 +37,8 @@ function distanceKm(aLat: number, aLon: number, bLat: number, bLon: number): num
 }
 
 /**
- * The closest general hospitals to a point. On a Canary island, only hospitals on the same island
+ * Hospitals for the card: the nearest one with a confirmed emergency department first, then the
+ * closest of the rest (nearest first). On a Canary island, only hospitals on the same island
  * (a family can't drive across the sea); elsewhere, within maxKm.
  */
 export function nearestOfficialHospitals(
@@ -45,10 +48,11 @@ export function nearestOfficialHospitals(
   maxKm = 60,
 ): (OfficialHospital & { km: number })[] {
   const island = islandAt(lat, lon)?.name;
-  return HOSPITALS_ES.hospitals
+  const nearby = HOSPITALS_ES.hospitals
     .filter((h) => (island ? islandAt(h.lat, h.lon)?.name === island : true))
     .map((h) => ({ ...h, km: Math.round(distanceKm(lat, lon, h.lat, h.lon) * 10) / 10 }))
     .filter((h) => island || h.km <= maxKm)
-    .sort((a, b) => a.km - b.km)
-    .slice(0, max);
+    .sort((a, b) => a.km - b.km);
+  const first = nearby.find((h) => h.urgencias);
+  return first ? [first, ...nearby.filter((h) => h !== first).slice(0, max - 1)] : nearby.slice(0, max);
 }
