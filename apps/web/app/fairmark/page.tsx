@@ -56,7 +56,7 @@ export default async function FairMarkPage({ searchParams }: { searchParams: Sea
 
   return (
     <main>
-      <HolidayScene mood="golden" focus="right" label="TRUEVSAD · 04 FAIRMARK" />
+      <HolidayScene photo="sunset" label="TRUEVSAD · 04 FAIRMARK" />
       <h1>FairMark</h1>
       <p className="lead">
         How much a holiday advert leaves out: the taxes and fees every family on that deal must pay,

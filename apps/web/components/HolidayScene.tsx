@@ -9,7 +9,21 @@
  * Purely decorative: the whole scene is hidden from screen readers.
  */
 
+import Image from "next/image";
+
 export type SceneMood = "golden" | "morning" | "dusk";
+
+/**
+ * Made with AI on HeyJess.art (Adalbert's own app), so no real people are pictured. Each frame says so in its top bar.
+ * `pos` keeps the family (and the light) in view when a wide banner crops the picture.
+ */
+export const SCENE_PHOTOS = {
+  sunset: { src: "/images/scenes/sunset.jpg", mood: "golden", pos: "42% 72%" },
+  golden: { src: "/images/scenes/golden.jpg", mood: "golden", pos: "52% 70%" },
+  beach: { src: "/images/scenes/beach.jpg", mood: "morning", pos: "56% 60%" },
+  night: { src: "/images/scenes/night.jpg", mood: "dusk", pos: "50% 72%" },
+} as const satisfies Record<string, { src: string; mood: SceneMood; pos: string }>;
+export type ScenePhoto = keyof typeof SCENE_PHOTOS;
 
 type Palette = {
   sky: string[];
@@ -224,8 +238,11 @@ export function HolidayScene({
   variant = "banner",
   focus = "center",
   label,
+  photo,
 }: {
   mood?: SceneMood;
+  /** One of the AI-made pictures instead of the drawn scene. Its mood (day or night greetings) comes with it. */
+  photo?: ScenePhoto;
   /** "band": the tall full-width film still on the homepage. "banner": the letterbox strip at the top of a page. */
   variant?: "band" | "banner";
   /** Which part of the scene stays in view on narrow screens: the mountains, the middle, or the family on the beach. */
@@ -233,6 +250,8 @@ export function HolidayScene({
   /** Small slate text in the top bar, e.g. "TRUEVSAD · PLAN B". */
   label?: string;
 }) {
+  const shot = photo ? SCENE_PHOTOS[photo] : undefined;
+  if (shot) mood = shot.mood;
   const p = PALETTES[mood];
   const L = LIGHT[mood];
   const id = `sc-${mood}`;
@@ -243,13 +262,31 @@ export function HolidayScene({
   const sky = p.sky;
 
   return (
-    <figure className={`scene scene-${variant} scene-${mood}`} aria-hidden="true">
+    <figure className={`scene scene-${variant} scene-${mood}${shot ? " scene-photo" : ""}`} aria-hidden="true">
       <div className="scene-bar scene-bar-top">
         <span>{label ?? "TRUEVSAD"}</span>
-        <span className="scene-dots" />
+        <span className="scene-bar-right">
+          {shot && (
+            <span className="scene-credit">
+              AI IMAGE<span className="scene-credit-long"> · HEYJESS.ART</span>
+            </span>
+          )}
+          <span className="scene-dots" />
+        </span>
       </div>
       <div className="scene-frame">
         <div className="scene-cam">
+          {shot ? (
+            <Image
+              src={shot.src}
+              alt=""
+              fill
+              priority={variant === "banner"}
+              sizes="(max-width: 1200px) 100vw, 1168px"
+              style={{ objectFit: "cover", objectPosition: shot.pos }}
+            />
+          ) : (
+          <>
           {/* Sky, light and clouds */}
           <Layer vb={vb} align={align} className="layer-sky">
             <defs>
@@ -442,6 +479,8 @@ export function HolidayScene({
                 <polygon points="1521,333 760,270 760,380" fill={`url(#${id}-beam)`} />
               </g>
             </Layer>
+          )}
+          </>
           )}
         </div>
       </div>

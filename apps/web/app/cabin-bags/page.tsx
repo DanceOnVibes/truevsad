@@ -36,7 +36,7 @@ function checked(iso: string): string {
 export default function CabinBagsPage() {
   return (
     <main>
-      <HolidayScene mood="morning" focus="center" label="TRUEVSAD · 05 CABIN BAGS" />
+      <HolidayScene photo="golden" label="TRUEVSAD · 05 CABIN BAGS" />
       <h1>Cabin bags: will yours fit?</h1>
       <p className="lead">
         Every airline has its own sizes, and a bag that&apos;s too big at the gate costs money. Measure

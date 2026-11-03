@@ -82,7 +82,7 @@ export default async function PlanBPage({ searchParams }: { searchParams: Search
   return (
     <main>
       <div className="no-print">
-        <HolidayScene mood="dusk" focus="right" label="TRUEVSAD · 03 PLAN B" />
+        <HolidayScene photo="night" label="TRUEVSAD · 03 PLAN B" />
         <h1>Plan B</h1>
         <p className="lead">
           One page for your trip that still works when the power is out, the signal has gone and the card machine is

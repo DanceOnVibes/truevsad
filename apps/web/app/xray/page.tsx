@@ -276,7 +276,7 @@ export default function XrayPage() {
 
   return (
     <main>
-      <HolidayScene mood="golden" focus="center" label="TRUEVSAD · 01 DEAL X-RAY" />
+      <HolidayScene photo="golden" label="TRUEVSAD · 01 DEAL X-RAY" />
       <h1>Deal X-ray</h1>
       <p className="lead">Paste a holiday deal. We&apos;ll show what it really costs your family.</p>
 

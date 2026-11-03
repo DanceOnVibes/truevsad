@@ -96,7 +96,7 @@ export default async function SchoolWindowPage({ searchParams }: { searchParams:
 
   return (
     <main>
-      <HolidayScene mood="golden" focus="left" label="TRUEVSAD · 06 SCHOOL WINDOW" />
+      <HolidayScene photo="beach" label="TRUEVSAD · 06 SCHOOL WINDOW" />
       <h1>School Window</h1>
       <p className="lead">
         Your council&apos;s school holidays, the quieter &ldquo;shoulder&rdquo; weeks either side, and

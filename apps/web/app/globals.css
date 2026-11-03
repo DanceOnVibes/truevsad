@@ -506,3 +506,9 @@ table.board th { font-family: var(--font-mono); font-size: 0.72rem; letter-spaci
   /* The black scanner needs an edge on the dark page. */
   .scanner { background: #1b1e1b; box-shadow: 0 0 0 1px var(--line); }
 }
+/* Scene with one of the AI-made pictures: the camera still pushes in, the grain and subtitles stay. */
+.scene-bar-right { display: inline-flex; align-items: center; gap: 12px; }
+.scene-credit { color: #8d958f; }
+.scene-photo .scene-cam { transform-origin: 50% 62%; }
+@media (max-width: 560px) { .scene-credit-long { display: none; } }
+.scene-photo.scene-banner .scene-frame { height: clamp(200px, 32vw, 420px); }

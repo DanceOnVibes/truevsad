@@ -138,7 +138,7 @@ export default async function Home() {
       )}
 
       <div className="home">
-        <HolidayScene variant="band" mood="golden" focus="center" label="TRUEVSAD · THE HOLIDAY" />
+        <HolidayScene variant="band" photo="sunset" label="TRUEVSAD · THE HOLIDAY" />
 
         <section className="answers">
           <div className="section-head">
