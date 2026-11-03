@@ -297,7 +297,7 @@ export function pickHospitals(elements: OverpassHospital[], lat: number, lon: nu
     const address = [street, town].filter(Boolean).join(", ") || null;
     out.push({ name: name.slice(0, 120), address: address?.slice(0, 200) ?? null, lat: p.lat, lon: p.lon, km: Math.round(distanceKm(lat, lon, p.lat, p.lon) * 10) / 10 });
   }
-  return out.sort((a, b) => a.km - b.km).slice(0, 3);
+  return out.sort((a, b) => a.km - b.km).slice(0, 8); // the page keeps the closest 3 on the same island
 }
 
 /** One Overpass query, trying the backup servers if the main one is busy. Null if all fail. */

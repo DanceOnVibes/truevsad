@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
-import { planBFor } from "@truevsad/true-cost";
+import { islandAt, planBFor } from "@truevsad/true-cost";
 import { hospitalsFor, type HospitalLookup } from "@/lib/osm";
 import { allowHeaders } from "@/lib/rate-limit";
 import { PlanBCard } from "./PlanBCard";
@@ -55,6 +55,14 @@ export default async function PlanBPage({ searchParams }: { searchParams: Search
   const found = lookup?.ok ? lookup.place : null;
   const plan = q ? planBFor(q) ?? (found ? planBFor(found.displayName) : undefined) : undefined;
   const placeName = plan?.island ?? q.split(",")[0]?.trim() ?? "";
+  // On an island, only hospitals on the same island: a 40 km circle can reach across the sea
+  // (Corralejo, Fuerteventura is 40 km from Lanzarote), and a family can't drive there.
+  const onIsland = found ? islandAt(found.lat, found.lon)?.name : undefined;
+  const hospitals =
+    lookup?.ok && lookup.hospitals
+      ? lookup.hospitals.filter((h) => !onIsland || islandAt(h.lat, h.lon)?.name === onIsland).slice(0, 3)
+      : null;
+  const distanceFrom = usedIsland ? `the centre of ${usedIsland}` : q.split(",")[0]?.trim() || placeName;
 
   return (
     <main>
@@ -102,8 +110,9 @@ export default async function PlanBPage({ searchParams }: { searchParams: Search
         <PlanBCard
           placeName={placeName}
           plan={plan ?? null}
-          hospitals={lookup?.ok ? lookup.hospitals : null}
+          hospitals={hospitals}
           hospitalsCheckedOn={lookup?.ok && lookup.hospitals ? lookup.fetchedAt.slice(0, 10) : null}
+          distanceFrom={distanceFrom}
           initialChildren={childCount}
         />
       )}

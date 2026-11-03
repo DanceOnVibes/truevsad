@@ -46,6 +46,8 @@ interface Props {
   plan: PlanB | null;
   hospitals: NearbyHospital[] | null;
   hospitalsCheckedOn: string | null;
+  /** What the distances are measured from, e.g. "Corralejo". */
+  distanceFrom: string;
   initialChildren: number;
 }
 
@@ -71,7 +73,7 @@ function escapeHtml(s: string): string {
   return s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 }
 
-export function PlanBCard({ placeName, plan, hospitals, hospitalsCheckedOn, initialChildren }: Props) {
+export function PlanBCard({ placeName, plan, hospitals, hospitalsCheckedOn, distanceFrom, initialChildren }: Props) {
   const [hotel, setHotel] = useState("");
   const [address, setAddress] = useState("");
   const [meeting, setMeeting] = useState("");
@@ -216,7 +218,7 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalsCheckedOn, init
                   {hospitals.map((h) => (
                     <li key={h.name}>
                       <strong>{h.name}</strong>
-                      {h.address ? `, ${h.address}` : ""} <span className="planb-small">(about {h.km} km from {placeName || "the centre"})</span>
+                      {h.address ? `, ${h.address}` : ""} <span className="planb-small">(about {h.km} km from {distanceFrom || "the centre"})</span>
                     </li>
                   ))}
                 </ul>
@@ -227,7 +229,7 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalsCheckedOn, init
               </>
             ) : (
               <p>
-                {hospitals ? "None are mapped near here." : "We couldn't look this up just now."} Ask your hotel for the nearest
+                {hospitals ? `None with an emergency department are mapped near here${plan?.island ? ` on ${plan.island}` : ""}.` : "We couldn't look this up just now."} Ask your hotel for the nearest
                 hospital with an emergency department and write it here: ____________________
               </p>
             )}

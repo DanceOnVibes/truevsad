@@ -67,6 +67,11 @@ export interface Island {
   /** Resort and town names a deal might use instead of the island's name. */
   places: string[];
   consulate: string;
+  /**
+   * A rough box around the island (and its islets): [south, west, north, east] in degrees.
+   * Only used to keep map results on the same island; the islands' boxes don't overlap.
+   */
+  bounds: [number, number, number, number];
 }
 
 export interface FragileEvent {
@@ -128,16 +133,19 @@ export const CANARY_ISLANDS: Island[] = [
     name: "La Palma",
     places: ["La Palma", "Santa Cruz de La Palma", "Los Llanos de Aridane", "Puerto Naos", "Los Cancajos", "Tazacorte", "Breña Baja", "Brena Baja", "Fuencaliente"],
     consulate: "British Consulate Santa Cruz de Tenerife",
+    bounds: [28.45, -18.01, 28.86, -17.71],
   },
   {
     name: "La Gomera",
     places: ["La Gomera", "San Sebastián de La Gomera", "San Sebastian de La Gomera", "Valle Gran Rey", "Playa Santiago"],
     consulate: "British Consulate Santa Cruz de Tenerife",
+    bounds: [28.00, -17.35, 28.22, -17.09],
   },
   {
     name: "El Hierro",
     places: ["El Hierro", "La Restinga"],
     consulate: "British Consulate Santa Cruz de Tenerife",
+    bounds: [27.62, -18.17, 27.86, -17.87],
   },
   {
     name: "Tenerife",
@@ -146,6 +154,7 @@ export const CANARY_ISLANDS: Island[] = [
       "Los Gigantes", "Golf del Sur", "El Médano", "El Medano", "Callao Salvaje", "Playa Paraiso", "Puerto de Santiago",
     ],
     consulate: "British Consulate Santa Cruz de Tenerife",
+    bounds: [27.99, -16.93, 28.60, -16.11],
   },
   {
     name: "Gran Canaria",
@@ -154,16 +163,19 @@ export const CANARY_ISLANDS: Island[] = [
       "Puerto de Mogan", "Mogán", "Mogan", "Meloneras", "San Agustín", "San Agustin", "Amadores", "Taurito", "Arguineguín", "Arguineguin",
     ],
     consulate: "British Consulate Las Palmas de Gran Canaria",
+    bounds: [27.73, -15.84, 28.19, -15.35],
   },
   {
     name: "Lanzarote",
     places: ["Lanzarote", "La Graciosa", "Playa Blanca", "Puerto del Carmen", "Costa Teguise", "Arrecife", "Puerto Calero", "Teguise", "Yaiza"],
     consulate: "British Consulate Las Palmas de Gran Canaria",
+    bounds: [28.83, -13.93, 29.43, -13.33],
   },
   {
     name: "Fuerteventura",
     places: ["Fuerteventura", "Corralejo", "Caleta de Fuste", "Costa Calma", "Morro Jable", "Jandía", "Jandia", "El Cotillo", "Puerto del Rosario"],
     consulate: "British Consulate Las Palmas de Gran Canaria",
+    bounds: [28.04, -14.53, 28.77, -13.81],
   },
 ];
 
@@ -246,6 +258,11 @@ export const FRAGILE_PLACES: FragilePlace[] = [
     checkedOn: C,
   },
 ];
+
+/** Which Canary island a map point is on, if any. */
+export function islandAt(lat: number, lon: number): Island | undefined {
+  return CANARY_ISLANDS.find(({ bounds: [s, w, n, e] }) => lat >= s && lat <= n && lon >= w && lon <= e);
+}
 
 /** Which Canary island a destination names, if any. */
 export function islandFor(destination: string | undefined | null): Island | undefined {
