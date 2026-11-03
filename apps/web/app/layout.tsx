@@ -20,6 +20,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en-GB" className={`${display.variable} ${mono.variable}`}>
       <body>
+        <div className="sky-gulls" aria-hidden="true">
+          <span className="gull g1" />
+          <span className="gull g2" />
+          <span className="gull g3" />
+          <span className="gull g4" />
+          <span className="gull g5" />
+        </div>
         <SiteHeader />
         {children}
         <footer className="site-footer">
