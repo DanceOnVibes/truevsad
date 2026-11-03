@@ -56,7 +56,7 @@ export default async function SharedReceiptPage({ params }: { params: Params }) 
           The advertised price itself may have changed too, so check the deal.
         </p>
       )}
-      <div className="card">
+      <div className="card receipt-card">
         <ReceiptView {...r} airline={r.airline ?? r.supplierName} />
         <ChildCostsNote costs={r.childCostsPence.map((pence) => ({ pence }))} />
       </div>

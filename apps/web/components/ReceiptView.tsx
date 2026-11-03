@@ -1,5 +1,6 @@
 import { ADVISORY_CATEGORIES, airlineBagsFor, CARD_FEES_CHECKED_ON, cardFeeNote, dropOffFor, formatGBP, HELP_CHECKED_ON, ifItGoesWrong, localTaxNoteFor, NO_FEE_CARDS, planBFor, SURCHARGE_BAN_URL, transferFor, receiptScope, type BookingType, type CostCategory, type CostLine, type FairMark, type Inclusion } from "@truevsad/true-cost";
 import { FairMarkBadge, FairMarkDetail } from "./FairMarkBadge";
+import { VerdictStamp, verdictFor } from "./VerdictStamp";
 import { EMAILS } from "@/lib/company";
 import { INCLUSION_LABELS } from "@/lib/supplier-defaults";
 
@@ -89,6 +90,16 @@ export function ReceiptView(props: ReceiptViewProps) {
         </p>
       )}
 
+      <div className="paper receipt-paper">
+        <span className="zigzag" aria-hidden="true" />
+        <div className="paper-body receipt-body">
+          <div className="receipt-top">
+            <span className="paper-head">
+              <span>TRUEVSAD · RECEIPT</span>
+              {props.destination && <span>{props.destination.split(",")[0]?.toUpperCase()}</span>}
+            </span>
+            <VerdictStamp fm={fairMark} className="receipt-stamp" />
+          </div>
       <div className="headline">
         <div>
           <div className="hint">Advertised</div>
@@ -106,7 +117,7 @@ export function ReceiptView(props: ReceiptViewProps) {
         </div>
         <div>
           <div className="hint">Gap</div>
-          <div className="num gap">
+          <div className={`num gap gap-${verdictFor(fairMark)?.tone ?? "none"}`}>
             {gapPence > 0 ? "+" : ""}
             {formatGBP(gapPence)} ({Math.round(gapRatio * 100)}%)
           </div>
@@ -175,6 +186,10 @@ export function ReceiptView(props: ReceiptViewProps) {
           {includes.map((i) => INCLUSION_LABELS[i]).join(", ")}.
         </p>
       )}
+          <span className="barcode" aria-hidden="true" />
+        </div>
+        <span className="zigzag zigzag-flip" aria-hidden="true" />
+      </div>
       <div className="scope">
         {scope.counted.length > 0 && (
           <>
