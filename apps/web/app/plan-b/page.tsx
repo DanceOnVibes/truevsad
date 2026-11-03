@@ -85,8 +85,9 @@ export default async function PlanBPage({ searchParams }: { searchParams: Search
         <HolidayScene photo="night" label="TRUEVSAD · 03 PLAN B" />
         <h1>Plan B</h1>
         <p className="lead">
-          One page for your trip that still works when the power is out, the signal has gone and the card machine is
-          dead. Make it before you fly, save it to your phone and print a copy.
+          One page for your trip for when things go wrong: a wildfire, a flood, a storm, an earthquake or a power cut. It
+          still works when the signal has gone and the card machine is dead. Make it before you fly, save it to your phone
+          and print a copy.
         </p>
 
         <form className="card form-ink" method="get">

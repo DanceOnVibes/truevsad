@@ -9,6 +9,7 @@ import {
   PACKAGE_HELP,
   planBFor,
   SEPARATE_HELP,
+  SPAIN,
   suggestBookingType,
 } from "./planb";
 
@@ -116,5 +117,25 @@ describe("Plan B: card phrases", () => {
     const keys = Object.keys(CARD_PHRASES.en!).sort();
     expect(Object.keys(CARD_PHRASES.es!).sort()).toEqual(keys);
     for (const v of Object.values(CARD_PHRASES.es!)) if (typeof v === "string") expect(v.length).toBeGreaterThan(3);
+  });
+});
+
+describe("Plan B: natural hazards", () => {
+  it("covers wildfires, floods, storms and earthquakes for Spain", () => {
+    expect(SPAIN.hazards.map((h) => h.id).sort()).toEqual(["earthquake", "flood", "storm", "wildfire"]);
+  });
+  it("every hazard has at least two independent official sources", () => {
+    for (const h of SPAIN.hazards) {
+      const hosts = new Set(h.sources.map((s) => new URL(s.url).hostname));
+      expect(hosts.size).toBeGreaterThan(1);
+      for (const s of h.sources) expect(s.url).toMatch(/^https:\/\/(www\.)?(gobiernodecanarias\.org|proteccioncivil\.es|112\.castillalamancha\.es|gov\.uk)\//);
+    }
+  });
+  it("every hazard has short, plain lines and a checked date", () => {
+    for (const h of SPAIN.hazards) {
+      expect(h.lines.length).toBeGreaterThan(2);
+      for (const l of h.lines) expect(l.length).toBeLessThan(170);
+      expect(h.checkedOn).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    }
   });
 });

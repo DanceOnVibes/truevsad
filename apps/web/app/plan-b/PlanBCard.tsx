@@ -30,7 +30,7 @@ export const CARD_CSS = `
 .planb-sheet{background:#fff;color:#16181d;border:2px solid #16181d;border-radius:12px;padding:20px;margin:16px 0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.45}
 .planb-sheet h2{font-size:1.35rem;margin:0 0 2px;letter-spacing:-0.01em}
 .planb-sheet .planb-sub{color:#5d6470;font-size:.85rem;margin:0 0 12px}
-.planb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.planb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;align-items:start}
 .planb-box{border:1px solid #d8d8d0;border-radius:10px;padding:12px 14px;break-inside:avoid}
 .planb-box h3{font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:#5d6470;margin:0 0 6px}
 .planb-box p{margin:4px 0}
@@ -41,13 +41,15 @@ export const CARD_CSS = `
 .planb-es{font-style:italic;color:#0b6e4f}
 .planb-blank{color:#8a909a}
 .planb-small{font-size:.75rem;color:#5d6470}
+.planb-hazard{border-color:#16181d;border-width:1.5px}
+.planb-hazard h3{color:#16181d}
 .planb-ok{font-size:.8rem;font-weight:600;color:#0b6e4f}
 .planb-children{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}
 .planb-child{border:2px dashed #16181d;border-radius:10px;padding:12px 14px;break-inside:avoid}
 .planb-child strong,.planb-child .planb-es{display:block}
 .planb-sources{margin-top:12px;font-size:.72rem;color:#5d6470}
 .planb-sources a{color:#0b6e4f}
-@media print{.planb-sheet{border:0;padding:0;margin:0;font-size:11px}.planb-grid,.planb-children{grid-template-columns:1fr 1fr;gap:6px}.planb-box,.planb-child{padding:7px 9px}.planb-sos .planb-big{font-size:1.9rem}.planb-sheet .planb-sub{margin-bottom:6px}.planb-children{break-before:auto}}
+@media print{.planb-sheet{border:0;padding:0;margin:0;font-size:11px}.planb-hazard ul{margin:0;padding-left:16px}.planb-hazard li{margin:0;line-height:1.3}.planb-grid,.planb-children{grid-template-columns:1fr 1fr;gap:6px}.planb-box,.planb-child{padding:7px 9px}.planb-sos .planb-big{font-size:1.9rem}.planb-sheet .planb-sub{margin-bottom:6px}.planb-children{break-before:auto}}
 @page{margin:10mm}
 `;
 
@@ -127,6 +129,10 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalSource, register
     sources.push({ name: country.emergency.sourceName, url: country.emergency.sourceUrl, checkedOn: country.emergency.checkedOn });
     sources.push({ name: country.emergencyNoSignal.sourceName, url: country.emergencyNoSignal.sourceUrl, checkedOn: country.emergencyNoSignal.checkedOn });
     sources.push({ name: country.alerts.sourceName, url: country.alerts.sourceUrl, checkedOn: country.alerts.checkedOn });
+    sources.push({ name: "AEMET", url: country.warnings.sourceUrl, checkedOn: country.warnings.checkedOn });
+    for (const h of country.hazards)
+      for (const x of h.sources)
+        if (!sources.some((s) => s.url === x.url)) sources.push({ name: `${x.name}: ${h.title.toLowerCase()}`, url: x.url, checkedOn: h.checkedOn });
   }
   if (hospitalSource === "register" && hospitals?.length)
     sources.push({ name: "Ministerio de Sanidad, hospital catalogue", url: register.url, checkedOn: "2026-11-03" });
@@ -303,6 +309,7 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalSource, register
             <div className="planb-box">
               <h3>Phone alerts</h3>
               <p>{country.alerts.text}</p>
+              <p className="planb-small">{country.warnings.text} (aemet.es)</p>
             </div>
           )}
 
@@ -327,6 +334,18 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalSource, register
               ))}
             </div>
           )}
+
+          {country?.hazards.map((h) => (
+            <div className="planb-box planb-hazard" key={h.id}>
+              <h3>{h.title}: what to do</h3>
+              <ul>
+                {h.lines.map((l) => (
+                  <li key={l}>{l}</li>
+                ))}
+              </ul>
+              <p className="planb-small">From {h.sources.map((x) => x.name).join(", ")}.</p>
+            </div>
+          ))}
 
           <div className="planb-box planb-advice">
             <h3>In a power cut (our advice)</h3>
