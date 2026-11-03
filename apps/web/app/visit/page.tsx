@@ -42,7 +42,7 @@ export default async function VisitPage({ searchParams }: { searchParams: Search
 
   return (
     <main>
-      <HolidayScene mood="morning" focus="left" label="TRUEVSAD · 07 VISIT BEFORE YOU BOOK" />
+      <HolidayScene photo="ski" label="TRUEVSAD · 07 VISIT BEFORE YOU BOOK" />
       <h1>Visit before you book</h1>
       <p className="lead">
         Is this resort right for your group? See what&apos;s nearby — playgrounds, beaches,

@@ -22,7 +22,24 @@ export const SCENE_PHOTOS = {
   golden: { src: "/images/scenes/golden.jpg", mood: "golden", pos: "52% 70%" },
   beach: { src: "/images/scenes/beach.jpg", mood: "morning", pos: "56% 60%" },
   night: { src: "/images/scenes/night.jpg", mood: "dusk", pos: "50% 72%" },
-} as const satisfies Record<string, { src: string; mood: SceneMood; pos: string }>;
+  ski: {
+    src: "/images/scenes/ski.jpg", mood: "morning", pos: "50% 56%",
+    greet: [
+      { say: "Guten Morgen.", where: "AT" },
+      { say: "Bonjour.", where: "FR" },
+      { say: "Buongiorno.", where: "IT" },
+      { say: "Bon dia.", where: "AD" },
+      { say: "Dobro utro.", where: "BG" },
+    ],
+  },
+  castle: {
+    src: "/images/scenes/castle.jpg", mood: "morning", pos: "60% 45%",
+    greet: [
+      { say: "Bună dimineața.", where: "RO" },
+      { say: "Bine ați venit.", where: "RO" },
+    ],
+  },
+} as const satisfies Record<string, { src: string; mood: SceneMood; pos: string; greet?: readonly { say: string; where: string }[] }>;
 export type ScenePhoto = keyof typeof SCENE_PHOTOS;
 
 type Palette = {
@@ -258,7 +275,7 @@ export function HolidayScene({
   const vb = variant === "band" ? "0 0 1600 680" : "0 172 1600 496";
   const align = { left: "xMinYMid", center: "xMidYMid", right: "xMaxYMid" }[focus];
   const g = glints(L.x, mood === "dusk" ? 60 : 90, 7);
-  const lines = GREETINGS[mood === "dusk" ? "night" : "day"];
+  const lines = (shot && "greet" in shot ? shot.greet : undefined) ?? GREETINGS[mood === "dusk" ? "night" : "day"];
   const sky = p.sky;
 
   return (
@@ -487,7 +504,7 @@ export function HolidayScene({
       <div className="scene-bar scene-bar-bottom">
         <span className="scene-subs">
           {lines.map((l, i) => (
-            <span key={l.where} className="scene-sub" style={{ animationDelay: `${i * 4}s` }}>
+            <span key={l.say} className="scene-sub" style={{ animationDelay: `${(i * 20) / lines.length}s`, animationName: lines.length === 2 ? "tv-sub-2" : undefined }}>
               {l.say} <small>{l.where}</small>
             </span>
           ))}
