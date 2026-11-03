@@ -4,6 +4,7 @@ import { classifyTrip, publishedSpan, shoulderWeeks, toOutwardPostcode, type Tri
 import { loadAuthorities, loadHolidays, type HolidayRow } from "@/lib/school";
 import { EMAILS } from "@/lib/company";
 import { councilsForOutcode, matchSupported } from "@/lib/councils";
+import { HolidayScene } from "@/components/HolidayScene";
 
 export const runtime = "nodejs";
 export const preferredRegion = "lhr1";
@@ -95,6 +96,7 @@ export default async function SchoolWindowPage({ searchParams }: { searchParams:
 
   return (
     <main>
+      <HolidayScene photo="castle" label="TRUEVSAD · 06 SCHOOL WINDOW" />
       <h1>School Window</h1>
       <p className="lead">
         Your council&apos;s school holidays, the quieter &ldquo;shoulder&rdquo; weeks either side, and
