@@ -37,7 +37,8 @@ export const CARD_CSS = `
 .planb-child strong,.planb-child .planb-es{display:block}
 .planb-sources{margin-top:12px;font-size:.72rem;color:#5d6470}
 .planb-sources a{color:#0b6e4f}
-@media print{.planb-sheet{border:0;padding:0;margin:0}}
+@media print{.planb-sheet{border:0;padding:0;margin:0;font-size:11px}.planb-grid,.planb-children{grid-template-columns:1fr 1fr;gap:6px}.planb-box,.planb-child{padding:7px 9px}.planb-sos .planb-big{font-size:1.9rem}.planb-sheet .planb-sub{margin-bottom:6px}.planb-children{break-before:auto}}
+@page{margin:10mm}
 `;
 
 interface Props {
