@@ -33,7 +33,7 @@ export const SCENE_PHOTOS = {
     ],
   },
   castle: {
-    src: "/images/scenes/castle.jpg", mood: "morning", pos: "60% 45%",
+    src: "/images/scenes/castle.jpg", mood: "morning", pos: "48% 52%",
     greet: [
       { say: "Bună dimineața.", where: "RO" },
       { say: "Bine ați venit.", where: "RO" },
