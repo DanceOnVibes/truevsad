@@ -115,7 +115,40 @@ export async function lookupPlace(rawQuery: string, allowFetch: boolean): Promis
   return { ok: true, cached: false, place };
 }
 
+/**
+ * Find a place: OpenStreetMap's Nominatim first, then Photon (komoot's search over the same
+ * OpenStreetMap data) only if Nominatim doesn't answer. "Not found" from Nominatim is final.
+ */
 async function geocode(q: string): Promise<{ lat: number; lon: number; displayName: string } | null | "unavailable"> {
+  const main = await geocodeNominatim(q);
+  if (main !== "unavailable") return main;
+  return geocodePhoton(q);
+}
+
+async function geocodePhoton(q: string): Promise<{ lat: number; lon: number; displayName: string } | null | "unavailable"> {
+  const url = `https://photon.komoot.io/api/?${new URLSearchParams({ q, limit: "1", lang: "en" })}`;
+  try {
+    const res = await fetch(url, { headers: { "User-Agent": USER_AGENT }, signal: AbortSignal.timeout(8_000) });
+    if (!res.ok) {
+      console.error("Photon returned", res.status);
+      return "unavailable";
+    }
+    const json = (await res.json()) as {
+      features?: { geometry?: { coordinates?: [number, number] }; properties?: Record<string, string | undefined> }[];
+    };
+    const f = json.features?.[0];
+    const [lon, lat] = f?.geometry?.coordinates ?? [];
+    if (!f || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    const p = f.properties ?? {};
+    const displayName = [p.name, p.city, p.county, p.state, p.country].filter((x, i, a) => x && a.indexOf(x) === i).join(", ") || q;
+    return { lat: lat as number, lon: lon as number, displayName };
+  } catch (err) {
+    console.error("Photon request failed", (err as Error).name);
+    return "unavailable";
+  }
+}
+
+async function geocodeNominatim(q: string): Promise<{ lat: number; lon: number; displayName: string } | null | "unavailable"> {
   const url = `${NOMINATIM}?${new URLSearchParams({ q, format: "jsonv2", limit: "1", "accept-language": "en" })}`;
   try {
     const res = await fetch(url, {
