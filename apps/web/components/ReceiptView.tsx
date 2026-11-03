@@ -1,4 +1,4 @@
-import { ADVISORY_CATEGORIES, airlineBagsFor, CARD_FEES_CHECKED_ON, cardFeeNote, dropOffFor, formatGBP, localTaxNoteFor, NO_FEE_CARDS, SURCHARGE_BAN_URL, transferFor, receiptScope, type CostCategory, type CostLine, type FairMark, type Inclusion } from "@truevsad/true-cost";
+import { ADVISORY_CATEGORIES, airlineBagsFor, CARD_FEES_CHECKED_ON, cardFeeNote, dropOffFor, formatGBP, HELP_CHECKED_ON, ifItGoesWrong, localTaxNoteFor, NO_FEE_CARDS, planBFor, SURCHARGE_BAN_URL, transferFor, receiptScope, type BookingType, type CostCategory, type CostLine, type FairMark, type Inclusion } from "@truevsad/true-cost";
 import { FairMarkBadge, FairMarkDetail } from "./FairMarkBadge";
 import { EMAILS } from "@/lib/company";
 import { INCLUSION_LABELS } from "@/lib/supplier-defaults";
@@ -35,6 +35,8 @@ export interface ReceiptViewProps {
   destination?: string | null;
   /** Currency the advert was priced in ("EUR", "USD"); a card-fee note shows for anything but pounds. */
   advertisedCurrency?: string | null;
+  /** Package or booked separately, as the family confirmed. Picks the "If it goes wrong" lines. */
+  bookingType?: BookingType | null;
 }
 
 function checkedLabel(iso: string): string {
@@ -66,6 +68,9 @@ export function ReceiptView(props: ReceiptViewProps) {
   const cabin = bags?.bags.find((b) => b.kind === "cabin" && b.verified && b.dims);
   const gapRatio = advertisedPence > 0 ? gapPence / advertisedPence : 0;
   const scope = receiptScope({ includes }, { receipt: { lines, subtotals: {} as never } });
+  const help = ifItGoesWrong(props.bookingType);
+  const planB = planBFor(props.destination, today);
+  const planBPlace = planB?.island ?? props.destination?.split(",")[0]?.trim();
 
   return (
     <>
@@ -280,6 +285,46 @@ export function ReceiptView(props: ReceiptViewProps) {
               Not added to your true price: many families park, take the train or use the free option.
               From the airport&apos;s own page, checked {checkedLabel(dropOff.checkedOn)}.{" "}
               <a href={dropOff.sourceUrl} target="_blank" rel="noopener noreferrer">Source</a>
+            </p>
+          </>
+        )}
+        <h4>If it goes wrong</h4>
+        <ul>
+          {help.lines.map((l) => (
+            <li key={l.heading}>
+              <strong>{l.heading}:</strong> {l.text}{" "}
+              <a href={l.sourceUrl} target="_blank" rel="noopener noreferrer">
+                {l.sourceName}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <p className="hint">
+          {help.askSeller ? "Not sure if it's a package? Ask the seller before you book. " : ""}
+          Not added to your true price, and it never changes the FairMark. General information, not legal advice;
+          checked {checkedLabel(HELP_CHECKED_ON)}.
+        </p>
+        {planB && planBPlace && (
+          <>
+            <h4>Plan B for {planBPlace}</h4>
+            {planB.fragile && (
+              <p className="hint">
+                <strong>Good to know:</strong>{" "}
+                {planB.fragile.events.map((e) => (
+                  <span key={e.date}>
+                    on {checkedLabel(e.date)}, {e.text.charAt(0).toLowerCase() + e.text.slice(1)}{" "}
+                    <a href={e.sourceUrl} target="_blank" rel="noopener noreferrer">
+                      {e.sourceName}
+                    </a>
+                    .{" "}
+                  </span>
+                ))}
+                Our advice: carry some cash, because card machines need power.
+              </p>
+            )}
+            <p className="hint">
+              One page with 112, the nearest hospitals and UK help, that works with no signal.{" "}
+              <a href={`/plan-b?q=${encodeURIComponent(props.destination ?? planBPlace)}`}>Make your Plan B card →</a>
             </p>
           </>
         )}

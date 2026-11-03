@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AIRPORT_DROPOFF, INCLUSIONS, type FairMark, type Inclusion, type TrueCostResult } from "@truevsad/true-cost";
+import { AIRPORT_DROPOFF, INCLUSIONS, suggestBookingType, type BookingType, type FairMark, type Inclusion, type TrueCostResult } from "@truevsad/true-cost";
 import { INCLUSION_LABELS, supplierDefaults } from "@/lib/supplier-defaults";
 import { ReceiptView } from "@/components/ReceiptView";
 import { FairSharePanel } from "@/components/FairSharePanel";
@@ -53,6 +53,9 @@ export default function XrayPage() {
   const [departMonth, setDepartMonth] = useState("");
   const [departAirport, setDepartAirport] = useState("");
   const [holdBags, setHoldBags] = useState("");
+  /** Package or booked separately: suggested from the deal, then confirmed by the family. "" = not sure. */
+  const [bookingType, setBookingType] = useState<BookingType | "">("");
+  const [bookingHint, setBookingHint] = useState<string | null>(null);
   /** Fields the server wants the family to double-check. */
   const [check, setCheck] = useState<string[]>([]);
   const [advertCheck, setAdvertCheck] = useState<Record<string, number> | undefined>(undefined);
@@ -167,6 +170,9 @@ export default function XrayPage() {
         setIncludes(d.includes);
         setIncludesTouched(true);
       }
+      const suggested = suggestBookingType({ text: [text, url].join(" "), supplierName: d.supplierName });
+      setBookingType(suggested?.type ?? "");
+      setBookingHint(suggested ? `Pre-selected because ${suggested.reason}. Check your deal.` : null);
       setNotes([...(data.notes ?? []), ...extraNotes]);
       setStep("confirm");
     } catch (e) {
@@ -198,6 +204,7 @@ export default function XrayPage() {
         departDate: departDate || undefined,
         departMonth: !departDate && departMonth ? Number(departMonth) : undefined,
         airline: airline || undefined,
+        bookingType: bookingType || undefined,
         advertCheck,
       };
       const data = await post({
@@ -446,6 +453,33 @@ export default function XrayPage() {
             </p>
           </fieldset>
 
+          <div className="chips" role="group" aria-label="How is it booked?">
+            <span className="hint">How is it booked?</span>
+            {(
+              [
+                ["package", "Package: flights and stay from one company"],
+                ["separate", "Flight and stay booked separately"],
+                ["", "Not sure"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={label}
+                type="button"
+                className={`chip ${bookingType === value ? "sel" : ""}`}
+                aria-pressed={bookingType === value}
+                onClick={() => {
+                  setBookingType(value);
+                  setBookingHint(null);
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="hint">
+            {bookingHint ?? "It doesn't change the price. It tells you who has to help if something goes wrong on the trip."}
+          </p>
+
           <h3>Who&apos;s going</h3>
           <div className="row">
             <div>
@@ -501,6 +535,7 @@ export default function XrayPage() {
             departAirport={departAirport || null}
             destination={destination || null}
             advertisedCurrency={typeof quoted?.offer.currency === "string" ? quoted.offer.currency : null}
+            bookingType={quoted?.offer.bookingType === "package" || quoted?.offer.bookingType === "separate" ? quoted.offer.bookingType : null}
           />
           <ChildCostsNote costs={childCosts} />
 

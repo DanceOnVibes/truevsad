@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
-import { LENSES, looksUnderMapped, scorePlace, type Light } from "@truevsad/true-cost";
+import { LENSES, looksUnderMapped, planBFor, scorePlace, type Light } from "@truevsad/true-cost";
 import { lookupPlace, placeLinks, type PlaceLookup } from "@/lib/osm";
 import { allowHeaders } from "@/lib/rate-limit";
 
@@ -37,6 +37,7 @@ export default async function VisitPage({ searchParams }: { searchParams: Search
   const place = result?.ok ? result.place : null;
   const scores = place ? scorePlace(place.counts) : [];
   const links = place ? placeLinks(place.lat, place.lon) : null;
+  const planB = place ? planBFor(q) ?? planBFor(place.displayName) : undefined;
 
   return (
     <main>
@@ -108,6 +109,32 @@ export default async function VisitPage({ searchParams }: { searchParams: Search
               )}
             </div>
           ))}
+
+          {planB?.fragile && (
+            <div className="card">
+              <strong>Good to know: {planB.fragile.place}.</strong>{" "}
+              {planB.fragile.events.map((e) => (
+                <span key={e.date}>
+                  On{" "}
+                  {new Date(`${e.date}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })}
+                  , {e.text.charAt(0).toLowerCase() + e.text.slice(1)}{" "}
+                  <a href={e.sourceUrl} target="_blank" rel="noopener noreferrer">
+                    {e.sourceName}
+                  </a>
+                  .{" "}
+                </span>
+              ))}
+              <p className="hint">
+                A fact, not a score: it doesn&apos;t change the ratings above. Our advice: carry some cash and make a Plan B card.
+              </p>
+            </div>
+          )}
+          {planB && (
+            <p className="hint">
+              <Link href={`/plan-b?q=${encodeURIComponent(q)}`}>Make a Plan B card for {planB.island ?? q.split(",")[0]} →</Link> 112,
+              the nearest hospitals and UK help on one page that works with no signal.
+            </p>
+          )}
 
           <p className="hint">
             Scores count places mapped on OpenStreetMap around the centre of {place.displayName.split(",")[0]}
