@@ -82,12 +82,15 @@ supabase db push
 - [x] First real, sourced fee rules (Balearics, Catalonia, Greece, ESTA, Ryanair/easyJet/typical hold bags) — checked against official/secondary sources 31 Oct 2026
 - [x] Engine: per-room-per-night fees, night caps (e.g. Catalonia's 7 nights), airline-specific fee beats the generic one
 - [x] Fee rules round 2 (30 rows): Balearics, Catalonia/Barcelona, Mogán, Greece, Croatia, Lisbon, Porto, Algarve, Rome, Florence, Venice, Malta; Ryanair/easyJet/TUI/Wizz/BA bags and seats; ESTA, Canada eTA, Egypt, Cape Verde. Load after merge
-- [ ] Paris, Amsterdam (% of room), Turkey (% of room), Bulgaria; paid cabin bags parked (see data/fee-rules/README.md)
+- [x] Paris (fee rule); Amsterdam and Turkey (% of the room price) shown as sourced "Good to know" notes, never added to the total
+- [ ] Still open: Bulgaria (Nessebar, Varna), Tunisia (needs an official TND rate), Wizz Air paid cabin bag; paid cabin bags parked (see data/fee-rules/README.md)
 - [x] Travel date on the X-ray (AI reads it too); seasonal fee rates by month (summer assumed without a date, and the receipt says so)
 - [x] School Window core: `school_holiday` table, `pnpm import-holidays`, /school-window (holidays, shoulder weeks, trip check)
 - [x] School Window data (loaded): 10 councils for 2026-27 (Lambeth, Southwark, Wandsworth, Lewisham, Croydon, Westminster, Birmingham, Leeds, Bristol, Cardiff) and 8 of them for 2027-28
 - [x] Term dates round 2 (31 Oct 2026): 16 councils, 177 holidays. Added Manchester, Liverpool, Sheffield, Bradford, Kent, Essex (2026-27 and 2027-28), Lewisham and Cardiff 2027-28, and summers where the council published the September return. GLM's pass (council's exact words quoted) agreed with Grok on all 44 shared rows; Liverpool Easter 2027 corrected (page says term "Ends" on Good Friday)
-- [ ] More councils (Hampshire, Surrey, Greenwich: Grok only, awaiting a second check; Hertfordshire, Lancashire, Bromley, Barnet, Newham)
+- [x] Term dates (2 Nov 2026): 41 councils, 534 holidays, 2026-27 to 2028-29 where published; most rows checked by two sources (GLM, our own read, or Adalbert's phone screenshots), the rest marked "one source so far"
+- [x] School Window and FairFam never guess past a council's published dates: "Dates not published yet" instead of "term time"
+- [ ] Term dates still open: summer 2028 for councils that haven't published 2028-29 yet; Devon 2026-27; January re-check
 - [x] Visit Before You Book core: /visit with OpenStreetMap counts (cached 30 days in London), families / couples / groups traffic lights
 - [x] Fair Share: split a deal between families on the receipt (never saved)
 - [x] Watch groundwork: shared receipts re-price with today's fee rules and flag changes
@@ -104,11 +107,14 @@ supabase db push
 - [x] Fair seats: seats count only when the airline makes a family pay to sit together (Ryanair, easyJet and BA seat children with an adult free, per their own pages; Ryanair changed its policy on 25 Jun 2026 after the CMA opened a case); nothing for adults-only or teen-only bookings; other airlines per adult until their policies are checked
 - [x] Infant (under 2) fees from airlines' own fee pages: Ryanair, easyJet, Aer Lingus £50 return; Wizz Air €70; Vueling €50 (+ taxes); Jet2 free (no line); TUI and BA not published
 - [x] Tax fixes from official pages (31 Oct 2026): Venice by area (city and islands EUR 4.50, Lido 3.60, Mestre 3.10; Feb–Dec; under-10s exempt; 5 nights; January not yet), Paris (EUR 8.45 per adult per night, 4-star, all surcharges), Egypt visa USD 30; Mogán switched off (reported annulled by the Canary Islands high court, July 2026; no official page either way). Tunisia waits for an official TND exchange rate
+- [x] Friendly "page not found" and error pages
+- [ ] Airline family seating still per adult for Vueling and Aer Lingus until their policies are checked
 - [ ] Watch alerts (needs accounts + email), search across deals (needs a click-out inventory, never scraping)
 - [x] All migrations applied to production, up to 1900 (1100 and 1600 run by hand) (nightly purge job scheduled at 03:17 UTC)
 - [x] Deployed on Vercel (London) and tested end to end: X-ray → save → share
 - [x] Privacy page and footer: company number, ICO registration, registered office, contact emails, security.txt
 - [ ] Duffel integration for live flight prices
+- [ ] Plan B (last feature): offline emergency card, fragile-place notes, "If it goes wrong" receipt line
 
 
 ---
