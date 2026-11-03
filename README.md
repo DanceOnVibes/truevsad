@@ -109,7 +109,8 @@ supabase db push
 - [x] Infant (under 2) fees from airlines' own fee pages: Ryanair, easyJet, Aer Lingus £50 return; Wizz Air €70; Vueling €50 (+ taxes); Jet2 free (no line); TUI and BA not published
 - [x] Tax fixes from official pages (31 Oct 2026): Venice by area (city and islands EUR 4.50, Lido 3.60, Mestre 3.10; Feb–Dec; under-10s exempt; 5 nights; January not yet), Paris (EUR 8.45 per adult per night, 4-star, all surcharges), Egypt visa USD 30; Mogán switched off (reported annulled by the Canary Islands high court, July 2026; no official page either way). Tunisia waits for an official TND exchange rate
 - [x] Friendly "page not found" and error pages
-- [ ] Airline family seating still per adult for Vueling and Aer Lingus until their policies are checked
+- [x] Aer Lingus family seating checked (3 Nov 2026, its own Seats and Cabin page): it only does "our best" to seat families together without paid seats, depending on seats left, so it stays per adult
+- [ ] Vueling family seating still per adult until its own page is checked
 - [ ] Watch alerts (needs accounts + email), search across deals (needs a click-out inventory, never scraping)
 - [x] All migrations applied to production, up to 1900 (1100 and 1600 run by hand) (nightly purge job scheduled at 03:17 UTC)
 - [x] Deployed on Vercel (London) and tested end to end: X-ray → save → share
