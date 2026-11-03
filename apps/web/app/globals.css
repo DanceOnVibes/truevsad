@@ -4,10 +4,10 @@
  * verdict signals ONLY (stop, safe to go, check), and always come with a word and a symbol.
  */
 :root {
-  --bg: #f4f1ea;
+  --bg: #e6f4fe;
   --fg: #111311;
-  --muted: #5f635d;
-  --line: #dcd6cb;
+  --muted: #4c5a64;
+  --line: #c9ddeb;
   --card: #ffffff;
   --ink: #111311;
   --on-ink: #f4f1ea;
@@ -24,11 +24,11 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #111311;
+    --bg: #0a1526;
     --fg: #f4f1ea;
-    --muted: #a9b0aa;
-    --line: #2b2f2b;
-    --card: #1b1e1b;
+    --muted: #a8b7c6;
+    --line: #23344c;
+    --card: #12203a;
     --ink: #f4f1ea;
     --on-ink: #111311;
     --accent: #f4f1ea;
@@ -44,7 +44,8 @@
 
 body {
   margin: 0;
-  background: var(--bg);
+  /* A clear holiday sky: deeper blue at the top, paler towards the page below. */
+  background: linear-gradient(180deg, #9fd6ff 0, #c4e7ff 420px, #e2f3ff 1000px, var(--bg) 1600px) no-repeat, var(--bg);
   color: var(--fg);
   font-family: var(--font-display);
   line-height: 1.5;
@@ -513,3 +514,9 @@ table.board th { font-family: var(--font-mono); font-size: 0.72rem; letter-spaci
 .scene-photo .scene-cam { transform-origin: 50% 62%; }
 @media (max-width: 560px) { .scene-credit-long { display: none; } }
 .scene-photo.scene-banner .scene-frame { height: clamp(200px, 32vw, 420px); }
+
+/* Sky background (Nov 2026): the night version of the sky, and dark objects that match it. */
+@media (prefers-color-scheme: dark) {
+  body { background: linear-gradient(180deg, #13284a 0, #0d1b33 520px, var(--bg) 1200px) no-repeat, var(--bg); }
+  .scanner, .card.form-ink { background: #12203a; }
+}
