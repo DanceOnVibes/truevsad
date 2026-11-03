@@ -448,6 +448,11 @@ export function FairFamClient({ councils }: { councils: string[] }) {
                 Opens Deal X-ray with your party, date and nights filled in. Paste the deal or a
                 screenshot there.
               </p>
+              <p className="hint">
+                Booked?{" "}
+                <a href={`/plan-b${ages.length ? `?children=${Math.min(6, ages.length)}` : ""}`}>Make your Plan B card →</a>{" "}
+                One page with 112, the nearest hospitals and a card for each child, that works with no signal.
+              </p>
             </>
           )}
         </div>

@@ -208,3 +208,10 @@ button + button.secondary { margin-left: 8px; }
   /* Board cards: once the price drops under the title, line it up on the left with the title. */
   .deal-card .price { text-align: left; }
 }
+
+/* Plan B: the card prints on its own (the page's form, links and footer stay on screen) */
+@media print {
+  .no-print, .site-footer { display: none !important; }
+  main { padding: 0; max-width: none; }
+  body { background: #fff; }
+}

@@ -349,6 +349,7 @@ function parseOffer(raw: unknown): Offer | string {
       ? (raw.departMonth as number)
       : undefined,
     airline: tidy(raw.airline, 60),
+    bookingType: raw.bookingType === "package" || raw.bookingType === "separate" ? raw.bookingType : undefined,
     advertCheck: parseAdvertCheck(raw.advertCheck),
   };
 }

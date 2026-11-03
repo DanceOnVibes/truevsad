@@ -116,7 +116,8 @@ supabase db push
 - [x] Deployed on Vercel (London) and tested end to end: X-ray → save → share
 - [x] Privacy page and footer: company number, ICO registration, registered office, contact emails, security.txt
 - [ ] Duffel integration for live flight prices
-- [ ] Plan B (last feature): offline emergency card, fragile-place notes, "If it goes wrong" receipt line
+- [x] Plan B (Spain and the Canary Islands first): /plan-b offline family card (built in the browser, nothing sent or stored; print or save an offline copy; child cards in English and Spanish), nearest hospitals with an emergency department from OpenStreetMap (cached 30 days), consulate per island from GOV.UK; "If it goes wrong" on every receipt (PTR 2018 reg 18, CAA delays) with a one-tap package question in Deal X-ray; Good-to-know notes for islands whose whole grid failed, only when an official body confirms it, dropping off after 3 years
+- [ ] Plan B still to confirm: the Spanish card phrases with a native speaker; official sources for Lanzarote (Oct 2026), La Palma (Jun 2025) and La Gomera (Jan 2026) cuts; ES-Alert on roaming UK phones; more countries
 
 
 ---

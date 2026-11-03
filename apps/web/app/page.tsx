@@ -39,6 +39,14 @@ export default function Home() {
         <Link href="/visit">Check a place →</Link>
       </div>
       <div className="card">
+        <h2 style={{ marginTop: 0 }}>Plan B</h2>
+        <p>
+          One page for your trip that works when the power and signal don&apos;t: 112, the nearest hospitals, UK help and your
+          family&apos;s meeting point. Nothing you type leaves your phone.
+        </p>
+        <Link href="/plan-b">Make a Plan B card →</Link>
+      </div>
+      <div className="card">
         <h2 style={{ marginTop: 0 }}>FairMark</h2>
         <p>Which holiday prices are honest? See the fairest sellers this month, and deals whose adverts left out {FAIRMARK_SCALE.fair}% or less.</p>
         <Link href="/fairmark">See FairMark →</Link>

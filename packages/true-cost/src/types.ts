@@ -81,6 +81,11 @@ export interface Offer {
   /** Travel month (1–12) when the family knows the month but not the date. */
   departMonth?: number;
   /**
+   * Package (flights and stay from one organiser) or booked separately, as the family confirmed.
+   * Never changes the price: it only picks the receipt's "If it goes wrong" lines.
+   */
+  bookingType?: "package" | "separate";
+  /**
    * What the advert itself says about its price, used only to check its own numbers add up and
    * that it was priced for this family. Never changes the price.
    */

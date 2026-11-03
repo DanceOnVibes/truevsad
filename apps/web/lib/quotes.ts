@@ -152,6 +152,7 @@ export async function saveQuote(input: {
   if (input.offer.freeChildClaim) extra.free_child_claim = true;
   if (input.offer.airline) extra.airline = input.offer.airline;
   if (input.offer.departMonth) extra.depart_month = input.offer.departMonth;
+  if (input.offer.bookingType) extra.booking_type = input.offer.bookingType;
   if (input.conversion) {
     extra.fx_from_currency = input.conversion.from;
     extra.fx_from_amount_minor = input.conversion.amountMinor;
@@ -244,6 +245,8 @@ export interface PublicReceipt {
   notes: string[];
   /** The airline flying the deal, when the family told us. */
   airline: string | null;
+  /** Package or booked separately, as the family confirmed. Picks the "If it goes wrong" lines. */
+  bookingType: "package" | "separate" | null;
 }
 
 interface CostLineRow {
@@ -268,7 +271,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
   const { data: q } = await db
     .from("true_cost_quote")
     .select(
-      "id, advertised_pence, true_cost_pence, gap_pence, confidence, used_demo_rules, created_at, fairmark_level, notes, offer:offer_id (nights, destination, includes, excludes_taxes_and_fees, depart_on, depart_month, airline, headline_pence, headline_basis, currency, supplier_name, free_child_claim, fx_from_currency, fx_from_amount_minor, fx_rate, fx_date), party:party_id (adults, child_ages, hold_bags)",
+      "id, advertised_pence, true_cost_pence, gap_pence, confidence, used_demo_rules, created_at, fairmark_level, notes, offer:offer_id (nights, destination, includes, excludes_taxes_and_fees, depart_on, depart_month, airline, headline_pence, headline_basis, currency, supplier_name, free_child_claim, fx_from_currency, fx_from_amount_minor, fx_rate, fx_date, booking_type), party:party_id (adults, child_ages, hold_bags)",
     )
     .eq("share_slug", slug)
     .eq("is_public", true)
@@ -299,6 +302,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
         fx_date: string | null;
         depart_month: number | null;
         airline: string | null;
+        booking_type: string | null;
       }
     | null;
   const party = (Array.isArray(q.party) ? q.party[0] : q.party) as
@@ -404,6 +408,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
     lines: receiptLines,
     notes,
     airline: offer?.airline ?? null,
+    bookingType: offer?.booking_type === "package" || offer?.booking_type === "separate" ? (offer.booking_type as "package" | "separate") : null,
   };
 }
 
