@@ -34,6 +34,38 @@
       "checkedOn": "2026-11-04"
     },
     {
+      "slug": "china",
+      "numbers": [
+        {
+          "service": "Police",
+          "number": "110"
+        },
+        {
+          "service": "Fire",
+          "number": "119"
+        },
+        {
+          "service": "Ambulance",
+          "number": "120"
+        },
+        {
+          "service": "Traffic police",
+          "number": "122"
+        }
+      ],
+      "sources": [
+        {
+          "name": "Beijing Municipal Government",
+          "url": "https://english.beijing.gov.cn/travellinginbeijing/quickguideontravelservices/traveltips/202108/t20210811_2466839.html"
+        },
+        {
+          "name": "GOV.UK",
+          "url": "https://www.gov.uk/foreign-travel-advice/china/getting-help"
+        }
+      ],
+      "checkedOn": "2026-11-04"
+    },
+    {
       "slug": "france",
       "numbers": [
         {
@@ -90,6 +122,26 @@
       "checkedOn": "2026-11-04"
     },
     {
+      "slug": "hong-kong",
+      "numbers": [
+        {
+          "service": "Ambulance, fire, police",
+          "number": "999"
+        }
+      ],
+      "sources": [
+        {
+          "name": "Hong Kong SAR Government (Hong Kong Talent Engage)",
+          "url": "https://www.hkengage.gov.hk/en/essentials/basics/emergency-ambulance-services"
+        },
+        {
+          "name": "GOV.UK",
+          "url": "https://www.gov.uk/foreign-travel-advice/hong-kong/getting-help"
+        }
+      ],
+      "checkedOn": "2026-11-04"
+    },
+    {
       "slug": "italy",
       "numbers": [
         {
@@ -113,6 +165,50 @@
         {
           "name": "GOV.UK",
           "url": "https://www.gov.uk/foreign-travel-advice/italy/getting-help"
+        }
+      ],
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "slug": "japan",
+      "numbers": [
+        {
+          "service": "Police",
+          "number": "110"
+        },
+        {
+          "service": "Fire and ambulance",
+          "number": "119"
+        }
+      ],
+      "sources": [
+        {
+          "name": "Japan National Tourism Organization",
+          "url": "https://www.japan.travel/en/plan/hotline/"
+        },
+        {
+          "name": "GOV.UK",
+          "url": "https://www.gov.uk/foreign-travel-advice/japan/getting-help"
+        }
+      ],
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "slug": "mexico",
+      "numbers": [
+        {
+          "service": "Ambulance, fire, police",
+          "number": "911"
+        }
+      ],
+      "sources": [
+        {
+          "name": "Gobierno de la Ciudad de México",
+          "url": "https://www.mexicocity.cdmx.gob.mx/e/emergency/?lang=en"
+        },
+        {
+          "name": "GOV.UK",
+          "url": "https://www.gov.uk/foreign-travel-advice/mexico/getting-help"
         }
       ],
       "checkedOn": "2026-11-04"
@@ -190,6 +286,34 @@
       "checkedOn": "2026-11-04"
     },
     {
+      "slug": "singapore",
+      "numbers": [
+        {
+          "service": "Ambulance and fire",
+          "number": "995"
+        },
+        {
+          "service": "Police",
+          "number": "999"
+        }
+      ],
+      "sources": [
+        {
+          "name": "Singapore Civil Defence Force",
+          "url": "https://scdf.gov.sg/eventslisting/newsarticledetail/SCDF's-995-number-to-be-displayed-on-phones'-caller-ID"
+        },
+        {
+          "name": "GOV.UK",
+          "url": "https://www.gov.uk/foreign-travel-advice/singapore/getting-help"
+        },
+        {
+          "name": "Singapore Police Force",
+          "url": "https://www.police.gov.sg/Contact-Us"
+        }
+      ],
+      "checkedOn": "2026-11-04"
+    },
+    {
       "slug": "switzerland",
       "numbers": [
         {
@@ -217,6 +341,54 @@
         {
           "name": "GOV.UK",
           "url": "https://www.gov.uk/foreign-travel-advice/switzerland/getting-help"
+        }
+      ],
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "slug": "united-arab-emirates",
+      "numbers": [
+        {
+          "service": "Police",
+          "number": "999"
+        },
+        {
+          "service": "Ambulance",
+          "number": "998"
+        },
+        {
+          "service": "Fire",
+          "number": "997"
+        }
+      ],
+      "sources": [
+        {
+          "name": "u.ae (UAE government portal)",
+          "url": "https://u.ae/en/information-and-services/justice-safety-and-the-law/handling-emergencies"
+        },
+        {
+          "name": "GOV.UK",
+          "url": "https://www.gov.uk/foreign-travel-advice/united-arab-emirates/getting-help"
+        }
+      ],
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "slug": "usa",
+      "numbers": [
+        {
+          "service": "Ambulance, fire, police",
+          "number": "911"
+        }
+      ],
+      "sources": [
+        {
+          "name": "Colorado Public Utilities Commission (911 Program)",
+          "url": "https://sites.google.com/state.co.us/all-about-9-1-1/what-is-9-1-1"
+        },
+        {
+          "name": "GOV.UK",
+          "url": "https://www.gov.uk/foreign-travel-advice/usa/getting-help"
         }
       ],
       "checkedOn": "2026-11-04"
