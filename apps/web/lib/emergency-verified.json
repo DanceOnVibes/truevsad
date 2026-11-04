@@ -51,6 +51,10 @@
         {
           "service": "Traffic police",
           "number": "122"
+        },
+        {
+          "service": "Maritime search and rescue",
+          "number": "12395"
         }
       ],
       "sources": [
@@ -61,6 +65,10 @@
         {
           "name": "GOV.UK",
           "url": "https://www.gov.uk/foreign-travel-advice/china/getting-help"
+        },
+        {
+          "name": "Ministry of Transport of the PRC (National Maritime Search and Rescue Emergency Plan)",
+          "url": "https://xxgk.mot.gov.cn/jigou/aqyzljlglj/202006/P020200623751659515041.pdf"
         }
       ],
       "checkedOn": "2026-11-04"
