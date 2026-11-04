@@ -117,29 +117,41 @@ function withChildren(all: Section[], i: number): Section[] {
   return kids;
 }
 
-const SERVICE = /^([A-Za-z][A-Za-z ()'’,/&-]{1,48}?)\s*[:–—-]\s*(\+?\d[\d ]{0,12}\d)\b/;
+const SERVICE = /^([A-Za-z][A-Za-z ()'’,/&-]{1,48}?)\s*[:–—-]\s*(\d{2,6})((?:\s*(?:,|or|\/)\s*\d{2,6})*)/;
+
+/** Bump when the reader changes, so the daily job re-reads every country with the new version. */
+export const FCDO_PARSER_VERSION = 2;
 
 /**
- * "Ambulance: 1669" lines → numbers. Also "Ambulance, fire and police: 112".
+ * "Ambulance: 1669" lines → numbers. Also "Ambulance, fire and police: 112", and "112 or 999" as two.
  * "Telephone: 191 (ambulance, fire, police)" takes its name from the brackets: "Ambulance, fire, police".
  * A number the FCDO repeats further down (e.g. "Police: 191") is shown once, under its first name.
+ *
+ * All or nothing: if any line holds a number we can't take apart safely (a full international
+ * number, or a heading with the numbers in bullet points below it), we return nothing, and the
+ * card shows the FCDO's own text word for word instead of a list that could be incomplete.
  */
 export function numbersIn(text: string): FcdoNumber[] {
   const out: FcdoNumber[] = [];
   for (const raw of text.split("\n")) {
     const line = raw.replace(/^•\s*/, "").trim();
+    if (/\+\d/.test(line) || /^[A-Za-z][A-Za-z ()'’,/&-]{1,48}:\s*$/.test(line)) return [];
     const m = SERVICE.exec(line);
     if (!m) continue;
-    const number = m[2]!.replace(/\s+/g, " ").trim();
-    if (number.replace(/\D/g, "").length < 2) continue;
+    const rest = line.slice(m[0].length).trim();
+    if (/^\(?\d/.test(rest)) return [];
     let service = m[1]!.trim();
-    const brackets = /^\(([^)]{3,60})\)/.exec(line.slice(m[0].length).trim());
-    if (/^(telephone|tel|phone|call)$/i.test(service) && brackets) {
+    const brackets = /^\(([^)]{3,60})\)/.exec(rest);
+    if (/^(telephone|tel|phone|call)$/i.test(service)) {
+      if (!brackets) return [];
       const named = brackets[1]!.trim();
       service = named.charAt(0).toUpperCase() + named.slice(1);
     }
-    if (out.some((n) => n.number.replace(/\D/g, "") === number.replace(/\D/g, ""))) continue;
-    out.push({ service, number });
+    const all = [m[2]!, ...(m[3] ?? "").split(/,|or|\//).map((x) => x.trim())].filter((x) => /^\d{2,6}$/.test(x));
+    for (const number of all) {
+      if (out.some((n) => n.number === number)) continue;
+      out.push({ service, number });
+    }
   }
   return out;
 }
