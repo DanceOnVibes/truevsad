@@ -166,3 +166,25 @@ describe("FCDO: the real Thailand page", () => {
     expect(a.emergency?.text).toMatch(/Tourist Police have developed/);
   });
 });
+
+describe("FCDO: numbers it must not half-read", () => {
+  it("reads '112 or 999' as two numbers", () => {
+    expect(numbersIn("Telephone: 112 or 999 (ambulance, fire, police)")).toEqual([
+      { service: "Ambulance, fire, police", number: "112" },
+      { service: "Ambulance, fire, police", number: "999" },
+    ]);
+  });
+  it("gives up (so the card shows the FCDO's text) when a full international number is in the section", () => {
+    // GOV.UK's Ireland page, Nov 2026.
+    const ireland = "Telephone: 112 or 999 (ambulance, fire, police)\nYou can get support from Tourist SOS if you are a victim of crime.\nTelephone: +353 (0)1666 93 54";
+    expect(numbersIn(ireland)).toEqual([]);
+  });
+  it("gives up when the numbers are bullet points under a heading", () => {
+    // GOV.UK's Turkmenistan and Ghana pages, Nov 2026.
+    expect(numbersIn("Ambulance:\n• 03 from landline\n• 003 from mobile")).toEqual([]);
+    expect(numbersIn("Telephone:\n• 999 or 112 (ambulance, fire, police, coast guard and mountain rescue)\n• 192 (police)")).toEqual([]);
+  });
+  it("gives up on a 'Telephone' line with no services named", () => {
+    expect(numbersIn("Telephone: 112")).toEqual([]);
+  });
+});

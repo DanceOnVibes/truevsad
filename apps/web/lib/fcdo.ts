@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import {
   FCDO_API,
+  FCDO_PARSER_VERSION,
   countryFromDisplayName,
   matchFcdoCountry,
   parseTravelAdvice,
@@ -61,7 +62,7 @@ export async function refreshFcdo({ maxFetch = 120, deadlineMs = 240_000 } = {})
   const index = parseTravelAdviceIndex(await getJson("/foreign-travel-advice"));
   if (!index.length) return { error: "The FCDO index was empty or unreachable" };
 
-  const { data: rows, error } = await db.from("fcdo_advice").select("slug, updated_at, fetched_at, content_hash");
+  const { data: rows, error } = await db.from("fcdo_advice").select("slug, updated_at, fetched_at, content_hash, parser_version");
   if (error) return { error: `Reading our copy failed: ${error.message}` };
   const ours = new Map((rows ?? []).map((r) => [r.slug as string, r]));
 
@@ -69,7 +70,7 @@ export async function refreshFcdo({ maxFetch = 120, deadlineMs = 240_000 } = {})
   const todo = index
     .map((c) => {
       const r = ours.get(c.slug);
-      const changed = !r || (c.updatedAt ? Date.parse(c.updatedAt) !== Date.parse((r.updated_at as string) ?? "") : true);
+      const changed = !r || r.parser_version !== FCDO_PARSER_VERSION || (c.updatedAt ? Date.parse(c.updatedAt) !== Date.parse((r.updated_at as string) ?? "") : true);
       return { c, r, changed, age: r ? Date.parse(r.fetched_at as string) : 0 };
     })
     .filter((t) => t.changed || Date.now() - t.age > 7 * 86_400_000)
@@ -100,6 +101,7 @@ export async function refreshFcdo({ maxFetch = 120, deadlineMs = 240_000 } = {})
         emergency: advice.emergency,
         hazards: advice.hazards,
         content_hash: hash,
+        parser_version: FCDO_PARSER_VERSION,
         ...(isChange ? { changed_at: now, review_needed: true } : {}),
       });
       if (upErr) {

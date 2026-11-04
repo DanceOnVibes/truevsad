@@ -1,4 +1,225 @@
 {
   "about": "Emergency numbers double-checked by us against two sources (the country's own government and GOV.UK). Built from data/emergency-numbers/emergency-numbers.csv by scripts/import-emergency-numbers.py. Spain is covered by the deep Plan B layer.",
-  "countries": []
+  "countries": [
+    {
+      "slug": "austria",
+      "numbers": [
+        {
+          "service": "European emergency number",
+          "number": "112"
+        },
+        {
+          "service": "Fire",
+          "number": "122"
+        },
+        {
+          "service": "Police",
+          "number": "133"
+        },
+        {
+          "service": "Ambulance",
+          "number": "144"
+        }
+      ],
+      "sources": [
+        {
+          "name": "oesterreich.gv.at (Austrian government)",
+          "url": "https://www.oesterreich.gv.at/en/themen/notfaelle_unfaelle_und_kriminalitaet/notrufnummern.html"
+        },
+        {
+          "name": "GOV.UK",
+          "url": "https://www.gov.uk/foreign-travel-advice/austria/getting-help"
+        }
+      ],
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "slug": "france",
+      "numbers": [
+        {
+          "service": "Ambulance (SAMU)",
+          "number": "15"
+        },
+        {
+          "service": "Police",
+          "number": "17"
+        },
+        {
+          "service": "Fire",
+          "number": "18"
+        },
+        {
+          "service": "European emergency number",
+          "number": "112"
+        }
+      ],
+      "sources": [
+        {
+          "name": "French government (Direction générale des Entreprises)",
+          "url": "https://www.entreprises.gouv.fr/secteurs-dactivite/numerique/communications-durgence"
+        },
+        {
+          "name": "GOV.UK",
+          "url": "https://www.gov.uk/foreign-travel-advice/france/getting-help"
+        }
+      ],
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "slug": "germany",
+      "numbers": [
+        {
+          "service": "Fire and ambulance",
+          "number": "112"
+        },
+        {
+          "service": "Police",
+          "number": "110"
+        }
+      ],
+      "sources": [
+        {
+          "name": "Regierung von Niederbayern",
+          "url": "https://www.kriseninformation.niederbayern.bayern.de/notrufnummern.html"
+        },
+        {
+          "name": "GOV.UK",
+          "url": "https://www.gov.uk/foreign-travel-advice/germany/getting-help"
+        }
+      ],
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "slug": "italy",
+      "numbers": [
+        {
+          "service": "European emergency number",
+          "number": "112"
+        },
+        {
+          "service": "Fire",
+          "number": "115"
+        },
+        {
+          "service": "Ambulance",
+          "number": "118"
+        }
+      ],
+      "sources": [
+        {
+          "name": "Italia.it (Ministero del Turismo)",
+          "url": "https://www.italia.it/it/italia/informazioni/numeri-emergenza-e-assistenza"
+        },
+        {
+          "name": "GOV.UK",
+          "url": "https://www.gov.uk/foreign-travel-advice/italy/getting-help"
+        }
+      ],
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "slug": "poland",
+      "numbers": [
+        {
+          "service": "Emergency number",
+          "number": "112"
+        },
+        {
+          "service": "Police",
+          "number": "997"
+        },
+        {
+          "service": "Fire",
+          "number": "998"
+        },
+        {
+          "service": "Ambulance",
+          "number": "999"
+        }
+      ],
+      "sources": [
+        {
+          "name": "gov.pl (PSSE Szczecinek)",
+          "url": "https://www.gov.pl/web/psse-szczecinek/telefony-ratunkowe"
+        },
+        {
+          "name": "GOV.UK",
+          "url": "https://www.gov.uk/foreign-travel-advice/poland/getting-help"
+        }
+      ],
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "slug": "portugal",
+      "numbers": [
+        {
+          "service": "Ambulance, fire, police",
+          "number": "112"
+        }
+      ],
+      "sources": [
+        {
+          "name": "gov.pt (Ministério da Administração Interna)",
+          "url": "https://www.gov.pt/pt/linhas-uteis"
+        },
+        {
+          "name": "GOV.UK",
+          "url": "https://www.gov.uk/foreign-travel-advice/portugal/getting-help"
+        }
+      ],
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "slug": "romania",
+      "numbers": [
+        {
+          "service": "Ambulance, fire, police",
+          "number": "112"
+        }
+      ],
+      "sources": [
+        {
+          "name": "Serviciul de Telecomunicații Speciale (STS)",
+          "url": "https://www.sts.ro/ro/apeluri-la-112"
+        },
+        {
+          "name": "GOV.UK",
+          "url": "https://www.gov.uk/foreign-travel-advice/romania/getting-help"
+        }
+      ],
+      "checkedOn": "2026-11-04"
+    },
+    {
+      "slug": "switzerland",
+      "numbers": [
+        {
+          "service": "European emergency number",
+          "number": "112"
+        },
+        {
+          "service": "Police",
+          "number": "117"
+        },
+        {
+          "service": "Fire",
+          "number": "118"
+        },
+        {
+          "service": "Ambulance",
+          "number": "144"
+        }
+      ],
+      "sources": [
+        {
+          "name": "ch.ch (Swiss Confederation)",
+          "url": "https://www.ch.ch/en/safety-and-justice/emergencies-and-danger"
+        },
+        {
+          "name": "GOV.UK",
+          "url": "https://www.gov.uk/foreign-travel-advice/switzerland/getting-help"
+        }
+      ],
+      "checkedOn": "2026-11-04"
+    }
+  ]
 }

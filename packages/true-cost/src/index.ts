@@ -105,6 +105,7 @@ export {
   FCDO_API,
   FCDO_LICENCE,
   FCDO_NOT_CHECKED,
+  FCDO_PARSER_VERSION,
   shortHazard,
   FCDO_WEB,
   compareNumbers,

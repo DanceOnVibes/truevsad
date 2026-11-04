@@ -53,6 +53,7 @@ export const CARD_CSS = `
 .planb-numbers li{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dashed #d8d8d0;padding:3px 0}
 .planb-numbers strong{font-size:1.5rem;color:#b42318;font-variant-numeric:tabular-nums}
 .planb-alert{border:2px solid #b42318;background:#fff5f4}
+.planb-fcdo-text{white-space:pre-line;font-weight:600}
 .planb-hazard h3{color:#16181d}
 .planb-ok{font-size:.8rem;font-weight:600;color:#0b6e4f}
 .planb-children{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}
@@ -245,6 +246,12 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalSource, register
                     ? "As the FCDO lists them. Our own check found a difference, so confirm the numbers with your hotel when you arrive."
                     : "As the FCDO lists them on GOV.UK. We haven't double-checked these ourselves yet."}
               </p>
+            </div>
+          ) : gov?.emergency?.text ? (
+            <div className="planb-box planb-sos">
+              <h3>Emergency in {gov.name}</h3>
+              <p className="planb-fcdo-text">{gov.emergency.text.length > 420 ? `${gov.emergency.text.slice(0, gov.emergency.text.lastIndexOf(" ", 420))}…` : gov.emergency.text}</p>
+              <p className="planb-small">Word for word from GOV.UK&apos;s travel advice for {gov.name}. We haven&apos;t double-checked this ourselves yet.</p>
             </div>
           ) : (
             <div className="planb-box planb-sos">
