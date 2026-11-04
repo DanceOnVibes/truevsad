@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { islandAt, planBFor } from "@truevsad/true-cost";
 import { hospitalsFor, type HospitalLookup } from "@/lib/osm";
 import { HOSPITALS_ES, nearestOfficialHospitals } from "@/lib/hospitals-es";
+import { fcdoForPlace, type FcdoCard } from "@/lib/fcdo";
 import { allowHeaders } from "@/lib/rate-limit";
 import { PlanBCard } from "./PlanBCard";
 import { HolidayScene } from "@/components/HolidayScene";
@@ -16,7 +17,7 @@ export const maxDuration = 45;
 export const metadata: Metadata = {
   title: "Plan B — TrueVsAd",
   description:
-    "One page for your trip that works with no signal: 112, the nearest hospitals, UK help and your family's meeting point. Nothing you type leaves your phone.",
+    "One page for your trip that works with no signal: the emergency numbers, what to do in a wildfire, flood, storm or earthquake, the nearest hospitals, UK help and your family's meeting point. Nothing you type leaves your phone.",
 };
 
 type Search = Promise<{ q?: string; children?: string }>;
@@ -77,6 +78,15 @@ export default async function PlanBPage({ searchParams }: { searchParams: Search
       }))
     : mapHospitals;
   const hospitalSource = official.length ? ("register" as const) : ("map" as const);
+  // Outside our deep coverage (Spain for now): the FCDO's own advice for the country.
+  let fcdo: FcdoCard | null = null;
+  if (found && !plan) {
+    try {
+      fcdo = await fcdoForPlace(found.displayName);
+    } catch (err) {
+      console.error("FCDO lookup failed", (err as Error).message);
+    }
+  }
   const distanceFrom = usedIsland ? `the centre of ${usedIsland}` : q.split(",")[0]?.trim() || placeName;
 
   return (
@@ -111,7 +121,17 @@ export default async function PlanBPage({ searchParams }: { searchParams: Search
         {q && lookup && !lookup.ok && !limited && lookup.reason === "not_found" && (
           <p className="error">We couldn&apos;t find that place on the map. Try adding the island or country, e.g. &ldquo;Corralejo, Fuerteventura&rdquo;.</p>
         )}
-        {q && !plan && (
+        {q && !plan && fcdo && (
+          <p className="warn">
+            Our deepest checks cover Spain for now. For {fcdo.name}, the emergency numbers, travel warnings and natural
+            hazards below come straight from{" "}
+            <a href={fcdo.url} target="_blank" rel="noopener noreferrer">
+              GOV.UK&apos;s travel advice
+            </a>
+            , refreshed every day, and the hospitals come from the map.
+          </p>
+        )}
+        {q && !plan && !fcdo && (
           <p className="warn">
             Plan B covers Spain, including the Canary and Balearic Islands, for now: we only show facts we&apos;ve checked on
             official pages, one country at a time. You can still make a card with your own details below, and{" "}
@@ -133,6 +153,7 @@ export default async function PlanBPage({ searchParams }: { searchParams: Search
           hospitalsCheckedOn={official.length ? null : lookup?.ok && lookup.hospitals ? lookup.fetchedAt.slice(0, 10) : null}
           distanceFrom={distanceFrom}
           initialChildren={childCount}
+          fcdo={fcdo}
         />
       )}
 
