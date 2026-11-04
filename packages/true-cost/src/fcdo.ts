@@ -119,16 +119,27 @@ function withChildren(all: Section[], i: number): Section[] {
 
 const SERVICE = /^([A-Za-z][A-Za-z ()'’,/&-]{1,48}?)\s*[:–—-]\s*(\+?\d[\d ]{0,12}\d)\b/;
 
-/** "Ambulance: 1669" lines → numbers. Also "Ambulance, fire and police: 112". */
+/**
+ * "Ambulance: 1669" lines → numbers. Also "Ambulance, fire and police: 112".
+ * "Telephone: 191 (ambulance, fire, police)" takes its name from the brackets: "Ambulance, fire, police".
+ * A number the FCDO repeats further down (e.g. "Police: 191") is shown once, under its first name.
+ */
 export function numbersIn(text: string): FcdoNumber[] {
   const out: FcdoNumber[] = [];
   for (const raw of text.split("\n")) {
     const line = raw.replace(/^•\s*/, "").trim();
     const m = SERVICE.exec(line);
-    if (m) {
-      const number = m[2]!.replace(/\s+/g, " ").trim();
-      if (number.replace(/\D/g, "").length >= 2) out.push({ service: m[1]!.trim(), number });
+    if (!m) continue;
+    const number = m[2]!.replace(/\s+/g, " ").trim();
+    if (number.replace(/\D/g, "").length < 2) continue;
+    let service = m[1]!.trim();
+    const brackets = /^\(([^)]{3,60})\)/.exec(line.slice(m[0].length).trim());
+    if (/^(telephone|tel|phone|call)$/i.test(service) && brackets) {
+      const named = brackets[1]!.trim();
+      service = named.charAt(0).toUpperCase() + named.slice(1);
     }
+    if (out.some((n) => n.number.replace(/\D/g, "") === number.replace(/\D/g, ""))) continue;
+    out.push({ service, number });
   }
   return out;
 }

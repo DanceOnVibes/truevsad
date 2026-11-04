@@ -78,7 +78,7 @@ describe("FCDO: reading a travel advice guide", () => {
 
 describe("FCDO: numbers and text", () => {
   it("finds numbers in 'Service: number' lines", () => {
-    expect(numbersIn("Telephone: 112 (ambulance, fire, police)\nNothing here")).toEqual([{ service: "Telephone", number: "112" }]);
+    expect(numbersIn("Telephone: 112 (ambulance, fire, police)\nNothing here")).toEqual([{ service: "Ambulance, fire, police", number: "112" }]);
     expect(numbersIn("Police – 110\nFire and ambulance: 119")).toEqual([
       { service: "Police", number: "110" },
       { service: "Fire and ambulance", number: "119" },
@@ -137,5 +137,32 @@ describe("FCDO: freshness and double-checks", () => {
     expect(compareNumbers(fcdo, ok)).toBe("agree");
     expect(compareNumbers(fcdo, { ...ok, numbers: [{ service: "Police", number: "191" }] })).toBe("differ");
     expect(compareNumbers(fcdo, undefined)).toBe("unchecked");
+  });
+});
+
+// The real "Getting help" section of GOV.UK's Thailand travel advice (as published, Nov 2026).
+const THAILAND_GETTING_HELP =
+  "<h2>Emergency services in Thailand</h2>" +
+  "<p>Telephone: 191 (ambulance, fire, police)</p><p>Ambulance: 1669</p><p>Fire: 199</p><p>Police: 191</p><p>Tourist police: 1155</p>" +
+  "<p>The Tourist Police have developed a new application called Thailand Tourist Police to facilitate communication between tourists and our services online.</p>" +
+  "<h2>Contact your travel provider and insurer</h2><p>Contact your travel provider and your insurer if you are involved in a serious incident or emergency abroad.</p>" +
+  "<h2>Contacting FCDO</h2><h3>Help in the UK</h3><p>Telephone: 020 7008 5000 (24 hours)</p>";
+
+describe("FCDO: the real Thailand page", () => {
+  const a = parseTravelAdvice({
+    ...THAILAND,
+    details: { ...THAILAND.details, parts: [{ slug: "getting-help", title: "Getting help", body: THAILAND_GETTING_HELP }] },
+  })!;
+  it("reads every number once, named the way the FCDO names it", () => {
+    expect(a.emergency?.numbers).toEqual([
+      { service: "Ambulance, fire, police", number: "191" },
+      { service: "Ambulance", number: "1669" },
+      { service: "Fire", number: "199" },
+      { service: "Tourist police", number: "1155" },
+    ]);
+  });
+  it("stops at the next section, so the FCDO's London line isn't taken for a Thai number", () => {
+    expect(a.emergency?.text).not.toMatch(/7008/);
+    expect(a.emergency?.text).toMatch(/Tourist Police have developed/);
   });
 });
