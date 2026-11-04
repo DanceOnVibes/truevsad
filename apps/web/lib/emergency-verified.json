@@ -170,6 +170,26 @@
       "checkedOn": "2026-11-04"
     },
     {
+      "slug": "romania",
+      "numbers": [
+        {
+          "service": "Ambulance, fire, police",
+          "number": "112"
+        }
+      ],
+      "sources": [
+        {
+          "name": "Serviciul de Telecomunicații Speciale (STS)",
+          "url": "https://www.sts.ro/ro/apeluri-la-112"
+        },
+        {
+          "name": "GOV.UK",
+          "url": "https://www.gov.uk/foreign-travel-advice/romania/getting-help"
+        }
+      ],
+      "checkedOn": "2026-11-04"
+    },
+    {
       "slug": "switzerland",
       "numbers": [
         {
