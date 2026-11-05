@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
-import { islandAt, planBFor } from "@truevsad/true-cost";
+import { countryFromDisplayName, islandAt, planBFor } from "@truevsad/true-cost";
 import { hospitalsFor, type HospitalLookup } from "@/lib/osm";
 import { HOSPITALS_ES, nearestOfficialHospitals } from "@/lib/hospitals-es";
-import { fcdoForPlace, type FcdoCard } from "@/lib/fcdo";
+import { fcdoForCountryName, type FcdoCard } from "@/lib/fcdo";
 import { allowHeaders } from "@/lib/rate-limit";
 import { PlanBCard } from "./PlanBCard";
 import { HolidayScene } from "@/components/HolidayScene";
@@ -41,6 +41,8 @@ export default async function PlanBPage({ searchParams }: { searchParams: Search
     }
     // The town wasn't found (a typo, or a tiny place), but we know the island: look up the island
     // instead, so the family still gets the nearest hospitals.
+    // planBFor ignores "La Palma, Panama" (the last part names another country), so this never
+    // falls back to the Canary island for a place abroad.
     const island = planBFor(q)?.island;
     if (!lookup.ok && lookup.reason === "not_found" && island && !limited) {
       const islandQuery = `${island}, Spain`;
@@ -56,7 +58,27 @@ export default async function PlanBPage({ searchParams }: { searchParams: Search
   }
 
   const found = lookup?.ok ? lookup.place : null;
-  const plan = q ? planBFor(q) ?? (found ? planBFor(found.displayName) : undefined) : undefined;
+  // Which country? When the map found the place, the map decides: town names repeat across the world
+  // ("Valencia, Venezuela", "Granada, Nicaragua", "La Palma, Panama", "Port of Spain, Trinidad"), so
+  // Spain's card goes only to places the map puts in Spain. When the map couldn't help, a country typed
+  // at the end ("…, Venezuela") still wins over the town name.
+  const mapCountry = found ? countryFromDisplayName(found.displayName) : "";
+  const typedCountry = q.includes(",") ? (q.split(",").pop() ?? "").trim() : "";
+  let fcdo: FcdoCard | null = null;
+  let plan: ReturnType<typeof planBFor> = undefined;
+  try {
+    if (found) {
+      plan = /^(spain|españa|espana)$/i.test(mapCountry) ? planBFor(q) ?? planBFor(found.displayName) : undefined;
+      if (!plan && mapCountry) fcdo = await fcdoForCountryName(mapCountry);
+    } else if (q) {
+      const typed = typedCountry ? await fcdoForCountryName(typedCountry) : null;
+      if (typed && typed.slug !== "spain") fcdo = typed;
+      else plan = planBFor(q);
+    }
+  } catch (err) {
+    console.error("FCDO lookup failed", (err as Error).message);
+    if (!plan && found && /^(spain|españa|espana)$/i.test(mapCountry)) plan = planBFor(found.displayName);
+  }
   const placeName = plan?.island ?? q.split(",")[0]?.trim() ?? "";
   // On an island, only hospitals on the same island: a 40 km circle can reach across the sea
   // (Corralejo, Fuerteventura is 40 km from Lanzarote), and a family can't drive there.
@@ -78,15 +100,6 @@ export default async function PlanBPage({ searchParams }: { searchParams: Search
       }))
     : mapHospitals;
   const hospitalSource = official.length ? ("register" as const) : ("map" as const);
-  // Outside our deep coverage (Spain for now): the FCDO's own advice for the country.
-  let fcdo: FcdoCard | null = null;
-  if (found && !plan) {
-    try {
-      fcdo = await fcdoForPlace(found.displayName);
-    } catch (err) {
-      console.error("FCDO lookup failed", (err as Error).message);
-    }
-  }
   const distanceFrom = usedIsland ? `the centre of ${usedIsland}` : q.split(",")[0]?.trim() || placeName;
 
   return (

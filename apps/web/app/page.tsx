@@ -1,8 +1,11 @@
+import { Fragment } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { FAIRMARK_SCALE, type FairMarkLevel } from "@truevsad/true-cost";
 import { loadListedDeals, type ListedDeal } from "@/lib/quotes";
 import { HolidayScene } from "@/components/HolidayScene";
+import { VerdictStamp, verdictFor } from "@/components/VerdictStamp";
+import { exampleReceipts, gbp } from "@/lib/examples";
 
 // The public-receipts strip shows real receipts families chose to list, so refresh it now and then.
 export const revalidate = 300;
@@ -30,7 +33,8 @@ function Zigzag({ flip = false }: { flip?: boolean }) {
 }
 
 export default async function Home() {
-  const deals = await publicReceipts();
+  // Priced by the engine with today's rules (never typed by hand); hidden if the rules can't load.
+  const [deals, ex] = await Promise.all([publicReceipts(), exampleReceipts().catch(() => null)]);
   const strip = deals.length >= 3 ? deals : [];
 
   return (
@@ -76,44 +80,45 @@ export default async function Home() {
               {/* Adalbert's own photo. Decorative, so it has no alt text. */}
               <Image src="/images/hero-beach.jpg" alt="" fill priority sizes="(max-width: 900px) 100vw, 560px" />
             </div>
-            <div className="paper hero-receipt">
-              <Zigzag />
-              <div className="paper-body">
-                <span className="scanline" aria-hidden="true" />
-                <div className="paper-head">
-                  <span>TRUEVSAD · RECEIPT</span>
-                  <span>EXAMPLE</span>
+            {ex && (
+              <div className="paper hero-receipt">
+                <Zigzag />
+                <div className="paper-body">
+                  <span className="scanline" aria-hidden="true" />
+                  <div className="paper-head">
+                    <span>TRUEVSAD · RECEIPT</span>
+                    <span>EXAMPLE</span>
+                  </div>
+                  <p className="paper-title">{ex.stop.title}</p>
+                  <dl className="paper-lines">
+                    <dt>Advertised</dt>
+                    <dd>{gbp(ex.stop.advertisedPence)}</dd>
+                    {ex.stop.lines.map((l) => (
+                      <Fragment key={l.label}>
+                        <dt>{l.label}</dt>
+                        <dd>+{gbp(l.pence)}</dd>
+                      </Fragment>
+                    ))}
+                  </dl>
+                  <p className="paper-total">
+                    <span>TRUE PRICE</span>
+                    <span>{gbp(ex.stop.truePence)}</span>
+                  </p>
+                  {ex.stop.fm.gapPence !== null && (
+                    <p className={`paper-gap t-${verdictFor(ex.stop.fm)?.tone ?? "check"}`}>
+                      <span>Left out</span>
+                      <span>
+                        +{gbp(ex.stop.fm.gapPence)} · {ex.stop.fm.display.replace(/^\+/, "")}
+                      </span>
+                    </p>
+                  )}
+                  <p className="paper-small">NOT CHECKED: UK AIRPORT TRAVEL, SPENDING MONEY, INSURANCE</p>
+                  <span className="barcode" aria-hidden="true" />
+                  <VerdictStamp fm={ex.stop.fm} className="hero-stamp" />
                 </div>
-                <p className="paper-title">Tenerife · 7 nights · 2 adults, 2 children</p>
-                <dl className="paper-lines">
-                  <dt>Advertised</dt>
-                  <dd>£1,596</dd>
-                  <dt>Hold bags</dt>
-                  <dd>+£180</dd>
-                  <dt>Seats together</dt>
-                  <dd>+£96</dd>
-                  <dt>Transfers</dt>
-                  <dd>+£64</dd>
-                  <dt>Card fee</dt>
-                  <dd>+£46</dd>
-                </dl>
-                <p className="paper-total">
-                  <span>TRUE PRICE</span>
-                  <span>£1,982</span>
-                </p>
-                <p className="paper-gap t-stop">
-                  <span>Left out</span>
-                  <span>+£386 · 24%</span>
-                </p>
-                <p className="paper-small">NOT CHECKED: UK AIRPORT TRAVEL, SPENDING MONEY, INSURANCE</p>
-                <span className="barcode" aria-hidden="true" />
-                <span className="stamp stamp-stop hero-stamp" role="img" aria-label="Verdict: stop, high gap. Ask the seller.">
-                  <strong>STOP</strong>
-                  <small>HIGH GAP</small>
-                </span>
+                <Zigzag flip />
               </div>
-              <Zigzag flip />
-            </div>
+            )}
           </div>
         </section>
       </div>
@@ -146,41 +151,36 @@ export default async function Home() {
             <p>Every receipt ends in one verdict on the price, and says what it couldn&apos;t check.</p>
           </div>
           <div className="answers-grid">
-            <div className="paper tilt-left">
-              <Zigzag />
-              <div className="paper-body paper-small-body">
-                <span className="paper-head">EXAMPLE · LANZAROTE · 7 NIGHTS</span>
-                <span>Advertised £2,140</span>
-                <span>Tourist tax +£70</span>
-                <span className="paper-total">TRUE £2,210 · +3%</span>
-                <span className="paper-small">Bags, seats and transfers already in the price.</span>
-                <span className="stamp stamp-go" role="img" aria-label="Verdict: safe to go, FairMark Gold">
-                  <strong>
-                    SAFE
-                    <br />
-                    TO GO
-                  </strong>
-                  <small>FAIRMARK GOLD</small>
-                </span>
-              </div>
-              <Zigzag flip />
-            </div>
-
-            <div className="paper tilt-right">
-              <Zigzag />
-              <div className="paper-body paper-small-body">
-                <span className="paper-head">EXAMPLE · MALLORCA · 10 NIGHTS</span>
-                <span>Advertised £1,288</span>
-                <span>Tourist tax and bags +£224</span>
-                <span className="paper-total">TRUE £1,512 · +17%</span>
-                <span className="paper-small">Ask the seller what&apos;s in the price before you book.</span>
-                <span className="stamp stamp-check" role="img" aria-label="Verdict: check, higher gap">
-                  <strong>CHECK</strong>
-                  <small>HIGHER GAP</small>
-                </span>
-              </div>
-              <Zigzag flip />
-            </div>
+            {ex &&
+              ([
+                ["safe", "tilt-left", "Bags and transfers already in the price."],
+                ["check", "tilt-right", "Ask the seller what\u2019s in the price before you book."],
+              ] as const).map(([key, tilt, note]) => {
+                const e = ex[key];
+                return (
+                  <div className={`paper ${tilt}`} key={key}>
+                    <Zigzag />
+                    <div className="paper-body paper-small-body">
+                      <span className="paper-head">EXAMPLE · {e.title.toUpperCase()}</span>
+                      <span>Advertised {gbp(e.advertisedPence)}</span>
+                      {e.lines.map((l) => (
+                        <span key={l.label}>
+                          {l.label} +{gbp(l.pence)}
+                        </span>
+                      ))}
+                      <span className="paper-total">TRUE {gbp(e.truePence)}</span>
+                      {e.fm.gapPence !== null && (
+                        <span className="paper-left">
+                          Left out {gbp(e.fm.gapPence)} · {e.fm.display.replace(/^\+/, "")}
+                        </span>
+                      )}
+                      <span className="paper-small">{note}</span>
+                      <VerdictStamp fm={e.fm} />
+                    </div>
+                    <Zigzag flip />
+                  </div>
+                );
+              })}
 
             <div className="ink-card">
               <span className="ink-label">HOW WE DECIDE</span>

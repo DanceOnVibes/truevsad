@@ -80,3 +80,12 @@ describe("FairMark hardening", () => {
     expect(f.gapPence).toBe(0);
   });
 });
+
+describe("FairMark: adverts that say taxes and fees are extra", () => {
+  it("gives no verdict, however small the gap we can see", () => {
+    const fm = fairMark({ advertisedPence: 100000, trueCostPence: 100000, confidence: 0.9, taxCoverage: true, advertExcludesFees: true });
+    expect(fm.level).toBe("unavailable");
+    expect(fm.reason).toBe("advert_excludes_fees");
+    expect(fm.summary).toMatch(/Ask for the full price/);
+  });
+});

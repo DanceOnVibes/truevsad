@@ -139,3 +139,17 @@ describe("Plan B: natural hazards", () => {
     }
   });
 });
+
+describe("Plan B: towns that share a Spanish name", () => {
+  it("never gives Spain's card to a place the destination puts in another country", () => {
+    for (const d of ["Port of Spain", "Port of Spain, Trinidad", "Valencia, Venezuela", "Granada, Nicaragua", "La Palma, Panama", "Barcelona, Venezuela", "Cordoba, Argentina"]) {
+      expect(planBFor(d)).toBeUndefined();
+    }
+  });
+  it("still finds Spanish places, including ones whose last part isn't a country", () => {
+    expect(planBFor("Corralejo, Fuerteventura")?.island).toBe("Fuerteventura");
+    expect(planBFor("Benidorm, Costa Blanca")?.country.country).toBe("Spain");
+    expect(planBFor("Valencia")?.country.country).toBe("Spain");
+    expect(planBFor("Los Cristianos, Arona")?.island).toBe("Tenerife");
+  });
+});

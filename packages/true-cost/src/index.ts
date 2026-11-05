@@ -84,6 +84,7 @@ export {
   fragileNoteFor,
   ifItGoesWrong,
   islandAt,
+  namesAnotherCountry,
   islandFor,
   planBFor,
   suggestBookingType,

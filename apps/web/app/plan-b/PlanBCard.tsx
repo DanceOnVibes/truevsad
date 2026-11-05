@@ -250,7 +250,7 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalSource, register
           ) : gov?.emergency?.text ? (
             <div className="planb-box planb-sos">
               <h3>Emergency in {gov.name}</h3>
-              <p className="planb-fcdo-text">{gov.emergency.text.length > 420 ? `${gov.emergency.text.slice(0, gov.emergency.text.lastIndexOf(" ", 420))}…` : gov.emergency.text}</p>
+              <p className="planb-fcdo-text">{gov.emergency.text}</p>
               <p className="planb-small">Word for word from GOV.UK&apos;s travel advice for {gov.name}. We haven&apos;t double-checked this ourselves yet.</p>
             </div>
           ) : (

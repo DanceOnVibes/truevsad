@@ -225,6 +225,11 @@ export interface TrueCostResult {
    */
   taxCoverage: boolean;
   /**
+   * The advert itself says taxes and fees are extra ("plus taxes and fees"). The seller can add
+   * more at checkout than we know about, so FairMark gives no verdict.
+   */
+  advertExcludesFees?: boolean;
+  /**
    * Price of ONE return hold bag for this deal (0 when the deal includes hold bags or no bag fee
    * applies). FairMark's standard: every seller is judged as if the booking takes one hold bag,
    * whatever this family chose.

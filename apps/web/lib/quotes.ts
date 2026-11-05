@@ -340,6 +340,8 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
         departDate: offer.depart_on ?? undefined,
         departMonth: offer.depart_month ?? undefined,
         airline: offer.airline ?? undefined,
+        excludesTaxesAndFees: offer.excludes_taxes_and_fees === true,
+        freeChildClaim: offer.free_child_claim === true,
       };
       const rules = selectRules(await loadFeeRules(), o);
       const now = calculateTrueCost({
@@ -401,6 +403,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
         confidence: Number(q.confidence),
         usedDemoRules: Boolean(q.used_demo_rules),
         taxCoverage: q.fairmark_level != null && q.fairmark_level !== "unavailable",
+        advertExcludesFees: offer?.excludes_taxes_and_fees === true,
         lines: receiptLines,
       }),
     adults: party?.adults ?? 0,
@@ -433,6 +436,7 @@ interface BoardOfferRow {
   headline_basis: "per_person" | "total";
   currency: string;
   excludes_taxes_and_fees: boolean | null;
+  free_child_claim?: boolean | null;
 }
 
 function one<T>(v: T | T[] | null): T | null {
@@ -451,6 +455,8 @@ function toOffer(o: BoardOfferRow): Offer {
     departDate: o.depart_on ?? undefined,
     departMonth: o.depart_month ?? undefined,
     airline: o.airline ?? undefined,
+    excludesTaxesAndFees: o.excludes_taxes_and_fees === true,
+    freeChildClaim: o.free_child_claim === true,
   };
 }
 
@@ -496,7 +502,7 @@ export async function loadListedDeals(fairOnly: boolean): Promise<ListedDeal[]> 
   const { data } = await db
     .from("true_cost_quote")
     .select(
-      "share_slug, created_at, offer:offer_id (nights, destination, supplier_name, includes, depart_on, depart_month, airline, headline_pence, headline_basis, currency, excludes_taxes_and_fees), party:party_id (adults, child_ages)",
+      "share_slug, created_at, offer:offer_id (nights, destination, supplier_name, includes, depart_on, depart_month, airline, headline_pence, headline_basis, currency, excludes_taxes_and_fees, free_child_claim), party:party_id (adults, child_ages)",
     )
     .eq("listed", true)
     .eq("is_public", true)
@@ -573,7 +579,7 @@ export async function loadLeaderboard(): Promise<{ rows: LeaderboardRow[]; deals
   const { data } = await db
     .from("true_cost_quote")
     .select(
-      "offer:offer_id (nights, destination, supplier_name, includes, depart_on, depart_month, airline, headline_pence, headline_basis, currency, excludes_taxes_and_fees), party:party_id (adults, child_ages)",
+      "offer:offer_id (nights, destination, supplier_name, includes, depart_on, depart_month, airline, headline_pence, headline_basis, currency, excludes_taxes_and_fees, free_child_claim), party:party_id (adults, child_ages)",
     )
     .gte("created_at", since)
     .limit(5000);
