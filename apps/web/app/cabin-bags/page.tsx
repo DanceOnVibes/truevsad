@@ -7,7 +7,7 @@ import { HolidayScene } from "@/components/HolidayScene";
 export const metadata: Metadata = {
   title: "Cabin bag sizes by airline, and will my bag fit? — TrueVsAd",
   description:
-    "Free under-seat and cabin bag sizes for Ryanair, easyJet, Jet2, TUI, BA, Wizz Air, Norwegian and more, from each airline's own page with the date we checked. Measure your bag and see where it flies free.",
+    "Free under-seat and cabin bag sizes for 10 airlines that fly most UK families: Ryanair, easyJet, Jet2, TUI, British Airways, Wizz Air, Norwegian, Aer Lingus, Lufthansa and Vueling, from each airline's own page with the date we checked. Measure your bag and see where it flies free.",
 };
 
 const PRICE: Record<BagAllowance["price"], string> = {

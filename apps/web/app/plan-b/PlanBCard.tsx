@@ -118,7 +118,7 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalSource, register
   const gov = country ? null : fcdo;
   const numbers = gov?.emergency?.numbers ?? [];
   const check = gov ? compareNumbers(numbers, gov.verified ?? undefined) : "unchecked";
-  const stale = gov ? fcdoFreshness(gov.fetchedAt) === "stale" : false;
+  const stale = gov ? fcdoFreshness(gov.checkedAt) === "stale" : false;
   const en = CARD_PHRASES.en!;
   const local = country ? CARD_PHRASES[country.language] : undefined;
   const made = new Date().toISOString().slice(0, 10);
@@ -160,7 +160,7 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalSource, register
   if (plan?.consulate) sources.push({ name: "GOV.UK", url: plan.consulate.sourceUrl, checkedOn: plan.consulate.checkedOn });
   sources.push({ name: "GOV.UK (FCDO)", url: FCDO_LONDON.sourceUrl, checkedOn: FCDO_LONDON.checkedOn });
   if (!country && fcdo) {
-    sources.push({ name: `GOV.UK travel advice: ${fcdo.name}`, url: fcdo.url, checkedOn: fcdo.fetchedAt.slice(0, 10) });
+    sources.push({ name: `GOV.UK travel advice: ${fcdo.name}`, url: fcdo.url, checkedOn: fcdo.checkedAt.slice(0, 10) });
     if (fcdo.verified && compareNumbers(fcdo.emergency?.numbers ?? [], fcdo.verified) === "agree")
       for (const v of fcdo.verified.sources) if (!sources.some((x) => x.url === v.url)) sources.push({ name: v.name, url: v.url, checkedOn: fcdo.verified.checkedOn });
   }
@@ -240,18 +240,29 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalSource, register
                 ))}
               </ul>
               <p className="planb-small">
-                {check === "agree"
-                  ? `✓ Double-checked by us against ${gov.verified!.sources.map((x) => x.name).join(" and ")} (${dateLabel(gov.verified!.checkedOn)}).`
-                  : check === "differ"
+                {check === "agree" ? (
+                  <>
+                    ✓ We checked these against{" "}
+                    {gov.verified!.sources.map((x, i, all) => (
+                      <span key={x.url}>
+                        <a href={x.url} target="_blank" rel="noopener noreferrer">
+                          {x.name}
+                        </a>
+                        {i < all.length - 2 ? ", " : i === all.length - 2 ? " and " : ""}
+                      </span>
+                    ))}{" "}
+                    ({dateLabel(gov.verified!.checkedOn)}).
+                  </>
+                ) : check === "differ"
                     ? "As the FCDO lists them. Our own check found a difference, so confirm the numbers with your hotel when you arrive."
-                    : "As the FCDO lists them on GOV.UK. We haven't double-checked these ourselves yet."}
+                    : "As the FCDO lists them on GOV.UK. We haven't checked these against a second source yet."}
               </p>
             </div>
           ) : gov?.emergency?.text ? (
             <div className="planb-box planb-sos">
               <h3>Emergency in {gov.name}</h3>
               <p className="planb-fcdo-text">{gov.emergency.text}</p>
-              <p className="planb-small">Word for word from GOV.UK&apos;s travel advice for {gov.name}. We haven&apos;t double-checked this ourselves yet.</p>
+              <p className="planb-small">Word for word from GOV.UK&apos;s travel advice for {gov.name}. We haven&apos;t checked this against a second source yet.</p>
             </div>
           ) : (
             <div className="planb-box planb-sos">
@@ -512,8 +523,8 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalSource, register
           {gov && (
             <>
               GOV.UK travel advice for {gov.name}{gov.updatedAt ? `, updated by the FCDO on ${dateLabel(gov.updatedAt.slice(0, 10))}` : ""}; our copy
-              refreshed {dateLabel(gov.fetchedAt.slice(0, 10))}.{" "}
-              {stale ? "We couldn't refresh it recently: check the GOV.UK page before you fly. " : ""}
+              checked against it {dateLabel(gov.checkedAt.slice(0, 10))}.{" "}
+              {stale ? "We couldn't check it recently: look at the GOV.UK page before you fly. " : ""}
               Contains public sector information licensed under the Open Government Licence v3.0.
               <br />
             </>

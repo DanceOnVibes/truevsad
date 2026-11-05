@@ -57,11 +57,28 @@ export default function PrivacyPage() {
         <h2>Visit before you book</h2>
         <p>
           When you check a place, we send only the place name you typed to OpenStreetMap&apos;s free
-          services (Nominatim and Overpass) to find it and count what&apos;s nearby. We keep that
-          result, which has nothing about you in it, so the next person doesn&apos;t have to wait.
+          services (Nominatim and Overpass) to find it and count what&apos;s nearby. If they&apos;re busy, the
+          same place name goes to a backup that uses the same map data: Photon (run by komoot) or another
+          public Overpass server. We keep that result, which has nothing about you in it, so the next
+          person doesn&apos;t have to wait.
           The map on that page loads from openstreetmap.org in your browser, so OpenStreetMap sees
           your IP address, as with any website. The Street View and Google Maps links open Google
           only if you click them.
+        </p>
+
+        <h2>Plan B</h2>
+        <p>
+          To make a Plan B card, only the place name you type leaves your phone. We use it to find the
+          place and its nearest hospitals with the same map services as Visit before you book (and
+          Spain&apos;s official hospital register, which is a file on our own server). We keep that
+          result, which has nothing about you in it, for up to 90 days.
+        </p>
+        <p>
+          Everything else you put on the card (your hotel, meeting point, phone numbers, passport notes
+          and the children&apos;s details) stays in your browser. We never receive it. &ldquo;Save an
+          offline copy&rdquo; saves the card as a file on your phone, and printing happens on your own
+          printer. The emergency numbers, warnings and hazards for countries outside Spain come from
+          GOV.UK&apos;s travel advice, which we copy each day; nothing about you is sent to GOV.UK.
         </p>
 
         <h2>Anonymous price statistics</h2>
@@ -156,7 +173,7 @@ export default function PrivacyPage() {
                 <td>2 years</td>
               </tr>
               <tr>
-                <td>Place checks (Visit)</td>
+                <td>Place checks (Visit, Plan B hospitals)</td>
                 <td>So the next person doesn&apos;t wait</td>
                 <td>Counts of what&apos;s nearby; nothing about you</td>
                 <td>90 days</td>

@@ -542,4 +542,8 @@ export const PLAN_B_NOT_CHECKED = [
   "How likely a wildfire, flood, storm or earthquake is where you're going: we don't rate places. The advice above is what Spain's authorities tell everyone.",
   "Whether ES-Alert warnings reach a UK phone on roaming: Spain's official pages don't say.",
   "Emergency departments are confirmed only where marked ✓ (Canary Islands public hospitals, from their health service's pages). Elsewhere Spain's register doesn't say, so call 112 and ask your hotel.",
-] as const;
+  // Shown until a native speaker has checked the card's Spanish (CARD_PHRASES.es.checked).
+  ...(CARD_PHRASES.es?.checked
+    ? []
+    : ["The Spanish phrases on the child card and taxi line haven't been checked by a native speaker yet: they're a help, not a guarantee."]),
+];

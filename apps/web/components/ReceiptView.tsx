@@ -38,6 +38,8 @@ export interface ReceiptViewProps {
   advertisedCurrency?: string | null;
   /** Package or booked separately, as the family confirmed. Picks the "If it goes wrong" lines. */
   bookingType?: BookingType | null;
+  /** The engine version that priced this receipt, printed at the foot of the scope notes. */
+  engineVersion?: string | null;
 }
 
 function checkedLabel(iso: string): string {
@@ -209,6 +211,7 @@ export function ReceiptView(props: ReceiptViewProps) {
         </ul>
         <p className="hint">
           The true price above covers everything else listed on the receipt, each with its source.
+          {props.engineVersion ? ` Priced by TrueVsAd engine ${props.engineVersion}.` : ""}
         </p>
         {bags && (underseat || cabin) && (
           <>
@@ -338,7 +341,7 @@ export function ReceiptView(props: ReceiptViewProps) {
               </p>
             )}
             <p className="hint">
-              One page with 112, the nearest hospitals and UK help, that works with no signal.{" "}
+              One page with 112, the nearest hospitals and UK help, that works with no signal once saved or printed.{" "}
               <a href={`/plan-b?q=${encodeURIComponent(props.destination ?? planBPlace)}`}>Make your Plan B card →</a>
             </p>
           </>

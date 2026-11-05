@@ -22,9 +22,10 @@ export default function FairMarkMethodPage() {
         <h2 style={{ marginTop: 0 }}>The calculation</h2>
         <p>
           FairMark = (taxes and fees the advert left out + one hold bag) ÷ advertised price × 100.
-          &ldquo;Left out&rdquo; means charges every family on that deal must pay: tourist taxes,
-          resort fees and entry documents, each from a published source. The hold bag is our standard:
-          one return hold bag per booking, at that airline&apos;s price, the same for every seller and
+          &ldquo;Left out&rdquo; means charges every family on that deal must pay: tourist taxes and
+          entry documents, each with its source shown on the receipt so you can check it. The hold bag is
+          our standard: one return hold bag per booking, at that airline&apos;s price where we have it and
+          a typical price where we don&apos;t (the receipt says which), the same for every seller and
           every family size, because a holiday with no hold bag at all isn&apos;t realistic. If the deal
           already includes hold bags, nothing is added. Anything the deal includes is never counted.
         </p>

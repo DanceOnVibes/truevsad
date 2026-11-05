@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "School Window — TrueVsAd",
   description:
-    "See your council's school holidays, the shoulder weeks either side, and how many school days a trip would miss.",
+    "School holidays for councils in England and Wales (more coming), the shoulder weeks either side, and how many school days a trip would miss.",
 };
 
 type Search = Promise<{ council?: string; date?: string; nights?: string; pc?: string }>;
@@ -34,6 +34,14 @@ const HOLIDAY_ORDER = [
   "May half term",
   "Summer holidays",
 ];
+
+/** "40 in England, 1 in Wales" */
+function coverage(list: { nation: string }[]): string {
+  const counts = new Map<string, number>();
+  for (const a of list) counts.set(a.nation, (counts.get(a.nation) ?? 0) + 1);
+  const NAMES: Record<string, string> = { england: "England", wales: "Wales", scotland: "Scotland", "northern-ireland": "Northern Ireland", northern_ireland: "Northern Ireland" };
+  return [...counts.entries()].map(([n, c]) => `${c} in ${NAMES[n] ?? n}`).join(", ");
+}
 
 function nice(d: string): string {
   return new Date(`${d}T00:00:00Z`).toLocaleDateString("en-GB", {
@@ -101,6 +109,13 @@ export default async function SchoolWindowPage({ searchParams }: { searchParams:
       <p className="lead">
         Your council&apos;s school holidays, the quieter &ldquo;shoulder&rdquo; weeks either side, and
         how many school days a trip would miss.
+        {authorities.length > 0 && (
+          <>
+            {" "}
+            We have {authorities.length} councils so far ({coverage(authorities)}), each from the council&apos;s
+            own website. Not on the list? Tell us at <a href={`mailto:${EMAILS.hello}`}>{EMAILS.hello}</a>.
+          </>
+        )}
       </p>
 
       {authorities.length === 0 ? (

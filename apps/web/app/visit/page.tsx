@@ -134,7 +134,7 @@ export default async function VisitPage({ searchParams }: { searchParams: Search
           {planB && (
             <p className="hint">
               <Link href={`/plan-b?q=${encodeURIComponent(q)}`}>Make a Plan B card for {planB.island ?? q.split(",")[0]} →</Link> 112,
-              the nearest hospitals and UK help on one page that works with no signal.
+              the nearest hospitals and UK help on one page that works with no signal once saved or printed.
             </p>
           )}
 
