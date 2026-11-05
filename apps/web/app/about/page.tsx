@@ -66,6 +66,12 @@ export default function AboutPage() {
           <li>
             Holiday sellers: <a href={`mailto:${EMAILS.partners}`}>{EMAILS.partners}</a>
           </li>
+          <li>
+            Your data (see a copy, correct or delete it): <a href={`mailto:${EMAILS.privacy}`}>{EMAILS.privacy}</a>
+          </li>
+          <li>
+            A security problem on the site: <a href={`mailto:${EMAILS.security}`}>{EMAILS.security}</a>
+          </li>
         </ul>
         <p className="hint">
           See also <Link href="/how-we-earn">How we earn</Link>, <Link href="/terms">Terms</Link> and{" "}

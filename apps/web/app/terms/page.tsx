@@ -128,8 +128,11 @@ export default function TermsPage() {
           and Wales. If you live elsewhere in the UK, you can also use your local courts.
         </p>
         <p>
-          Questions: <a href={`mailto:${EMAILS.hello}`}>{EMAILS.hello}</a>. Your data: see our{" "}
-          <Link href="/privacy">privacy page</Link>.
+          Questions: <a href={`mailto:${EMAILS.hello}`}>{EMAILS.hello}</a>. A wrong figure or a receipt to
+          report: <a href={`mailto:${EMAILS.corrections}`}>{EMAILS.corrections}</a>. Holiday sellers:{" "}
+          <a href={`mailto:${EMAILS.partners}`}>{EMAILS.partners}</a>. Your data:{" "}
+          <a href={`mailto:${EMAILS.privacy}`}>{EMAILS.privacy}</a> and our <Link href="/privacy">privacy page</Link>.
+          Security problems: <a href={`mailto:${EMAILS.security}`}>{EMAILS.security}</a>.
         </p>
         <p className="hint">Last changed 5 November 2026.</p>
       </div>

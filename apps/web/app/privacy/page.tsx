@@ -27,6 +27,10 @@ export default function PrivacyPage() {
         <p>
           Questions about your data: <a href={`mailto:${EMAILS.privacy}`}>{EMAILS.privacy}</a>
         </p>
+        <p>
+          If you think your data or the site isn&apos;t safe (a leak or a security hole), tell us at{" "}
+          <a href={`mailto:${EMAILS.security}`}>{EMAILS.security}</a>.
+        </p>
 
         <h2>What we store when you X-ray a deal</h2>
         <ul>
