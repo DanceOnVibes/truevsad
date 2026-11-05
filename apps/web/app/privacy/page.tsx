@@ -20,8 +20,8 @@ export default function PrivacyPage() {
         <h2 style={{ marginTop: 0 }}>Who we are</h2>
         <p>
           TrueVsAd is operated by {COMPANY.name}, {COMPANY.type} (company number {COMPANY.number}).
-          We are registered with the Information Commissioner&apos;s Office (registration{" "}
-          {COMPANY.ico}).
+          We are registered with the Information Commission, the UK&apos;s data protection regulator
+          (the ICO; registration {COMPANY.ico}).
         </p>
         <p>Registered office: {COMPANY.address}.</p>
         <p>
@@ -52,6 +52,12 @@ export default function PrivacyPage() {
           references before uploading a screenshot. If you paste a link, we also pass on the place
           words from its address (e.g. &ldquo;spain tarragona&rdquo;) to help read the destination;
           we still never open the link.
+        </p>
+        <p>
+          Google doesn&apos;t use what you send to train its AI. To answer quickly it may hold it in
+          memory, in the UK, for up to 24 hours, and under its cloud terms it may log requests to
+          detect abuse. The price itself is worked out by our own engine, never by AI, and nothing
+          about you is decided automatically.
         </p>
 
         <h2>Visit before you book</h2>
@@ -198,10 +204,17 @@ export default function PrivacyPage() {
           &ldquo;With the receipt&rdquo; means 30 days if you don&apos;t share it, 12 months if you do.
         </p>
 
-        <h2>Why</h2>
+        <h2>Why, and on what legal basis</h2>
+        <p>Everything we keep is under &ldquo;legitimate interests&rdquo; (UK GDPR Article 6(1)(f)):</p>
+        <ul>
+          <li>working out the true price you asked for, and letting you share or list the receipt if you choose;</li>
+          <li>keeping the site safe and working: the spam counter, and the family code that stops one person swaying FairMark;</li>
+          <li>the anonymous price statistics, to show how prices change and how fair each seller is.</li>
+        </ul>
         <p>
-          To work out the true price you asked for, and to let you share the receipt if you choose
-          to. Our lawful basis is legitimate interests: providing the service you requested.
+          We ask for children&apos;s ages only because bag rules and tourist taxes depend on them. The
+          site is for parents and other adults, not for children to use. You can object to any of
+          this at any time (see &ldquo;Your rights&rdquo;).
         </p>
 
         <h2>How long we keep it</h2>
@@ -223,7 +236,8 @@ export default function PrivacyPage() {
           To stop automated spam we count requests per visitor. We store a scrambled code made from
           your IP address, never the address itself, and delete it the next night (at most 2 days later). FairMark keeps a second,
           different scrambled code with each receipt for 30 days, so the sellers&apos; leaderboard counts
-          different families rather than clicks. Neither code can be turned back into your address.
+          different families rather than clicks. Neither code contains your address, and we never try
+          to work it out from them.
         </p>
 
         <h2>Cookies and tracking</h2>
@@ -236,22 +250,56 @@ export default function PrivacyPage() {
           has its own <a href="https://osmfoundation.org/wiki/Privacy_Policy" target="_blank" rel="noopener noreferrer">privacy policy</a>.
         </p>
 
-        <h2>Where your data lives</h2>
+        <h2>Who else handles it, and where</h2>
+        <ul>
+          <li>Supabase (our database), in London.</li>
+          <li>
+            Vercel (our website), with our servers in London. Like any web host it keeps short-lived
+            logs of requests, which include your IP address.
+          </li>
+          <li>Google Cloud (reading deals), in London.</li>
+          <li>Cloudflare (our domain and email forwarding) and Microsoft (our mailbox), if you email us.</li>
+        </ul>
         <p>
-          Our database is hosted by Supabase in London. The website runs on Vercel, with our
-          servers in London; Vercel may keep short-lived technical logs of requests. Deal reading
-          runs on Google Cloud in London.
+          Each works for us under a data processing agreement and may only use your data to provide
+          their service to us. They are US companies, so staff abroad could in rare cases access it;
+          that&apos;s covered by the UK&apos;s US data bridge or the UK&apos;s standard contract clauses.
+          We never sell your data or share it with anyone else, unless the law requires it.
+          When we delete data it can stay in our database provider&apos;s backups for a short time,
+          until they roll over.
+        </p>
+        <p>
+          The place-name and postcode services above (OpenStreetMap, Photon, postcodes.io) and the
+          exchange-rate service only ever receive a place name, a postcode district or a currency
+          code from our server, never anything about you.
+        </p>
+
+        <h2>If you email us</h2>
+        <p>
+          Your email reaches us through Cloudflare&apos;s email forwarding into our Microsoft
+          mailbox. We use it only to reply to you, and delete it within 12 months of the matter being
+          closed.
         </p>
 
         <h2>Your rights</h2>
         <p>
-          You can ask us what we hold, or ask us to delete a receipt: email{" "}
-          <a href={`mailto:${EMAILS.privacy}`}>{EMAILS.privacy}</a> with its share link. We reply
-          within one month. You can also complain to the Information Commissioner&apos;s Office
-          (ico.org.uk).
+          You can ask us for a copy of what we hold about you, to correct it, to delete it, to limit
+          how we use it, and you can object to us using it. Email{" "}
+          <a href={`mailto:${EMAILS.privacy}`}>{EMAILS.privacy}</a>; for a shared receipt, include its
+          link. We reply within one month. A receipt you never shared has no link and nothing that
+          names you, so we can&apos;t find it to show you; it is deleted after 30 days anyway.
         </p>
 
-        <p className="hint">Last updated 31 October 2026.</p>
+        <h2>Complaints</h2>
+        <p>
+          If you&apos;re unhappy with how we&apos;ve handled your data, tell us first at{" "}
+          <a href={`mailto:${EMAILS.privacy}`}>{EMAILS.privacy}</a> (or any way you can reach us). We
+          acknowledge every complaint within 30 days, look into it, keep you updated and tell you the
+          outcome. You can also complain to the Information Commission (the ICO) at any time:{" "}
+          <a href="https://ico.org.uk/make-a-complaint/" target="_blank" rel="noopener noreferrer">ico.org.uk/make-a-complaint</a>.
+        </p>
+
+        <p className="hint">Last updated 5 November 2026.</p>
       </div>
     </main>
   );

@@ -79,6 +79,10 @@ export default function HowWeEarnPage() {
             <strong>FairFam</strong> lists holiday sellers&apos; own search pages in alphabetical order.
           </li>
         </ul>
+        <p>
+          <strong>What we cover:</strong> we don&apos;t search the market for deals. We check the deals you
+          bring, and FairMark covers only the sellers whose deals families have checked here.
+        </p>
       </div>
 
       <p className="hint">

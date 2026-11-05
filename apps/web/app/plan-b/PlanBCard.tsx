@@ -338,7 +338,8 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalSource, register
                 ) : (
                   <p className="planb-small">
                     From OpenStreetMap{hospitalsCheckedOn ? `, ${dateLabel(hospitalsCheckedOn)}` : ""}. Map data can be out of date:
-                    check with your hotel when you arrive. © OpenStreetMap contributors.
+                    check with your hotel when you arrive. ©{" "}
+                    <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.
                   </p>
                 )}
               </>
@@ -525,7 +526,8 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalSource, register
               GOV.UK travel advice for {gov.name}{gov.updatedAt ? `, updated by the FCDO on ${dateLabel(gov.updatedAt.slice(0, 10))}` : ""}; our copy
               checked against it {dateLabel(gov.checkedAt.slice(0, 10))}.{" "}
               {stale ? "We couldn't check it recently: look at the GOV.UK page before you fly. " : ""}
-              Contains public sector information licensed under the Open Government Licence v3.0.
+              Contains public sector information licensed under the{" "}
+              <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/">Open Government Licence v3.0</a>.
               <br />
             </>
           )}

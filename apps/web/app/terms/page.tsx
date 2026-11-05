@@ -57,9 +57,36 @@ export default function TermsPage() {
         <h2>Using the site fairly</h2>
         <ul>
           <li>Check real deals, honestly. Don&apos;t enter made-up deals to push a seller&apos;s FairMark up or down.</li>
+          <li>
+            Sellers, and anyone working for them, mustn&apos;t check or list deals to boost themselves or
+            harm a competitor. That&apos;s against the law on fake reviews as well as these terms.
+          </li>
+          <li>Don&apos;t put anyone&apos;s personal details, or anything offensive or unlawful, in the deal details.</li>
           <li>Don&apos;t copy the site or its data automatically, overload it, or try to get round its limits.</li>
-          <li>When you share a receipt, anyone with the link can see it. Only list it on the public board if you want to.</li>
         </ul>
+
+        <h2>Sharing and listing a receipt</h2>
+        <ul>
+          <li>When you share a receipt, anyone with the link can see it. Only list it on the public board if you want to.</li>
+          <li>
+            A shared or listed receipt shows only figures and checked names: the place (never the hotel or anything
+            else you typed), the seller once we&apos;ve checked its name, nights, number of adults and children, and
+            the prices.
+          </li>
+          <li>By listing a receipt you let us show it on the FairMark board until it&apos;s deleted after 12 months.</li>
+          <li>
+            We may unlist or delete any receipt that breaks these terms or is reported to us. If a deal turns out to
+            be made up, we delete it and FairMark is worked out again without it.
+          </li>
+        </ul>
+
+        <h2>Reporting a receipt or a figure</h2>
+        <p>
+          If a receipt looks fake, unlawful or harmful, or a figure looks wrong, email{" "}
+          <a href={`mailto:${EMAILS.corrections}`}>{EMAILS.corrections}</a> with its link. We look at
+          reports of unlawful or harmful content first, and remove it as soon as we see it&apos;s a
+          problem.
+        </p>
 
         <h2>Challenging a figure</h2>
         <p>
@@ -73,13 +100,20 @@ export default function TermsPage() {
           We take care to get things right and to show where every figure comes from, but we can&apos;t promise the site
           is always available or free of mistakes. We aren&apos;t responsible for a seller&apos;s prices, terms or
           service. Nothing in these terms limits any right you have under UK consumer law, or our responsibility where
-          the law doesn&apos;t allow it to be limited.
+          the law doesn&apos;t allow it to be limited, including for death or personal injury caused by our
+          negligence.
         </p>
 
         <h2>Other people&apos;s information</h2>
         <p>
-          Travel advice from GOV.UK is used under the Open Government Licence v3.0. Map data is © OpenStreetMap
-          contributors. Each receipt and card names and links its other sources.
+          Travel advice from GOV.UK is used under the{" "}
+          <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank" rel="noopener noreferrer">
+            Open Government Licence v3.0
+          </a>
+          ; it isn&apos;t endorsed by the FCDO. Map data is ©{" "}
+          <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>
+          , available under the Open Database Licence. Exchange rates are the European Central Bank&apos;s reference
+          rates, which are for information only. Each receipt and card names and links its other sources.
         </p>
 
         <h2>Changes and law</h2>

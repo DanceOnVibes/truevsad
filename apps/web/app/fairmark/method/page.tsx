@@ -75,6 +75,37 @@ export default function FairMarkMethodPage() {
           </li>
           <li>The ✓ needs 30+ deals in 5+ destinations with a median of {FAIRMARK_SCALE.fair}% or less left out. It is earned, never bought, and lost automatically.</li>
           <li>We rank the company selling the deal, not the brand of holiday inside it.</li>
+          <li>
+            It covers only the deals families chose to check here, not every advert a seller runs. A seller&apos;s
+            figure says how much those adverts left out; it says nothing about its holidays or service.
+          </li>
+        </ul>
+      </div>
+
+      <div className="card">
+        <h2 style={{ marginTop: 0 }}>Fake deals and listings</h2>
+        <p>
+          Every checked deal and every listed receipt counts as a review of the seller, so we treat fake ones the
+          way the law on fake reviews requires:
+        </p>
+        <ul>
+          <li>
+            Checking or listing a made-up deal, or a seller doing it for itself or against a competitor, is
+            banned by our <Link href="/terms">terms</Link>.
+          </li>
+          <li>
+            Our checks: a person approves every seller name before it appears; the same deal sent twice counts
+            once; one family counts for at most {LEADERBOARD_PER_FAMILY} deals per seller; a seller needs deals from
+            at least {LEADERBOARD_MIN_FAMILIES} different families.
+          </li>
+          <li>
+            Anyone can report a receipt or a figure at <a href={`mailto:${EMAILS.corrections}`}>{EMAILS.corrections}</a>.
+            Made-up deals are deleted, and FairMark is worked out again without them.
+          </li>
+          <li>
+            We never pick which genuine deals count. The board shows every listed deal, newest first, once we can
+            name its place; the leaderboard counts every deal checked, good or bad. Commission never changes either.
+          </li>
         </ul>
       </div>
 
