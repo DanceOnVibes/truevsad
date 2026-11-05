@@ -83,8 +83,8 @@ export default function PrivacyPage() {
 
         <h2>Anonymous price statistics</h2>
         <p>
-          Each time a deal is X-rayed we also keep one anonymous line of statistics: the seller, the
-          town and country, the week of travel, the number of nights, how many people and children,
+          Each time a deal is X-rayed we also keep one anonymous line of statistics: the seller and
+          the destination as you confirmed them, the week of travel, the number of nights, how many people and children,
           and the price per person before and after extras, the currency the deal was advertised in,
           and the <strong>letters</strong> of your postcode only (e.g. SE from SE11) — an area of
           tens of thousands of homes. It has no link to your receipt and holds no ages, full postcode
@@ -97,8 +97,9 @@ export default function PrivacyPage() {
           The FairMark leaderboard is built from anonymous totals per holiday seller across all the
           deals checked in the last 30 days: it never shows a single family&apos;s deal. A shared
           receipt appears on the public FairMark board only if you tick the box when you share it. The
-          board shows the destination, seller, nights, number of adults and children and the prices,
-          never your postcode, children&apos;s ages or the deal link.
+          board shows the place (never the hotel), the seller once we&apos;ve checked its name, nights,
+          number of adults and children and the prices, never your postcode, children&apos;s ages or
+          the deal link.
         </p>
 
         <h2>FairFam, School Window and splitting a price</h2>
@@ -182,7 +183,7 @@ export default function PrivacyPage() {
                 <td>Scrambled visitor code</td>
                 <td>Stopping automated spam</td>
                 <td>Made from your IP address; never the address</td>
-                <td>Under a day</td>
+                <td>Deleted the next night (at most 2 days)</td>
               </tr>
               <tr>
                 <td>FairMark family code</td>
@@ -211,21 +212,29 @@ export default function PrivacyPage() {
 
         <h2>Sharing a receipt</h2>
         <p>
-          When you press Share, anyone with the link can see the receipt: the prices, destination,
-          nights and how many adults and children. The shared page never shows your postcode,
-          children&apos;s ages or the deal link. Shared pages are hidden from search engines.
+          When you press Share, anyone with the link can see the receipt: the prices, the place (never
+          the hotel or anything else you typed), nights and how many adults and children. The shared
+          page never shows your postcode, children&apos;s ages or the deal link. Shared pages are
+          hidden from search engines.
         </p>
 
         <h2>Stopping abuse</h2>
         <p>
           To stop automated spam we count requests per visitor. We store a scrambled code made from
-          your IP address, never the address itself, and delete it within a day. FairMark keeps a second,
+          your IP address, never the address itself, and delete it the next night (at most 2 days later). FairMark keeps a second,
           different scrambled code with each receipt for 30 days, so the sellers&apos; leaderboard counts
           different families rather than clicks. Neither code can be turned back into your address.
         </p>
 
         <h2>Cookies and tracking</h2>
-        <p>We don&apos;t use advertising cookies, tracking pixels or analytics.</p>
+        <p>
+          We don&apos;t set any cookies, and we don&apos;t use tracking pixels, analytics or advertising.
+          The only thing we put in your browser is a short note when you go from FairFam to Deal
+          X-ray (your party, date and nights), so the next page can fill them in; it stays in that tab
+          and is deleted as soon as the page opens. A Plan B card you save is a file on your own
+          phone. The OpenStreetMap map on Visit before you book is loaded from openstreetmap.org, which
+          has its own <a href="https://osmfoundation.org/wiki/Privacy_Policy" target="_blank" rel="noopener noreferrer">privacy policy</a>.
+        </p>
 
         <h2>Where your data lives</h2>
         <p>

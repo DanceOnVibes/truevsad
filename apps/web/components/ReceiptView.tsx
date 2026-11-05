@@ -34,6 +34,11 @@ export interface ReceiptViewProps {
   departAirport?: string | null;
   /** Where the holiday is, to show official public transfer fares when transfers aren't included. */
   destination?: string | null;
+  /**
+   * Shared pages only: the place name they may print (never what the family typed). When given,
+   * even as null, it replaces the destination in the receipt's header.
+   */
+  publicPlace?: string | null;
   /** Currency the advert was priced in ("EUR", "USD"); a card-fee note shows for anything but pounds. */
   advertisedCurrency?: string | null;
   /** Package or booked separately, as the family confirmed. Picks the "If it goes wrong" lines. */
@@ -98,7 +103,10 @@ export function ReceiptView(props: ReceiptViewProps) {
           <div className="receipt-top">
             <span className="paper-head">
               <span>TRUEVSAD · RECEIPT</span>
-              {props.destination && <span>{props.destination.split(",")[0]?.toUpperCase()}</span>}
+              {(() => {
+                const shown = props.publicPlace !== undefined ? props.publicPlace : props.destination?.split(",")[0];
+                return shown ? <span>{shown.toUpperCase()}</span> : null;
+              })()}
             </span>
             <VerdictStamp fm={fairMark} className="receipt-stamp" />
           </div>

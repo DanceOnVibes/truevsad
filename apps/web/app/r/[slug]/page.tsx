@@ -41,7 +41,7 @@ export default async function SharedReceiptPage({ params }: { params: Params }) 
     <main>
       <h1>True price receipt</h1>
       <p className="lead">
-        {r.destination ? `${r.destination} · ` : ""}
+        {r.publicPlace ? `${r.publicPlace} · ` : ""}
         {r.nights} night{r.nights === 1 ? "" : "s"} · {who} · priced{" "}
         {new Date(r.createdAt).toLocaleDateString("en-GB", {
           day: "numeric",

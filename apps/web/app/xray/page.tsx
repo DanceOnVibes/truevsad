@@ -320,7 +320,7 @@ export default function XrayPage() {
           />
           <p className="hint">
             Tip: crop out names and booking references first. We only read the deal details and
-            never keep the screenshot.
+            never keep the screenshot. <a href="/privacy">What we keep, and for how long</a>.
           </p>
 
           <button onClick={onExtract} disabled={busy || (!url && !text && !screenshot)}>
