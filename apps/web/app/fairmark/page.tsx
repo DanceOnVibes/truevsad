@@ -6,6 +6,8 @@ import { INCLUSION_LABELS } from "@/lib/supplier-defaults";
 import {
   LEADERBOARD_DAYS,
   LEADERBOARD_MIN_DEALS,
+  LEADERBOARD_MIN_FAMILIES,
+  LEADERBOARD_PER_FAMILY,
   loadLeaderboard,
   loadListedDeals,
   type LeaderboardRow,
@@ -86,8 +88,8 @@ export default async function FairMarkPage({ searchParams }: { searchParams: Sea
       {rows.length === 0 ? (
         <div className="card">
           <p style={{ marginTop: 0 }}>
-            Not enough deals checked yet. A seller appears here once families have X-rayed at least{" "}
-            {LEADERBOARD_MIN_DEALS} of its deals in the last {LEADERBOARD_DAYS} days.
+            Not enough deals checked yet. A seller appears here once at least {LEADERBOARD_MIN_FAMILIES} different
+            families have X-rayed {LEADERBOARD_MIN_DEALS} or more of its deals in the last {LEADERBOARD_DAYS} days.
           </p>
           <Link href="/xray">X-ray a deal →</Link>
         </div>
@@ -129,10 +131,12 @@ export default async function FairMarkPage({ searchParams }: { searchParams: Sea
             </tbody>
           </table>
           <p className="hint">
-            Every deal families X-rayed in the last {LEADERBOARD_DAYS} days ({board.dealsCounted} in all), priced
-            with today&apos;s fees for one standard family ({ref}) so sellers are compared like for like.
-            &ldquo;Total price&rdquo; adverts keep their own party. Sellers need {LEADERBOARD_MIN_DEALS}+ deals to
-            appear; ✓ means 30+ deals in 5+ destinations with a median of {FAIRMARK_SCALE.fair}% or less left out, and is never
+            Every deal families X-rayed in the last {LEADERBOARD_DAYS} days ({board.dealsCounted} counted), priced
+            again every night with that day&apos;s fees for one standard family ({ref}) so sellers are compared like for like.
+            &ldquo;Total price&rdquo; adverts keep their own party. Sellers need {LEADERBOARD_MIN_DEALS}+ deals from{" "}
+            {LEADERBOARD_MIN_FAMILIES}+ different families to appear; the same deal checked twice counts once, and one
+            family counts for at most {LEADERBOARD_PER_FAMILY} deals per seller. We check every seller&apos;s name before
+            it&apos;s shown. ✓ means 30+ deals in 5+ destinations with a median of {FAIRMARK_SCALE.fair}% or less left out, and is never
             for sale. A seller is the company selling the deal, not the brand of holiday inside it. Sellers can
             challenge any figure: see <Link href="/fairmark/method">how FairMark works</Link>. Updated{" "}
             {new Date(at).toLocaleString("en-GB", { hour: "2-digit", minute: "2-digit", day: "numeric", month: "short", timeZone: "Europe/London" })}.
@@ -187,7 +191,9 @@ export default async function FairMarkPage({ searchParams }: { searchParams: Sea
       )}
       <p className="hint">
         Newest first. FairMark never changes the order. Prices are recalculated with today&apos;s fees
-        each time you open this page; the advertised price is what the family saw on the day.
+        each time you open this page; the advertised price is what the family saw on the day. We show the
+        place, never the hotel, and a seller&apos;s name only once we&apos;ve checked it, so a shared deal can
+        take a day or two to appear.
       </p>
     </main>
   );

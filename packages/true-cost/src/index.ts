@@ -124,3 +124,4 @@ export {
   type FcdoNumber,
   type VerifiedNumbers,
 } from "./fcdo";
+export { EXTRA_PLACES, fold, knownPlaceIn, placeKey, placeLabel, sellerKey } from "./names";
