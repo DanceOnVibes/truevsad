@@ -453,7 +453,7 @@ export function FairFamClient({ councils }: { councils: string[] }) {
               <p className="hint">
                 Booked?{" "}
                 <a href={`/plan-b${ages.length ? `?children=${Math.min(6, ages.length)}` : ""}`}>Make your Plan B card →</a>{" "}
-                One page with 112, the nearest hospitals and a card for each child, that works with no signal.
+                One page with 112, the nearest hospitals and a card for each child, that works with no signal once saved or printed.
               </p>
             </>
           )}

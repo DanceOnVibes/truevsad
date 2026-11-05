@@ -17,7 +17,7 @@ export const maxDuration = 45;
 export const metadata: Metadata = {
   title: "Plan B — TrueVsAd",
   description:
-    "One page for your trip that works with no signal: the emergency numbers, what to do in a wildfire, flood, storm or earthquake, the nearest hospitals, UK help and your family's meeting point. Nothing you type leaves your phone.",
+    "One page for your trip that works with no signal once you've saved or printed it: the emergency numbers, what to do in a wildfire, flood, storm or earthquake, the nearest hospitals, UK help and your family's meeting point. Only the place name leaves your phone.",
 };
 
 type Search = Promise<{ q?: string; children?: string }>;
@@ -108,9 +108,9 @@ export default async function PlanBPage({ searchParams }: { searchParams: Search
         <HolidayScene photo="night" label="TRUEVSAD · 03 PLAN B" />
         <h1>Plan B</h1>
         <p className="lead">
-          One page for your trip for when things go wrong: a wildfire, a flood, a storm, an earthquake or a power cut. It
-          still works when the signal has gone and the card machine is dead. Make it before you fly, save it to your phone
-          and print a copy.
+          One page for your trip for when things go wrong: a wildfire, a flood, a storm, an earthquake or a power cut. Saved
+          to your phone or printed, it still works when the signal has gone and the card machine is dead. Make it before you
+          fly, save it to your phone and print a copy.
         </p>
 
         <form className="card form-ink" method="get">
@@ -141,7 +141,7 @@ export default async function PlanBPage({ searchParams }: { searchParams: Search
             <a href={fcdo.url} target="_blank" rel="noopener noreferrer">
               GOV.UK&apos;s travel advice
             </a>
-            , refreshed every day, and the hospitals come from the map.
+            , checked against GOV.UK every morning, and the hospitals come from the map.
           </p>
         )}
         {q && !plan && !fcdo && (

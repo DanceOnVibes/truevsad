@@ -1,11 +1,12 @@
 import { Fragment } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { FAIRMARK_SCALE, type FairMarkLevel } from "@truevsad/true-cost";
+import { AIRLINE_BAGS, FAIRMARK_SCALE, type FairMarkLevel } from "@truevsad/true-cost";
 import { loadListedDeals, type ListedDeal } from "@/lib/quotes";
 import { HolidayScene } from "@/components/HolidayScene";
 import { VerdictStamp, verdictFor } from "@/components/VerdictStamp";
 import { exampleReceipts, gbp } from "@/lib/examples";
+import { loadAuthorities } from "@/lib/school";
 
 // The public-receipts strip shows real receipts families chose to list, so refresh it now and then.
 export const revalidate = 300;
@@ -34,7 +35,13 @@ function Zigzag({ flip = false }: { flip?: boolean }) {
 
 export default async function Home() {
   // Priced by the engine with today's rules (never typed by hand); hidden if the rules can't load.
-  const [deals, ex] = await Promise.all([publicReceipts(), exampleReceipts().catch(() => null)]);
+  const [deals, ex, councils] = await Promise.all([
+    publicReceipts(),
+    exampleReceipts().catch(() => null),
+    loadAuthorities()
+      .then((a) => a.length)
+      .catch(() => 0),
+  ]);
   const strip = deals.length >= 3 ? deals : [];
 
   return (
@@ -225,7 +232,8 @@ export default async function Home() {
             <span className="tool-name">Plan B</span>
             <span>
               One page for wildfires, floods, storms, earthquakes and power cuts: what to do, the emergency numbers, the nearest
-              hospitals, UK help and your family&apos;s meeting point. Works with no signal. Nothing you type leaves your phone.
+              hospitals, UK help and your family&apos;s meeting point. Save or print it and it works with no signal. Only the
+              place name leaves your phone.
             </span>
           </Link>
           <Link href="/fairmark" className="tool">
@@ -239,12 +247,18 @@ export default async function Home() {
           <Link href="/cabin-bags" className="tool">
             <span className="tool-n">05</span>
             <span className="tool-name">Will my bag fit?</span>
-            <span>Every airline has its own cabin bag sizes. Measure yours and see where it flies free, from each airline&apos;s own rules.</span>
+            <span>
+              Every airline has its own cabin bag sizes. Measure yours and see where it flies free on {AIRLINE_BAGS.length} airlines
+              that fly most UK families, from each airline&apos;s own rules.
+            </span>
           </Link>
           <Link href="/school-window" className="tool">
             <span className="tool-n">06</span>
             <span className="tool-name">School Window</span>
-            <span>See your council&apos;s school holidays, the quieter weeks either side, and what a trip would miss.</span>
+            <span>
+              {councils > 0 ? `School holidays for ${councils} councils so far, ` : "Council school holidays, "}the quieter weeks
+              either side, and what a trip would miss.
+            </span>
           </Link>
           <Link href="/visit" className="tool">
             <span className="tool-n">07</span>

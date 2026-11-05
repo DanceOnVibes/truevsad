@@ -290,6 +290,8 @@ export interface PublicReceipt {
   gapPence: number;
   confidence: number;
   usedDemoRules: boolean;
+  /** The engine version that priced it when it was saved. */
+  engineVersion: string | null;
   createdAt: string;
   nights: number;
   destination: string | null;
@@ -336,7 +338,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
   const { data: q } = await db
     .from("true_cost_quote")
     .select(
-      "id, advertised_pence, true_cost_pence, gap_pence, confidence, used_demo_rules, created_at, fairmark_level, notes, offer:offer_id (nights, destination, includes, excludes_taxes_and_fees, depart_on, depart_month, airline, headline_pence, headline_basis, currency, supplier_name, free_child_claim, fx_from_currency, fx_from_amount_minor, fx_rate, fx_date, booking_type), party:party_id (adults, child_ages, hold_bags)",
+      "id, advertised_pence, true_cost_pence, gap_pence, confidence, used_demo_rules, engine_version, created_at, fairmark_level, notes, offer:offer_id (nights, destination, includes, excludes_taxes_and_fees, depart_on, depart_month, airline, headline_pence, headline_basis, currency, supplier_name, free_child_claim, fx_from_currency, fx_from_amount_minor, fx_rate, fx_date, booking_type), party:party_id (adults, child_ages, hold_bags)",
     )
     .eq("share_slug", slug)
     .eq("is_public", true)
@@ -450,6 +452,7 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
     gapPence: Number(q.gap_pence),
     confidence: Number(q.confidence),
     usedDemoRules: Boolean(q.used_demo_rules),
+    engineVersion: (q.engine_version as string | null) ?? null,
     createdAt: q.created_at as string,
     nights: offer?.nights ?? 0,
     destination: offer?.destination ?? null,

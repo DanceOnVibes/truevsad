@@ -77,6 +77,14 @@ export async function refreshFcdo({ maxFetch = 120, deadlineMs = 240_000 } = {})
     .sort((a, b) => a.age - b.age);
 
   const summary: RefreshSummary = { countries: index.length, fetched: 0, changed: 0, failed: [], remaining: 0 };
+
+  // Countries the index shows unchanged since our copy: confirmed current this morning.
+  const todoSlugs = new Set(todo.map((t) => t.c.slug));
+  const confirmed = index.filter((c) => ours.has(c.slug) && !todoSlugs.has(c.slug)).map((c) => c.slug);
+  if (confirmed.length) {
+    const { error: ckErr } = await db.from("fcdo_advice").update({ checked_at: new Date().toISOString() }).in("slug", confirmed);
+    if (ckErr) console.error("fcdo_advice checked_at failed:", ckErr.message);
+  }
   for (const [i, t] of todo.entries()) {
     if (summary.fetched >= maxFetch || Date.now() - started > deadlineMs) {
       summary.remaining = todo.length - i;
@@ -97,6 +105,7 @@ export async function refreshFcdo({ maxFetch = 120, deadlineMs = 240_000 } = {})
         synonyms: advice.synonyms.slice(0, 40),
         updated_at: advice.updatedAt,
         fetched_at: now,
+        checked_at: now,
         alert_status: advice.alertStatus,
         emergency: advice.emergency,
         hazards: advice.hazards,
@@ -121,6 +130,8 @@ export interface FcdoCard {
   url: string;
   updatedAt: string | null;
   fetchedAt: string;
+  /** When we last confirmed our copy matches GOV.UK (re-read, or the FCDO's index showed no change). */
+  checkedAt: string;
   alertStatus: string[];
   emergency: { text: string; numbers: FcdoNumber[] } | null;
   hazards: FcdoHazard[];
@@ -144,7 +155,7 @@ export async function fcdoForCountryName(country: string): Promise<FcdoCard | nu
   if (!slug) return null;
   const { data } = await db
     .from("fcdo_advice")
-    .select("slug, name, updated_at, fetched_at, alert_status, emergency, hazards")
+    .select("slug, name, updated_at, fetched_at, checked_at, alert_status, emergency, hazards")
     .eq("slug", slug)
     .maybeSingle();
   if (!data) return null;
@@ -154,6 +165,7 @@ export async function fcdoForCountryName(country: string): Promise<FcdoCard | nu
     url: `https://www.gov.uk/foreign-travel-advice/${data.slug as string}`,
     updatedAt: (data.updated_at as string) ?? null,
     fetchedAt: data.fetched_at as string,
+    checkedAt: ((data.checked_at as string | null) ?? (data.fetched_at as string)),
     alertStatus: (data.alert_status as string[]) ?? [],
     emergency: (data.emergency as FcdoCard["emergency"]) ?? null,
     hazards: (data.hazards as FcdoHazard[]) ?? [],
