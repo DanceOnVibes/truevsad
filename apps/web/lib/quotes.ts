@@ -2,11 +2,17 @@ import { randomBytes } from "node:crypto";
 import {
   calculateTrueCost,
   childExtras,
+  EXTRA_PLACES,
   fairMark,
   fairMarkLevel,
+  fold,
   isFairPrice,
+  knownPlaceIn,
+  placeKey,
+  placeLabel,
   REFERENCE_PARTY,
   selectRules,
+  sellerKey,
   type FairMark,
   type FairMarkLevel,
   FAIRMARK_SCALE,
@@ -119,8 +125,14 @@ export async function saveQuote(input: {
   result: TrueCostResult;
   sourceKind: SourceKind;
   sourceUrl?: string;
-  /** Set when the advert was in euros or dollars: kept so shared receipts show the original price and rate. */
+  /** When the advert was in euros or dollars: kept so shared receipts show the original price and rate. */
   conversion?: Conversion;
+  /** Every active fee rule (not just this deal's), for FairMark's standard-family figure. */
+  rules: FeeRule[];
+  /** FairMark's scrambled visitor code (see familyCode), so one family counts once. */
+  familyCode: string | null;
+  /** "Edit details": the earlier quote this one replaces. Removed if it's unshared and from the same visitor. */
+  replaces?: string;
 }): Promise<string | null> {
   const db = supabaseAdmin();
   if (!db) return null;
@@ -141,13 +153,17 @@ export async function saveQuote(input: {
     return null;
   }
   const id = data as string;
+
   // FairMark is stored with the quote so shares and history stay consistent.
   const fm = fairMark(input.result);
-  const { error: fmErr } = await db
-    .from("true_cost_quote")
-    .update({ fairmark_percent: fm.percent, fairmark_level: fm.level })
-    .eq("id", id);
-  if (fmErr) console.error("fairmark save failed:", fmErr.message);
+  const quoteExtra: Record<string, unknown> = {
+    fairmark_percent: fm.percent,
+    fairmark_level: fm.level,
+    source_hash: input.familyCode,
+  };
+  // What the receipt said when it was priced (conversion, advert checks, seasonal rates).
+  if (input.result.notes.length) quoteExtra.notes = input.result.notes.slice(0, 12);
+
   const extra: Record<string, unknown> = {};
   if (input.offer.freeChildClaim) extra.free_child_claim = true;
   if (input.offer.airline) extra.airline = input.offer.airline;
@@ -159,20 +175,38 @@ export async function saveQuote(input: {
     extra.fx_rate = input.conversion.rate;
     extra.fx_date = input.conversion.date;
   }
-  const { data: q } = await db.from("true_cost_quote").select("offer_id, party_id").eq("id", id).maybeSingle();
-  if (q?.offer_id && Object.keys(extra).length) {
-    const { error: oErr } = await db.from("offer").update(extra).eq("id", q.offer_id);
-    if (oErr) console.error("offer extras save failed:", oErr.message);
-  }
-  if (q?.party_id && input.party.holdBags !== undefined) {
-    const { error: pErr } = await db.from("party").update({ hold_bags: input.party.holdBags }).eq("id", q.party_id);
-    if (pErr) console.error("party bags save failed:", pErr.message);
-  }
-  // What the receipt said when it was priced (conversion, advert checks, seasonal rates).
-  if (input.result.notes.length) {
-    const { error: nErr } = await db.from("true_cost_quote").update({ notes: input.result.notes.slice(0, 12) }).eq("id", id);
-    if (nErr) console.error("notes save failed:", nErr.message);
-  }
+
+  const [{ data: q }, known] = await Promise.all([
+    db.from("true_cost_quote").select("offer_id, party_id").eq("id", id).maybeSingle(),
+    knownPlaces(input.rules),
+  ]);
+  const entry = fairMarkIndexEntry(id, input.offer, input.party, input.rules, known);
+
+  // Independent writes, all at once (each one logs its own failure and never blocks the answer).
+  const logIf = (what: string) => ({ error }: { error: { message: string } | null }) => {
+    if (error) console.error(`${what} failed:`, error.message);
+  };
+  await Promise.all([
+    db.from("true_cost_quote").update(quoteExtra).eq("id", id).then(logIf("quote extras save")),
+    q?.offer_id && Object.keys(extra).length
+      ? db.from("offer").update(extra).eq("id", q.offer_id).then(logIf("offer extras save"))
+      : null,
+    q?.party_id && input.party.holdBags !== undefined
+      ? db.from("party").update({ hold_bags: input.party.holdBags }).eq("id", q.party_id).then(logIf("party bags save"))
+      : null,
+    db.rpc("fairmark_index", { p: [entry] }).then(logIf("fairmark_index")),
+    // "Edit details" priced the same deal again: drop the earlier private quote, so FairMark
+    // never counts one family's corrections as extra deals. Only the same visitor's, never a shared one.
+    input.replaces && input.replaces !== id && input.familyCode
+      ? db
+          .from("true_cost_quote")
+          .delete()
+          .eq("id", input.replaces)
+          .is("share_slug", null)
+          .eq("source_hash", input.familyCode)
+          .then(logIf("replaced quote removal"))
+      : null,
+  ]);
   return id;
 }
 
@@ -423,6 +457,10 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
 export const LEADERBOARD_DAYS = 30;
 /** A seller needs at least this many checked deals before it's named on the leaderboard. */
 export const LEADERBOARD_MIN_DEALS = 10;
+/** …from at least this many different families (scrambled visitor codes), */
+export const LEADERBOARD_MIN_FAMILIES = 5;
+/** …and each family counts for at most this many deals per seller, so one person can't sway a median. */
+export const LEADERBOARD_PER_FAMILY = 2;
 
 interface BoardOfferRow {
   nights: number;
@@ -460,21 +498,8 @@ function toOffer(o: BoardOfferRow): Offer {
   };
 }
 
-/** "Golden Donaire Beach, Tarragona, Spain" → "tarragona spain": town/region + country, without the hotel. */
-export function placeKey(destination: string): string {
-  const parts = destination.split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
-  return (parts.length >= 3 ? parts.slice(-2) : parts.length === 2 ? parts : parts.slice(0, 1)).join(" ");
-}
-
-/** "Jet2holidays.com", "jet2 holidays" → "jet2holidays": one leaderboard row per seller. */
-export function sellerKey(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\b(www|com|co|uk|ltd|limited)\b/g, "")
-    .replace(/[^a-z0-9]+/g, "");
-}
+// One seller key and one place key however it's typed (moved to the engine so it can be tested).
+export { placeKey, sellerKey } from "@truevsad/true-cost";
 
 export interface ListedDeal {
   slug: string;
@@ -491,26 +516,111 @@ export interface ListedDeal {
   includes: Inclusion[];
 }
 
+// ---------------------------------------------------------------------------
+// Names shown in public: approved sellers, recognised places
+// ---------------------------------------------------------------------------
+
+/** Fee-rule regions, popular places and FCDO country names: the places we can name in public. */
+export interface KnownPlaces {
+  places: string[];
+  countries: string[];
+}
+
+let countryCache: { at: number; names: string[] } | null = null;
+
+export async function knownPlaces(rules: FeeRule[]): Promise<KnownPlaces> {
+  if (!countryCache || Date.now() - countryCache.at > 6 * 3_600_000) {
+    const db = supabaseAdmin();
+    const { data } = db ? await db.from("fcdo_advice").select("name") : { data: null };
+    const names = (data ?? []).map((r) => String((r as { name: string }).name)).filter(Boolean);
+    if (names.length) countryCache = { at: Date.now(), names };
+  }
+  return {
+    places: [...new Set([...rules.flatMap((r) => r.regions ?? []), ...EXTRA_PLACES])],
+    countries: countryCache?.names ?? [],
+  };
+}
+
+/** Approved names, by key: what may appear on /fairmark and the homepage. */
+async function approvedNames(): Promise<{ sellers: Map<string, string>; places: Map<string, string> }> {
+  const sellers = new Map<string, string>();
+  const places = new Map<string, string>();
+  const db = supabaseAdmin();
+  if (!db) return { sellers, places };
+  const { data, error } = await db.from("public_name").select("kind, key, display").eq("status", "approved");
+  if (error) console.error("public_name read failed:", error.message);
+  for (const r of (data ?? []) as { kind: string; key: string; display: string }[]) {
+    (r.kind === "seller" ? sellers : places).set(r.key, r.display);
+  }
+  return { sellers, places };
+}
+
+/** The place a listed deal may show: a recognised place, or one a person approved. Never the hotel. */
+function publicPlace(destination: string | null, known: KnownPlaces, approved: Map<string, string>): string | null {
+  if (!destination) return null;
+  return knownPlaceIn(destination, known.places, known.countries) ?? approved.get(placeKey(destination)) ?? null;
+}
+
+/** What FairMark stores for one quote: the engine's figure for the standard family, and the name keys. */
+export interface FairMarkIndexEntry {
+  id: string;
+  ref_percent: number | null;
+  seller_key: string | null;
+  /** The seller as typed: only stored as a name waiting for review, never shown until approved. */
+  seller: string | null;
+  place_key: string | null;
+  /** Set only for a place we don't recognise, so a person can look at it. */
+  place: string | null;
+}
+
+export function fairMarkIndexEntry(id: string, offer: Offer, party: Party, rules: FeeRule[], known: KnownPlaces): FairMarkIndexEntry {
+  // Sellers are compared on one standard family; a "total price" advert keeps its own party.
+  const refParty = offer.headlineBasis === "per_person" ? REFERENCE_PARTY : party;
+  let ref: number | null = null;
+  try {
+    ref = fairMark(calculateTrueCost({ party: refParty, offer, rules: selectRules(rules, offer) })).percent;
+  } catch {
+    ref = null;
+  }
+  const seller = offer.supplierName?.trim() ?? "";
+  const sKey = seller ? sellerKey(seller).slice(0, 120) : "";
+  const recognised = offer.destination ? knownPlaceIn(offer.destination, known.places, known.countries) : null;
+  const pKey = offer.destination ? (recognised ? fold(recognised) : placeKey(offer.destination)).slice(0, 120) : "";
+  return {
+    id,
+    ref_percent: ref,
+    seller_key: sKey || null,
+    seller: sKey ? seller.slice(0, 80) : null,
+    place_key: pKey || null,
+    place: pKey && !recognised && offer.destination ? placeLabel(offer.destination) : null,
+  };
+}
+
 /**
  * Deals families chose to list publicly, newest first, each re-priced with today's rules
  * for the family's own party (FairMark is recalculated on every view).
  * Order stays newest first: FairMark never boosts or demotes a deal.
+ * A deal only appears once its place can be named safely, and the seller only once approved.
  */
 export async function loadListedDeals(fairOnly: boolean): Promise<ListedDeal[]> {
   const db = supabaseAdmin();
   if (!db) return [];
-  const { data } = await db
-    .from("true_cost_quote")
-    .select(
-      "share_slug, created_at, offer:offer_id (nights, destination, supplier_name, includes, depart_on, depart_month, airline, headline_pence, headline_basis, currency, excludes_taxes_and_fees, free_child_claim), party:party_id (adults, child_ages)",
-    )
-    .eq("listed", true)
-    .eq("is_public", true)
-    .order("created_at", { ascending: false })
-    .limit(200);
+  const [{ data }, rules, names] = await Promise.all([
+    db
+      .from("true_cost_quote")
+      .select(
+        "share_slug, created_at, offer:offer_id (nights, destination, supplier_name, includes, depart_on, depart_month, airline, headline_pence, headline_basis, currency, excludes_taxes_and_fees, free_child_claim), party:party_id (adults, child_ages)",
+      )
+      .eq("listed", true)
+      .eq("is_public", true)
+      .order("created_at", { ascending: false })
+      .limit(200),
+    loadFeeRules(),
+    approvedNames(),
+  ]);
   if (!data) return [];
+  const known = await knownPlaces(rules);
 
-  const rules = await loadFeeRules();
   const out: ListedDeal[] = [];
   for (const row of data as unknown as {
     share_slug: string;
@@ -521,6 +631,8 @@ export async function loadListedDeals(fairOnly: boolean): Promise<ListedDeal[]> 
     const o = one(row.offer);
     const p = one(row.party);
     if (!o || !p) continue;
+    const place = publicPlace(o.destination, known, names.places);
+    if (!place) continue; // waiting for a person to check the place name
     try {
       const offer = toOffer(o);
       const res = calculateTrueCost({
@@ -533,8 +645,8 @@ export async function loadListedDeals(fairOnly: boolean): Promise<ListedDeal[]> 
       out.push({
         slug: row.share_slug,
         createdAt: row.created_at,
-        destination: o.destination,
-        supplierName: o.supplier_name,
+        destination: place,
+        supplierName: o.supplier_name ? (names.sellers.get(sellerKey(o.supplier_name)) ?? null) : null,
         nights: o.nights,
         adults: p.adults,
         children: p.child_ages?.length ?? 0,
@@ -554,6 +666,8 @@ export async function loadListedDeals(fairOnly: boolean): Promise<ListedDeal[]> 
 export interface LeaderboardRow {
   seller: string;
   deals: number;
+  /** Different families (scrambled visitor codes) behind those deals. */
+  families: number;
   destinations: number;
   averagePercent: number;
   medianPercent: number;
@@ -567,75 +681,107 @@ export interface LeaderboardRow {
 }
 
 /**
- * Operator Fairness Leaderboard. Every deal checked in the last 30 days (shared or not —
- * only anonymous totals per seller are shown) is re-priced with today's rules for ONE
- * reference family (2 adults, children 7 and 11), so sellers are compared like for like.
- * "Total price" adverts keep their own party: the price was for that party.
+ * Operator Fairness Leaderboard, worked out in the database in one query. Every deal checked
+ * in the last 30 days (shared or not — only anonymous totals per seller are shown) carries the
+ * engine's FairMark for ONE reference family (2 adults, children 7 and 11), refreshed nightly
+ * with that day's fees. Only approved seller names appear; repeats count once; each family
+ * counts at most twice per seller; a seller needs 10+ deals from 5+ families.
  */
 export async function loadLeaderboard(): Promise<{ rows: LeaderboardRow[]; dealsCounted: number }> {
   const db = supabaseAdmin();
   if (!db) return { rows: [], dealsCounted: 0 };
-  const since = new Date(Date.now() - LEADERBOARD_DAYS * 86_400_000).toISOString();
-  const { data } = await db
-    .from("true_cost_quote")
-    .select(
-      "offer:offer_id (nights, destination, supplier_name, includes, depart_on, depart_month, airline, headline_pence, headline_basis, currency, excludes_taxes_and_fees, free_child_claim), party:party_id (adults, child_ages)",
-    )
-    .gte("created_at", since)
-    .limit(5000);
-  if (!data) return { rows: [], dealsCounted: 0 };
+  const { data, error } = await db.rpc("fairmark_leaderboard", {
+    p_days: LEADERBOARD_DAYS,
+    p_min_deals: LEADERBOARD_MIN_DEALS,
+    p_min_sources: LEADERBOARD_MIN_FAMILIES,
+    p_per_source: LEADERBOARD_PER_FAMILY,
+    p_fair: FAIRMARK_SCALE.fair,
+  });
+  if (error || !data) {
+    if (error) console.error("fairmark_leaderboard failed:", error.message);
+    return { rows: [], dealsCounted: 0 };
+  }
+  const res = data as {
+    dealsCounted: number;
+    rows: {
+      seller: string;
+      deals: number;
+      sources: number;
+      destinations: number;
+      averagePercent: number;
+      medianPercent: number;
+      fairShare: number;
+      bestPercent: number;
+      worstPercent: number;
+    }[];
+  };
+  const rows = res.rows.map((r) => ({
+    seller: r.seller,
+    deals: r.deals,
+    families: r.sources,
+    destinations: r.destinations,
+    averagePercent: r.averagePercent,
+    medianPercent: r.medianPercent,
+    fairShare: r.fairShare,
+    bestPercent: r.bestPercent,
+    worstPercent: r.worstPercent,
+    level: fairMarkLevel(r.medianPercent),
+    verified: r.deals >= 30 && r.destinations >= 5 && r.medianPercent <= FAIRMARK_SCALE.fair,
+  }));
+  return { rows, dealsCounted: res.dealsCounted };
+}
 
+/**
+ * The nightly job: re-price every deal from the last 30 days for the standard family with
+ * today's fees, so the leaderboard never uses yesterday's rules for long. Pages through the
+ * table 1,000 at a time (no row cap) and writes back in batches.
+ */
+export async function reindexFairMark({ deadlineMs = 240_000 } = {}): Promise<{ indexed: number; skipped: number; done: boolean } | { error: string }> {
+  const db = supabaseAdmin();
+  if (!db) return { error: "Supabase isn't configured" };
+  const started = Date.now();
   const rules = await loadFeeRules();
-  type SellerGroup = { names: Map<string, number>; pcts: number[]; places: Set<string> };
-  const groups = new Map<string, SellerGroup>();
-  let dealsCounted = 0;
-  for (const row of data as unknown as {
-    offer: BoardOfferRow | BoardOfferRow[] | null;
-    party: { adults: number; child_ages: number[] | null } | { adults: number; child_ages: number[] | null }[] | null;
-  }[]) {
-    const o = one(row.offer);
-    const p = one(row.party);
-    if (!o || !p || !o.supplier_name) continue; // no seller name: badge only, not on the leaderboard
-    const key = sellerKey(o.supplier_name);
-    if (!key) continue;
-    try {
-      const offer = toOffer(o);
-      const party = offer.headlineBasis === "per_person" ? REFERENCE_PARTY : { adults: p.adults, childAges: p.child_ages ?? [] };
-      const fm = fairMark(calculateTrueCost({ party, offer, rules: selectRules(rules, offer) }));
-      if (fm.percent === null) continue;
-      const g: SellerGroup = groups.get(key) ?? { names: new Map(), pcts: [], places: new Set() };
-      g.names.set(o.supplier_name, (g.names.get(o.supplier_name) ?? 0) + 1);
-      g.pcts.push(fm.percent);
-      if (o.destination) g.places.add(placeKey(o.destination));
-      groups.set(key, g);
-      dealsCounted++;
-    } catch {
-      /* skip */
-    }
-  }
+  if (rules === DEMO_RULES) return { error: "Only demo fee rules could be loaded, so nothing was re-priced" };
+  const known = await knownPlaces(rules);
+  const since = new Date(Date.now() - LEADERBOARD_DAYS * 86_400_000).toISOString();
 
-  const rows: LeaderboardRow[] = [];
-  for (const g of groups.values()) {
-    if (g.pcts.length < LEADERBOARD_MIN_DEALS) continue;
-    const sorted = [...g.pcts].sort((a, b) => a - b);
-    const mid = sorted.length / 2;
-    const median = sorted.length % 2 ? sorted[Math.floor(mid)]! : (sorted[mid - 1]! + sorted[mid]!) / 2;
-    const average = g.pcts.reduce((s, x) => s + x, 0) / g.pcts.length;
-    const name = [...g.names.entries()].sort((a, b) => b[1] - a[1])[0]![0];
-    rows.push({
-      seller: name,
-      deals: g.pcts.length,
-      destinations: g.places.size,
-      averagePercent: average,
-      medianPercent: median,
-      fairShare: g.pcts.filter((x) => x <= FAIRMARK_SCALE.fair).length / g.pcts.length,
-      bestPercent: sorted[0]!,
-      worstPercent: sorted.at(-1)!,
-      level: fairMarkLevel(median),
-      verified: g.pcts.length >= 30 && g.places.size >= 5 && median <= FAIRMARK_SCALE.fair,
-    });
+  let indexed = 0;
+  let skipped = 0;
+  const PAGE = 1000;
+  for (let from = 0; ; from += PAGE) {
+    if (Date.now() - started > deadlineMs) return { indexed, skipped, done: false };
+    const { data, error } = await db
+      .from("true_cost_quote")
+      .select(
+        "id, offer:offer_id (nights, destination, supplier_name, includes, depart_on, depart_month, airline, headline_pence, headline_basis, currency, excludes_taxes_and_fees, free_child_claim), party:party_id (adults, child_ages)",
+      )
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .order("id")
+      .range(from, from + PAGE - 1);
+    if (error) return { error: `Reading quotes failed: ${error.message}` };
+    const page = (data ?? []) as unknown as {
+      id: string;
+      offer: BoardOfferRow | BoardOfferRow[] | null;
+      party: { adults: number; child_ages: number[] | null } | { adults: number; child_ages: number[] | null }[] | null;
+    }[];
+    const entries: FairMarkIndexEntry[] = [];
+    for (const row of page) {
+      const o = one(row.offer);
+      const p = one(row.party);
+      if (!o || !p) {
+        skipped++;
+        continue;
+      }
+      entries.push(fairMarkIndexEntry(row.id, toOffer(o), { adults: p.adults, childAges: p.child_ages ?? [] }, rules, known));
+    }
+    for (let i = 0; i < entries.length; i += 500) {
+      const { error: upErr } = await db.rpc("fairmark_index", { p: entries.slice(i, i + 500) });
+      if (upErr) return { error: `Saving FairMark failed: ${upErr.message}` };
+    }
+    indexed += entries.length;
+    if (page.length < PAGE) return { indexed, skipped, done: true };
   }
-  return { rows, dealsCounted };
 }
 
 // ---------------------------------------------------------------------------

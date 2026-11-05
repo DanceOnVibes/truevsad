@@ -167,6 +167,12 @@ export default function PrivacyPage() {
                 <td>Made from your IP address; never the address</td>
                 <td>Under a day</td>
               </tr>
+              <tr>
+                <td>FairMark family code</td>
+                <td>Counting different families, so one person can&apos;t sway a seller&apos;s FairMark</td>
+                <td>A second scrambled code made from your IP address; never the address</td>
+                <td>30 days, then removed from the receipt</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -196,7 +202,9 @@ export default function PrivacyPage() {
         <h2>Stopping abuse</h2>
         <p>
           To stop automated spam we count requests per visitor. We store a scrambled code made from
-          your IP address, never the address itself, and delete it within a day.
+          your IP address, never the address itself, and delete it within a day. FairMark keeps a second,
+          different scrambled code with each receipt for 30 days, so the sellers&apos; leaderboard counts
+          different families rather than clicks. Neither code can be turned back into your address.
         </p>
 
         <h2>Cookies and tracking</h2>

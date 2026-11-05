@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { refreshFcdo } from "@/lib/fcdo";
+import { cronRefusal } from "@/lib/cron-auth";
 
 export const runtime = "nodejs";
 export const preferredRegion = "lhr1";
@@ -11,9 +12,8 @@ export const maxDuration = 300;
  * Vercel sends "Authorization: Bearer <CRON_SECRET>" with every scheduled run; anything else is refused.
  */
 export async function GET(req: Request) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return NextResponse.json({ error: "CRON_SECRET isn't set" }, { status: 503 });
-  if (req.headers.get("authorization") !== `Bearer ${secret}`) return NextResponse.json({ error: "Not allowed" }, { status: 401 });
+  const refused = cronRefusal(req);
+  if (refused) return refused;
   const result = await refreshFcdo();
   console.log("FCDO refresh:", JSON.stringify(result));
   return NextResponse.json(result, { status: "error" in result ? 500 : 200 });

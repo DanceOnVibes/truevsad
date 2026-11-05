@@ -32,6 +32,17 @@ function visitorKey(ip: string): string | null {
 }
 
 /**
+ * FairMark's scrambled visitor code: lets the leaderboard count different families rather than
+ * clicks. Made with a different purpose word than the spam counter, so the two can't be matched,
+ * and removed from the receipt after 30 days. Null if there's no secret or no IP to work from.
+ */
+export function familyCode(headers: Headers): string | null {
+  const ip = clientIp(headers);
+  if (ip === "unknown") return null;
+  return visitorKey(`fairmark:${ip}`);
+}
+
+/**
  * Returns true if the request may go ahead.
  * Fails OPEN: if the database is unreachable, real users are never blocked.
  */

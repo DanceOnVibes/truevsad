@@ -14,7 +14,7 @@ import {
   type Party,
 } from "@truevsad/true-cost";
 import { loadFeeRules, saveQuote, shareQuote, type SourceKind } from "@/lib/quotes";
-import { allowRequest } from "@/lib/rate-limit";
+import { allowRequest, familyCode } from "@/lib/rate-limit";
 import { aiConfigured, extractWithAi, type DraftOffer } from "@/lib/extract-ai";
 import { logObservation } from "@/lib/observations";
 import { conversionNote, toPence } from "@/lib/currency";
@@ -34,8 +34,9 @@ export const dynamic = "force-dynamic";
  *   { "step": "extract", "text"?: string, "url"?: string, "image"?: { mimeType, base64 } }
  *     → a DRAFT offer (read by Gemini in London when configured) for the user to check.
  *
- *   { "step": "quote", "party": Party, "offer": Offer, "sourceKind", "sourceUrl"? }
- *     → TrueCost result + itemised Receipt. Saved PRIVATELY; returns quoteId.
+ *   { "step": "quote", "party": Party, "offer": Offer, "sourceKind", "sourceUrl"?, "replaces"? }
+ *     → TrueCost result + itemised Receipt. Saved PRIVATELY; returns quoteId. "replaces" is the
+ *       quoteId this one corrects ("Edit details"), so the earlier private copy is removed.
  *
  *   { "step": "share", "quoteId": string }
  *     → makes that quote public and returns a random share slug (/r/[slug]).
@@ -65,7 +66,7 @@ export async function POST(req: Request) {
   }
 
   if (step === "extract") return extract(body);
-  if (step === "quote") return quote(body);
+  if (step === "quote") return quote(body, familyCode(req.headers));
   if (step === "split") return split(body);
   return share(body);
 }
@@ -257,7 +258,7 @@ function linkWords(url: string | undefined): string | undefined {
 // Step 2 — quote
 // ---------------------------------------------------------------------------
 
-async function quote(body: Record<string, unknown>) {
+async function quote(body: Record<string, unknown>, family: string | null) {
   const party = parseParty(body.party);
   if (typeof party === "string") return bad(party);
   const parsed = parseOffer(body.offer);
@@ -274,11 +275,14 @@ async function quote(body: Record<string, unknown>) {
   try {
     // The council lookup (for the School Window link) runs alongside pricing and never blocks it.
     const councilsP = suggestCouncil(party.outwardPostcode);
-    const rules = selectRules(await loadFeeRules(), offer);
+    const allRules = await loadFeeRules();
+    const rules = selectRules(allRules, offer);
     const result = calculateTrueCost({ party, offer, rules, asOf: new Date().toISOString().slice(0, 10) });
     if (conversion) result.notes.unshift(conversionNote(conversion));
+    // "Edit details": the quote this one corrects (an unguessable id only this browser was given).
+    const replaces = typeof body.replaces === "string" && UUID.test(body.replaces) ? body.replaces : undefined;
     // Saving must never block the answer: if it fails, the user still gets the price.
-    const quoteId = await saveQuote({ party, offer, result, sourceKind, sourceUrl, conversion });
+    const quoteId = await saveQuote({ party, offer, result, sourceKind, sourceUrl, conversion, rules: allRules, familyCode: family, replaces });
     const fm = fairMark(result);
     // Anonymous statistics, written after the answer is sent so the family never waits for it.
     after(() => logObservation({ party, offer, result, fairMark: fm, advertisedCurrency: conversion?.from }));

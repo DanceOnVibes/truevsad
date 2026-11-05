@@ -184,6 +184,8 @@ export default function XrayPage() {
       setBookingType(suggested?.type ?? "");
       setBookingHint(suggested ? `Pre-selected because ${suggested.reason}. Check your deal.` : null);
       setNotes([...(data.notes ?? []), ...extraNotes]);
+      // A new deal: the next price is a new quote, not a correction of the last one.
+      setQuoteId(null);
       setStep("confirm");
     } catch (e) {
       setError((e as Error).message);
@@ -221,6 +223,8 @@ export default function XrayPage() {
         step: "quote",
         sourceKind: text ? "text" : screenshot ? "screenshot" : "link",
         sourceUrl: url || undefined,
+        // After "Edit details" this corrects the last quote, so FairMark counts the deal once.
+        replaces: quoteId ?? undefined,
         party: {
           adults: Number(adults),
           childAges: ages,

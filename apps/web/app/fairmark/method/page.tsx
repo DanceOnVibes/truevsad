@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ENGINE_VERSION, FAIRMARK_MIN_CONFIDENCE, FAIRMARK_SCALE, REFERENCE_PARTY } from "@truevsad/true-cost";
 import { EMAILS } from "@/lib/company";
-import { LEADERBOARD_DAYS, LEADERBOARD_MIN_DEALS } from "@/lib/quotes";
+import { LEADERBOARD_DAYS, LEADERBOARD_MIN_DEALS, LEADERBOARD_MIN_FAMILIES, LEADERBOARD_PER_FAMILY } from "@/lib/quotes";
 
 export const metadata: Metadata = {
   title: "How FairMark works — TrueVsAd",
@@ -58,11 +58,20 @@ export default function FairMarkMethodPage() {
         <ul>
           <li>Built from every deal families X-rayed in the last {LEADERBOARD_DAYS} days, as anonymous totals per seller.</li>
           <li>
-            Every deal is re-priced with today&apos;s fees for one standard family ({REFERENCE_PARTY.adults} adults,
+            Every deal is re-priced every night with that day&apos;s fees for one standard family ({REFERENCE_PARTY.adults} adults,
             children aged {REFERENCE_PARTY.childAges.join(" and ")}), so sellers are compared like for like.
           </li>
           <li>Ranked by the median gap, so one unusual deal can&apos;t make or break a seller. Best and worst deals are shown too.</li>
-          <li>A seller needs at least {LEADERBOARD_MIN_DEALS} checked deals to appear.</li>
+          <li>
+            A seller needs at least {LEADERBOARD_MIN_DEALS} checked deals, from at least {LEADERBOARD_MIN_FAMILIES} different
+            families, to appear. The same deal checked twice counts once, and one family counts for at most{" "}
+            {LEADERBOARD_PER_FAMILY} deals per seller, so no one person can push a seller up or down.
+          </li>
+          <li>
+            Families type the seller&apos;s name, so a person checks every name before it can appear here. We tell
+            families apart with a scrambled code made from their IP address, never the address itself, deleted after{" "}
+            {LEADERBOARD_DAYS} days.
+          </li>
           <li>The ✓ needs 30+ deals in 5+ destinations with a median of {FAIRMARK_SCALE.fair}% or less left out. It is earned, never bought, and lost automatically.</li>
           <li>We rank the company selling the deal, not the brand of holiday inside it.</li>
         </ul>
