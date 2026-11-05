@@ -4,6 +4,7 @@ import Link from "next/link";
 import { AIRLINE_BAGS, FAIRMARK_SCALE, type FairMarkLevel } from "@truevsad/true-cost";
 import { loadListedDeals, type ListedDeal } from "@/lib/quotes";
 import { HolidayScene } from "@/components/HolidayScene";
+import { DealScannerForm } from "@/components/DealScannerForm";
 import { VerdictStamp, verdictFor } from "@/components/VerdictStamp";
 import { exampleReceipts, gbp } from "@/lib/examples";
 import { loadAuthorities } from "@/lib/school";
@@ -62,7 +63,7 @@ export default async function Home() {
               your exact party: bags, seats, tourist taxes and travel documents, each with its source. Every receipt says
               exactly what it hasn&apos;t checked yet. A verdict on the price, never on the place.
             </p>
-            <form className="scanner" action="/xray" method="get">
+            <DealScannerForm>
               <label htmlFor="home-deal" className="visually-hidden">
                 Deal link or text
               </label>
@@ -72,7 +73,7 @@ export default async function Home() {
               <input id="home-deal" name="deal" placeholder="paste a deal link or text" autoComplete="off" />
               <span className="scanner-caret" aria-hidden="true" />
               <button type="submit">X-ray it</button>
-            </form>
+            </DealScannerForm>
             <p className="hero-promises">
               <span>No account</span>
               <span aria-hidden="true">·</span>

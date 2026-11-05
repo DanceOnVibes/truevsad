@@ -5,6 +5,7 @@ import { formatGBP } from "@truevsad/true-cost";
 import { ReceiptView } from "@/components/ReceiptView";
 import { ChildCostsNote } from "@/components/ChildCostsNote";
 import { loadPublicReceipt } from "@/lib/quotes";
+import { EMAILS } from "@/lib/company";
 
 export const runtime = "nodejs";
 export const preferredRegion = "lhr1";
@@ -41,7 +42,7 @@ export default async function SharedReceiptPage({ params }: { params: Params }) 
     <main>
       <h1>True price receipt</h1>
       <p className="lead">
-        {r.destination ? `${r.destination} · ` : ""}
+        {r.publicPlace ? `${r.publicPlace} · ` : ""}
         {r.nights} night{r.nights === 1 ? "" : "s"} · {who} · priced{" "}
         {new Date(r.createdAt).toLocaleDateString("en-GB", {
           day: "numeric",
@@ -65,6 +66,10 @@ export default async function SharedReceiptPage({ params }: { params: Params }) 
       </p>
       <p className="hint">
         Prices change. This receipt shows what the deal cost on the day it was priced.
+      </p>
+      <p className="hint">
+        Looks fake, wrong or harmful?{" "}
+        <a href={`mailto:${EMAILS.corrections}?subject=${encodeURIComponent(`Report receipt ${slug}`)}`}>Report this receipt</a>.
       </p>
     </main>
   );

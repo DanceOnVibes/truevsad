@@ -36,7 +36,11 @@ const nextConfig: NextConfig = {
   transpilePackages: ["@truevsad/true-cost"],
   poweredByHeader: false,
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // Shared receipts are for the people they're sent to: never indexed, even if linked from the board.
+      { source: "/r/:slug*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
+    ];
   },
 };
 

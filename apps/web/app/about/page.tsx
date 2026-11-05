@@ -47,6 +47,14 @@ export default function AboutPage() {
           holiday scenes around the site are AI images made on HeyJess.art, and are credited where they appear.
         </p>
 
+        <h2>Accessibility</h2>
+        <p>
+          We aim for every page to work with a keyboard, a screen reader and zoom, to the WCAG 2.2 AA standard.
+          Automated tests don&apos;t catch everything, so if anything is hard to use, email{" "}
+          <a href={`mailto:${EMAILS.hello}`}>{EMAILS.hello}</a> and we&apos;ll fix it or get you the information
+          another way.
+        </p>
+
         <h2>Get in touch</h2>
         <ul>
           <li>

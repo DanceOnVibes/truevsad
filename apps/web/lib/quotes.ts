@@ -314,6 +314,11 @@ export interface PublicReceipt {
   createdAt: string;
   nights: number;
   destination: string | null;
+  /**
+   * The place a shared page may print: a recognised place or one a person approved, never the
+   * hotel or anything else the family typed. Null = print no place name.
+   */
+  publicPlace: string | null;
   includes: Inclusion[];
   excludesTaxesAndFees: boolean;
   departDate: string | null;
@@ -454,6 +459,17 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
     }
   }
 
+  // The only place name a shared page prints: never the hotel or anything else the family typed.
+  let shownPlace: string | null = null;
+  if (offer?.destination) {
+    try {
+      const [rulesForPlaces, names] = await Promise.all([loadFeeRules().catch(() => [] as FeeRule[]), approvedNames()]);
+      shownPlace = publicPlace(offer.destination, await knownPlaces(rulesForPlaces), names.places);
+    } catch {
+      shownPlace = null;
+    }
+  }
+
   const receiptLines: CostLine[] = ((lines ?? []) as unknown as CostLineRow[]).map((l) => ({
     category: l.category as CostCategory,
     label: l.label as string,
@@ -474,7 +490,9 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
     engineVersion: (q.engine_version as string | null) ?? null,
     createdAt: q.created_at as string,
     nights: offer?.nights ?? 0,
-    destination: offer?.destination ?? null,
+    // Shared pages never get the typed destination: only the checked place name, if any.
+    destination: shownPlace,
+    publicPlace: shownPlace,
     includes: offer?.includes ?? [],
     excludesTaxesAndFees: offer?.excludes_taxes_and_fees === true,
     departDate: offer?.depart_on ?? null,
