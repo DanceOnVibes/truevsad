@@ -13,7 +13,7 @@ import {
   type Offer,
   type Party,
 } from "@truevsad/true-cost";
-import { loadFeeRules, saveQuote, shareQuote, type SourceKind } from "@/lib/quotes";
+import { FeeRulesUnavailable, loadFeeRules, saveQuote, shareQuote, type SourceKind } from "@/lib/quotes";
 import { allowRequest, familyCode } from "@/lib/rate-limit";
 import { aiConfigured, extractWithAi, type DraftOffer } from "@/lib/extract-ai";
 import { logObservation } from "@/lib/observations";
@@ -102,7 +102,11 @@ async function extract(body: Record<string, unknown>) {
 
   // HARD RULE: we never fetch `url`. The AI only sees text/screenshot the family gave us.
   if ((text || image) && aiConfigured()) {
-    draft = await extractWithAi({ text: text || undefined, image, linkWords: linkWords(url) });
+    // Any failure in the AI reader means the family fills in the form themselves, never an error page.
+    draft = await extractWithAi({ text: text || undefined, image, linkWords: linkWords(url) }).catch((err: unknown) => {
+      console.error("AI reader failed:", (err as Error)?.name);
+      return null;
+    });
     if (draft) notes.push("Read by AI — please check every field before continuing.");
   }
 
@@ -292,6 +296,7 @@ async function quote(body: Record<string, unknown>, family: string | null) {
     return NextResponse.json({ result, fairMark: fm, childCosts, quoteId, councils });
   } catch (err) {
     if (err instanceof PartyValidationError) return bad(err.message);
+    if (err instanceof FeeRulesUnavailable) return unavailable(err.message);
     return bad(err instanceof Error ? err.message : "Could not price this deal.");
   }
 }
@@ -417,6 +422,7 @@ async function split(body: Record<string, unknown>) {
     });
   } catch (err) {
     if (err instanceof PartyValidationError) return bad(err.message);
+    if (err instanceof FeeRulesUnavailable) return unavailable(err.message);
     return bad(err instanceof Error ? err.message : "Could not split this deal.");
   }
 }
@@ -475,4 +481,9 @@ function isObject(v: unknown): v is Record<string, unknown> {
 
 function bad(message: string) {
   return NextResponse.json({ error: message }, { status: 400 });
+}
+
+/** Our side, not the family's: try again shortly. */
+function unavailable(message: string) {
+  return NextResponse.json({ error: message }, { status: 503, headers: { "Retry-After": "60" } });
 }
