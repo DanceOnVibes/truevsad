@@ -3,6 +3,7 @@ import {
   advertNotes,
   calculateTrueCost,
   childExtras,
+  expiredRuleNotes,
   fairMark,
   fairShare,
   INCLUSIONS,
@@ -13,7 +14,7 @@ import {
   type Offer,
   type Party,
 } from "@truevsad/true-cost";
-import { FeeRulesUnavailable, loadFeeRules, saveQuote, shareQuote, type SourceKind } from "@/lib/quotes";
+import { FeeRulesUnavailable, loadExpiredFeeRules, loadFeeRules, saveQuote, shareQuote, type SourceKind } from "@/lib/quotes";
 import { allowRequest, familyCode } from "@/lib/rate-limit";
 import { aiConfigured, extractWithAi, type DraftOffer } from "@/lib/extract-ai";
 import { logObservation } from "@/lib/observations";
@@ -283,6 +284,8 @@ async function quote(body: Record<string, unknown>, family: string | null) {
     const rules = selectRules(allRules, offer);
     const result = calculateTrueCost({ party, offer, rules, asOf: new Date().toISOString().slice(0, 10) });
     if (conversion) result.notes.unshift(conversionNote(conversion));
+    // A fee we used to add has run out and nothing newer replaces it: say so, never drop it quietly.
+    result.notes.push(...expiredRuleNotes(await loadExpiredFeeRules(), rules, offer));
     // "Edit details": the quote this one corrects (an unguessable id only this browser was given).
     const replaces = typeof body.replaces === "string" && UUID.test(body.replaces) ? body.replaces : undefined;
     // Saving must never block the answer: if it fails, the user still gets the price.

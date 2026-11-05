@@ -31,7 +31,7 @@ export function travelMonth(departDate: string | undefined, departMonth?: number
   return departMonth && Number.isInteger(departMonth) && departMonth >= 1 && departMonth <= 12 ? departMonth : ASSUMED_MONTH;
 }
 
-type ScopeOffer = Pick<Offer, "destination" | "supplierName" | "includes" | "departDate"> &
+export type ScopeOffer = Pick<Offer, "destination" | "supplierName" | "includes" | "departDate"> &
   Partial<Pick<Offer, "departMonth" | "airline">>;
 
 export function ruleApplies(rule: FeeRule, offer: ScopeOffer): boolean {

@@ -150,6 +150,8 @@ export interface FeeRule {
   sourceUrl?: string;
   /** When we last checked the figure against its source, YYYY-MM-DD. */
   checkedOn?: string;
+  /** Last day this figure applies, YYYY-MM-DD (e.g. a tax rate that changes on 1 April). */
+  validTo?: string;
   /**
    * Rules in the same group never stack: if several apply, only the most specific one is used
    * (the one listing the fewest places). E.g. "Barcelona" beats "Catalonia-wide" for a Barcelona hotel.
