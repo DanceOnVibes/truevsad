@@ -56,6 +56,7 @@ interface FeeRuleRow {
   exclusive_group: string | null;
   source_url: string | null;
   source_note: string | null;
+  valid_to: string | null;
 }
 
 const MONTH_ABBR = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
@@ -79,7 +80,7 @@ export class FeeRulesUnavailable extends Error {
 }
 
 /** The same rules serve every request for a minute: they change a few times a month at most. */
-let rulesCache: { at: number; day: string; rules: FeeRule[] } | null = null;
+let rulesCache: { at: number; day: string; rules: FeeRule[]; expired: FeeRule[] } | null = null;
 const RULES_CACHE_MS = 60_000;
 
 /**
@@ -97,6 +98,7 @@ export async function loadFeeRules(): Promise<FeeRule[]> {
   }
 
   const today = new Date().toISOString().slice(0, 10);
+  const yearAgo = new Date(Date.now() - 365 * 86_400_000).toISOString().slice(0, 10);
   if (rulesCache && rulesCache.day === today && Date.now() - rulesCache.at < RULES_CACHE_MS) return rulesCache.rules;
 
   let data: FeeRuleRow[] | null = null;
@@ -105,20 +107,36 @@ export async function loadFeeRules(): Promise<FeeRule[]> {
     const res = await db
       .from("fee_rule")
       .select(
-        "id, category, label, unit, amount_pence, amount_bp, min_age, max_age, confidence, regions, supplier_name, covers, max_nights, months, exclusive_group, source_url, source_note",
+        "id, category, label, unit, amount_pence, amount_bp, min_age, max_age, confidence, regions, supplier_name, covers, max_nights, months, exclusive_group, source_url, source_note, valid_to",
       )
       .eq("is_active", true)
       .lte("valid_from", today)
-      .or(`valid_to.is.null,valid_to.gte.${today}`);
+      // Today's rules, plus those that ran out in the last year (see loadExpiredFeeRules).
+      .or(`valid_to.is.null,valid_to.gte.${yearAgo}`);
     if (res.error) console.error("fee_rule read failed:", res.error.message);
     else if (!res.data?.length) console.error("fee_rule read returned no active rules");
     else data = res.data as FeeRuleRow[];
   }
   if (!data) throw new FeeRulesUnavailable();
 
-  const rules = mapRules(data);
-  rulesCache = { at: Date.now(), day: today, rules };
+  const all = mapRules(data);
+  const rules = all.filter((r) => !r.validTo || r.validTo >= today);
+  if (!rules.length) throw new FeeRulesUnavailable();
+  rulesCache = { at: Date.now(), day: today, rules, expired: all.filter((r) => r.validTo && r.validTo < today) };
   return rules;
+}
+
+/**
+ * Rules that ran out in the last year. Never priced: they're only used to tell the family
+ * "the rate we hold ran out" when nothing newer has replaced it (expiredRuleNotes).
+ */
+export async function loadExpiredFeeRules(): Promise<FeeRule[]> {
+  try {
+    await loadFeeRules();
+  } catch {
+    return [];
+  }
+  return rulesCache?.expired ?? [];
 }
 
 function mapRules(data: FeeRuleRow[]): FeeRule[] {
@@ -142,6 +160,7 @@ function mapRules(data: FeeRuleRow[]): FeeRule[] {
     exclusiveGroup: r.exclusive_group ?? undefined,
     sourceUrl: r.source_url && /^https?:\/\//.test(r.source_url) ? r.source_url : undefined,
     checkedOn: checkedOnFrom(r.source_note),
+    validTo: r.valid_to ?? undefined,
   }));
 }
 

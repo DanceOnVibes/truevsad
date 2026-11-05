@@ -3,6 +3,7 @@
   "regions": ["lhr1"],
   "crons": [
     { "path": "/api/cron/fcdo", "schedule": "17 5 * * *" },
-    { "path": "/api/cron/fairmark", "schedule": "43 4 * * *" }
+    { "path": "/api/cron/fairmark", "schedule": "43 4 * * *" },
+    { "path": "/api/cron/freshness", "schedule": "29 6 * * *" }
   ]
 }

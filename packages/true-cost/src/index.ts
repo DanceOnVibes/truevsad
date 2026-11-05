@@ -125,3 +125,13 @@ export {
   type VerifiedNumbers,
 } from "./fcdo";
 export { EXTRA_PLACES, fold, knownPlaceIn, placeKey, placeLabel, sellerKey } from "./names";
+export {
+  EUR_TOLERANCE,
+  RECHECK_DAYS,
+  SOON_DAYS,
+  expiredRuleNotes,
+  freshnessIssues,
+  type FreshnessInput,
+  type FreshnessIssue,
+  type FreshnessLevel,
+} from "./freshness";

@@ -9,7 +9,7 @@ export interface Authority {
 export interface HolidayRow extends SchoolHoliday {
   schoolYear: string;
   sourceUrl: string;
-  /** When we last checked these dates against the council's own page, YYYY-MM-DD. */
+  /** When we took these dates from the council's own page, YYYY-MM-DD (a later re-check updates it). */
   checkedOn: string | null;
 }
 

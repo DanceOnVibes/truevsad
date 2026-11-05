@@ -253,7 +253,7 @@ export function FairFamClient({ councils }: { councils: string[] }) {
             <a href={source.sourceUrl} target="_blank" rel="noopener noreferrer">
               council&apos;s own page
             </a>
-            {source.checkedOn ? `, checked ${nice(source.checkedOn)}` : ""}.
+            {source.checkedOn ? `, taken from it on ${nice(source.checkedOn)}` : ""}.
             {publishedSpan(holidays)
               ? ` The council has published dates up to ${nice(publishedSpan(holidays)!.until)}; later holidays aren't shown until it does.`
               : ""}
