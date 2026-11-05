@@ -77,7 +77,7 @@ export default async function FairMarkPage({ searchParams }: { searchParams: Sea
         </table>
         <p className="hint">
           FairMark is worked out by the same engine as every receipt, with sourced fees, and nothing
-          the deal already includes is counted twice. It never changes the order of results, and no
+          the deal already includes is counted twice. It never changes the order of the deals board, and no
           seller can pay for it. When we can&apos;t be confident, we show &ldquo;FairMark
           unavailable&rdquo; and say why. Fair means the advertised price is honest, not that the
           holiday is cheap. <Link href="/fairmark/method">How FairMark works</Link>.
@@ -134,7 +134,7 @@ export default async function FairMarkPage({ searchParams }: { searchParams: Sea
             Every deal families X-rayed in the last {LEADERBOARD_DAYS} days ({board.dealsCounted} counted), priced
             again every night with that day&apos;s fees for one standard family ({ref}) so sellers are compared like for like.
             &ldquo;Total price&rdquo; adverts keep their own party. Sellers need {LEADERBOARD_MIN_DEALS}+ deals from{" "}
-            {LEADERBOARD_MIN_FAMILIES}+ different families to appear; the same deal checked twice counts once, and one
+            {LEADERBOARD_MIN_FAMILIES}+ different families to appear; the same deal checked twice by one visitor counts once, and one
             family counts for at most {LEADERBOARD_PER_FAMILY} deals per seller. We check every seller&apos;s name before
             it&apos;s shown. ✓ means 30+ deals in 5+ destinations with a median of {FAIRMARK_SCALE.fair}% or less left out, and is never
             for sale. A seller is the company selling the deal, not the brand of holiday inside it. Sellers can

@@ -63,9 +63,9 @@ export default function PrivacyPage() {
         <h2>Visit before you book</h2>
         <p>
           When you check a place, we send only the place name you typed to OpenStreetMap&apos;s free
-          services (Nominatim and Overpass) to find it and count what&apos;s nearby. If they&apos;re busy, the
-          same place name goes to a backup that uses the same map data: Photon (run by komoot) or another
-          public Overpass server. We keep that result, which has nothing about you in it, so the next
+          place search (Nominatim) and to public Overpass map servers run by independent volunteers,
+          to find it and count what&apos;s nearby. If they&apos;re busy, the same place name goes to a
+          backup that uses the same map data: Photon (run by komoot) or another public Overpass server. We keep that result, which has nothing about you in it, so the next
           person doesn&apos;t have to wait.
           The map on that page loads from openstreetmap.org in your browser, so OpenStreetMap sees
           your IP address, as with any website. The Street View and Google Maps links open Google
@@ -104,8 +104,8 @@ export default function PrivacyPage() {
           deals checked in the last 30 days: it never shows a single family&apos;s deal. A shared
           receipt appears on the public FairMark board only if you tick the box when you share it. The
           board shows the place (never the hotel), the seller once we&apos;ve checked its name, nights,
-          number of adults and children and the prices, never your postcode, children&apos;s ages or
-          the deal link.
+          number of adults and children and the prices, never your postcode, children&apos;s exact
+          ages or the deal link.
         </p>
 
         <h2>FairFam, School Window and splitting a price</h2>
@@ -117,7 +117,7 @@ export default function PrivacyPage() {
           to the next page inside your own browser tab and deleted as soon as it opens.
         </p>
         <p>
-          If you give the first half of your postcode (on School Window or the X-ray), we send only
+          If you give the first half of your postcode (on FairFam, School Window or the X-ray), we send only
           that (e.g. SE11) to postcodes.io, a free service built on Office for National Statistics
           data, to find your council. Nothing about you goes with it, and we don&apos;t keep the
           answer against you.
@@ -189,7 +189,13 @@ export default function PrivacyPage() {
                 <td>Scrambled visitor code</td>
                 <td>Stopping automated spam</td>
                 <td>Made from your IP address; never the address</td>
-                <td>Deleted the next night (at most 2 days)</td>
+                <td>Deleted 1 to 2 days after your last visit</td>
+              </tr>
+              <tr>
+                <td>Seller and place names as typed</td>
+                <td>A person checks a name before it can ever be shown</td>
+                <td>The name only, with no link to you or your receipt</td>
+                <td>Deleted after 90 days unless approved</td>
               </tr>
               <tr>
                 <td>FairMark family code</td>
@@ -201,7 +207,8 @@ export default function PrivacyPage() {
           </table>
         </div>
         <p className="hint">
-          &ldquo;With the receipt&rdquo; means 30 days if you don&apos;t share it, 12 months if you do.
+          &ldquo;With the receipt&rdquo; means 30 days if you don&apos;t share it, 12 months from when you
+          priced it if you do.
         </p>
 
         <h2>Why, and on what legal basis</h2>
@@ -220,21 +227,22 @@ export default function PrivacyPage() {
         <h2>How long we keep it</h2>
         <ul>
           <li>Receipts you don&apos;t share: deleted automatically after <strong>30 days</strong>.</li>
-          <li>Receipts you share: deleted after <strong>12 months</strong>.</li>
+          <li>Receipts you share: deleted <strong>12 months</strong> after you priced them.</li>
         </ul>
 
         <h2>Sharing a receipt</h2>
         <p>
           When you press Share, anyone with the link can see the receipt: the prices, the place (never
-          the hotel or anything else you typed), nights and how many adults and children. The shared
-          page never shows your postcode, children&apos;s ages or the deal link. Shared pages are
-          hidden from search engines.
+          the hotel or anything else you typed), nights, how many adults and children, and each fee
+          line with its working. The shared page never shows your postcode, children&apos;s exact ages
+          or the deal link, though a fee line can show how many people are in an age band (for
+          example &ldquo;3 people aged 16+&rdquo;). Shared pages are hidden from search engines.
         </p>
 
         <h2>Stopping abuse</h2>
         <p>
           To stop automated spam we count requests per visitor. We store a scrambled code made from
-          your IP address, never the address itself, and delete it the next night (at most 2 days later). FairMark keeps a second,
+          your IP address, never the address itself, and delete it 1 to 2 days after your last visit. FairMark keeps a second,
           different scrambled code with each receipt for 30 days, so the sellers&apos; leaderboard counts
           different families rather than clicks. Neither code contains your address, and we never try
           to work it out from them.
@@ -243,9 +251,9 @@ export default function PrivacyPage() {
         <h2>Cookies and tracking</h2>
         <p>
           We don&apos;t set any cookies, and we don&apos;t use tracking pixels, analytics or advertising.
-          The only thing we put in your browser is a short note when you go from FairFam to Deal
-          X-ray (your party, date and nights), so the next page can fill them in; it stays in that tab
-          and is deleted as soon as the page opens. A Plan B card you save is a file on your own
+          The only things we put in your browser are short hand-over notes: the deal you paste on
+          the homepage, and your party, date and nights when you go from FairFam to Deal X-ray, so the
+          next page can fill them in. They stay in that tab and are deleted as soon as the page opens. A Plan B card you save is a file on your own
           phone. The OpenStreetMap map on Visit before you book is loaded from openstreetmap.org, which
           has its own <a href="https://osmfoundation.org/wiki/Privacy_Policy" target="_blank" rel="noopener noreferrer">privacy policy</a>.
         </p>
@@ -255,7 +263,9 @@ export default function PrivacyPage() {
           <li>Supabase (our database), in London.</li>
           <li>
             Vercel (our website), with our servers in London. Like any web host it keeps short-lived
-            logs of requests, which include your IP address.
+            logs of requests, which include your IP address and the page address. A page address can
+            include a place name, postcode district, number of children or travel date you entered
+            (never a deal you paste on the homepage, which we pass to the next page inside your browser).
           </li>
           <li>Google Cloud (reading deals), in London.</li>
           <li>Cloudflare (our domain and email forwarding) and Microsoft (our mailbox), if you email us.</li>

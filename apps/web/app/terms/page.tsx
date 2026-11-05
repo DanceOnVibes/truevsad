@@ -73,7 +73,10 @@ export default function TermsPage() {
             else you typed), the seller once we&apos;ve checked its name, nights, number of adults and children, and
             the prices.
           </li>
-          <li>By listing a receipt you let us show it on the FairMark board until it&apos;s deleted after 12 months.</li>
+          <li>
+            By listing a receipt you let us show it on the FairMark board (the newest 60 listed deals appear there) until
+            it&apos;s deleted, 12 months after you priced it.
+          </li>
           <li>
             We may unlist or delete any receipt that breaks these terms or is reported to us. If a deal turns out to
             be made up, we delete it and FairMark is worked out again without it.

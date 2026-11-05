@@ -65,8 +65,18 @@ export default function XrayPage() {
   const [fromFairFam, setFromFairFam] = useState(false);
 
   useEffect(() => {
-    // Pasted on the homepage: the deal arrives as ?deal=… and fills the first step.
-    const pasted = new URLSearchParams(window.location.search).get("deal")?.trim();
+    // Pasted on the homepage: handed over in this tab (or, without JavaScript, as ?deal=…).
+    // Read once, then removed from both, so the deal never stays in the address or history.
+    let handed: string | null = null;
+    try {
+      handed = sessionStorage.getItem("truevsad-deal");
+      sessionStorage.removeItem("truevsad-deal");
+    } catch {
+      handed = null;
+    }
+    const params = new URLSearchParams(window.location.search);
+    const pasted = (handed ?? params.get("deal") ?? "").trim();
+    if (params.has("deal")) window.history.replaceState(null, "", window.location.pathname);
     if (pasted) {
       if (/^https?:\/\/\S+$/i.test(pasted)) setUrl(pasted.slice(0, 2000));
       else setText(pasted.slice(0, 5000));
@@ -561,8 +571,8 @@ export default function XrayPage() {
                 <input id="share" readOnly value={shareUrl} onFocus={(e) => e.target.select()} />
                 <button onClick={onCopy}>{copied ? "Copied ✓" : "Copy link"}</button>
                 <p className="hint">
-                  Anyone with this link can see the receipt. It shows the party size, but never
-                  your postcode, ages or the deal link.
+                  Anyone with this link can see the receipt. It shows the party size and fee workings,
+                  but never your postcode, children&apos;s exact ages or the deal link.
                 </p>
               </div>
             ) : (
@@ -572,8 +582,8 @@ export default function XrayPage() {
                   Also show this deal on the public <a href="/fairmark">FairMark board</a>
                 </label>
                 <p className="hint">
-                  Optional. The board shows the destination, seller, nights, party size and prices, never
-                  your postcode, children&apos;s ages or the deal link.
+                  Optional. The board shows the place (never the hotel), the seller once we&apos;ve checked its
+                  name, nights, party size and prices, never your postcode, children&apos;s ages or the deal link.
                 </p>
                 <button onClick={onShare} disabled={busy}>
                   {busy ? "Making link…" : "Share this receipt"}

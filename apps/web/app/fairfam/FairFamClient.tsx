@@ -210,7 +210,7 @@ export function FairFamClient({ councils }: { councils: string[] }) {
             <input id="ff-kids" placeholder="e.g. 7, 11" value={childAges} onChange={(e) => setChildAges(e.target.value)} />
           </div>
         </div>
-        <p className="hint">Ages only. Nothing on this page is saved.</p>
+        <p className="hint">Ages only. Nothing you enter on this page is saved.</p>
       </div>
 
       {/* 2. School holidays */}

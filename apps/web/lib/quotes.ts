@@ -490,7 +490,8 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
     engineVersion: (q.engine_version as string | null) ?? null,
     createdAt: q.created_at as string,
     nights: offer?.nights ?? 0,
-    destination: offer?.destination ?? null,
+    // Shared pages never get the typed destination: only the checked place name, if any.
+    destination: shownPlace,
     publicPlace: shownPlace,
     includes: offer?.includes ?? [],
     excludesTaxesAndFees: offer?.excludes_taxes_and_fees === true,
