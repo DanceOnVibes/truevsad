@@ -41,7 +41,6 @@ export async function logObservation(input: {
   const { error } = await db.from("price_observation").insert({
     observed_week: mondayOf(new Date()),
     seller_key: offer.supplierName ? sellerKey(offer.supplierName).slice(0, 80) || null : null,
-    seller_name: offer.supplierName?.slice(0, 120) ?? null,
     place_key: offer.destination ? placeKey(offer.destination).slice(0, 120) || null : null,
     travel_week: offer.departDate ? mondayOf(new Date(`${offer.departDate}T00:00:00Z`)) : null,
     nights: offer.nights,

@@ -306,7 +306,7 @@ export default function XrayPage() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
           />
-          <p className="hint">We keep the link for reference only — we never open it ourselves.</p>
+          <p className="hint">We read only the words in the link&apos;s address to fill in the form. We never open it, and we don&apos;t keep it.</p>
           {fromFairFam && (
             <p className="hint">
               Your party, travel date and nights from FairFam are filled in for the next step.

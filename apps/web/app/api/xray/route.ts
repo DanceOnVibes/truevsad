@@ -275,7 +275,6 @@ async function quote(body: Record<string, unknown>, family: string | null) {
 
   const sourceKind: SourceKind =
     body.sourceKind === "link" || body.sourceKind === "screenshot" ? body.sourceKind : "text";
-  const sourceUrl = normaliseLink(body.sourceUrl);
 
   try {
     // The council lookup (for the School Window link) runs alongside pricing and never blocks it.
@@ -289,7 +288,7 @@ async function quote(body: Record<string, unknown>, family: string | null) {
     // "Edit details": the quote this one corrects (an unguessable id only this browser was given).
     const replaces = typeof body.replaces === "string" && UUID.test(body.replaces) ? body.replaces : undefined;
     // Saving must never block the answer: if it fails, the user still gets the price.
-    const quoteId = await saveQuote({ party, offer, result, sourceKind, sourceUrl, conversion, rules: allRules, familyCode: family, replaces });
+    const quoteId = await saveQuote({ party, offer, result, sourceKind, conversion, rules: allRules, familyCode: family, replaces });
     const fm = fairMark(result);
     // Anonymous statistics, written after the answer is sent so the family never waits for it.
     after(() => logObservation({ party, offer, result, fairMark: fm, advertisedCurrency: conversion?.from }));
@@ -453,7 +452,7 @@ async function share(body: Record<string, unknown>) {
 
 /**
  * Accepts "https://site.com/x" and also "site.com/x" or "www.site.com/x" (adds https://).
- * Stored as a reference only — we never fetch it.
+ * We never fetch it and never store it: only the words in its path are read (linkWords).
  */
 function normaliseLink(raw: unknown): string | undefined {
   if (typeof raw !== "string") return undefined;

@@ -19,7 +19,7 @@ export const preferredRegion = "lhr1";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "FairMark — which holiday prices are honest — TrueVsAd",
+  title: "FairMark — which holiday prices are complete — TrueVsAd",
   description:
     `FairMark shows how much a holiday advert leaves out in taxes and fees. Fair Price means ${FAIRMARK_SCALE.fair}% or less. See the fairest sellers this month.`,
 };
@@ -79,8 +79,8 @@ export default async function FairMarkPage({ searchParams }: { searchParams: Sea
           FairMark is worked out by the same engine as every receipt, with sourced fees, and nothing
           the deal already includes is counted twice. It never changes the order of the deals board, and no
           seller can pay for it. When we can&apos;t be confident, we show &ldquo;FairMark
-          unavailable&rdquo; and say why. Fair means the advertised price is honest, not that the
-          holiday is cheap. <Link href="/fairmark/method">How FairMark works</Link>.
+          unavailable&rdquo; and say why. Fair means the advertised price was nearly complete, not that the
+          holiday is cheap. A gap is not a finding that a seller broke the law. <Link href="/fairmark/method">How FairMark works</Link>.
         </p>
       </div>
 

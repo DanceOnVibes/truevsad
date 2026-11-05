@@ -116,7 +116,10 @@ export default function TermsPage() {
           ; it isn&apos;t endorsed by the FCDO. Map data is ©{" "}
           <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>
           , available under the Open Database Licence. Exchange rates are the European Central Bank&apos;s reference
-          rates, which are for information only. Each receipt and card names and links its other sources.
+          rates, which are for information only. Council suggestions come from postcodes.io, built on the ONS
+          Postcode Directory: contains OS data © Crown copyright and database right; contains Royal Mail data © Royal
+          Mail copyright and database right; source: Office for National Statistics, licensed under the Open
+          Government Licence v3.0. Each receipt and card names and links its other sources.
         </p>
 
         <h2>Changes and law</h2>

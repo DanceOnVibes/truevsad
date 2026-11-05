@@ -460,19 +460,28 @@ export async function loadPublicReceipt(slug: string): Promise<PublicReceipt | n
   }
 
   // The only place name a shared page prints: never the hotel or anything else the family typed.
+  const names = await approvedNames().catch(() => null);
   let shownPlace: string | null = null;
-  if (offer?.destination) {
+  if (offer?.destination && names) {
     try {
-      const [rulesForPlaces, names] = await Promise.all([loadFeeRules().catch(() => [] as FeeRule[]), approvedNames()]);
+      const rulesForPlaces = await loadFeeRules().catch(() => [] as FeeRule[]);
       shownPlace = publicPlace(offer.destination, await knownPlaces(rulesForPlaces), names.places);
     } catch {
       shownPlace = null;
     }
   }
+  // The seller line was saved with the name as the family typed it: a shared page shows only
+  // a name a person has approved, otherwise just "Advertised price".
+  const approvedSeller = offer?.supplier_name ? (names?.sellers.get(sellerKey(offer.supplier_name)) ?? null) : null;
 
   const receiptLines: CostLine[] = ((lines ?? []) as unknown as CostLineRow[]).map((l) => ({
     category: l.category as CostCategory,
-    label: l.label as string,
+    label:
+      l.category === "supplier"
+        ? approvedSeller
+          ? `${approvedSeller} — advertised price`
+          : "Advertised price"
+        : (l.label as string),
     amountPence: Number(l.amount_pence),
     working: (l.working as string | null) ?? undefined,
     source: l.source as LineSource,

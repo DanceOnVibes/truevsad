@@ -1,6 +1,6 @@
 import { ADVISORY_CATEGORIES, airlineBagsFor, CARD_FEES_CHECKED_ON, cardFeeNote, dropOffFor, formatGBP, HELP_CHECKED_ON, ifItGoesWrong, localTaxNoteFor, NO_FEE_CARDS, planBFor, SURCHARGE_BAN_URL, transferFor, receiptScope, type BookingType, type CostCategory, type CostLine, type FairMark, type Inclusion } from "@truevsad/true-cost";
 import { FairMarkBadge, FairMarkDetail } from "./FairMarkBadge";
-import { VerdictStamp, verdictFor } from "./VerdictStamp";
+import { VerdictStamp } from "./VerdictStamp";
 import { EMAILS } from "@/lib/company";
 import { INCLUSION_LABELS } from "@/lib/supplier-defaults";
 
@@ -126,8 +126,8 @@ export function ReceiptView(props: ReceiptViewProps) {
           )}
         </div>
         <div>
-          <div className="hint">Gap</div>
-          <div className={`num gap gap-${verdictFor(fairMark)?.tone ?? "none"}`}>
+          <div className="hint">Your total vs advert</div>
+          <div className="num gap gap-plain">
             {gapPence > 0 ? "+" : ""}
             {formatGBP(gapPence)} ({Math.round(gapRatio * 100)}%)
           </div>

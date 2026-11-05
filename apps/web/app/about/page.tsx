@@ -12,7 +12,7 @@ export default function AboutPage() {
     <main>
       <h1>About TrueVsAd</h1>
       <p className="lead">
-        The advertised price is never the price a family pays. TrueVsAd shows the difference before you book, with a
+        The advertised price is rarely the price a family pays. TrueVsAd shows the difference before you book, with a
         source for every pound.
       </p>
 

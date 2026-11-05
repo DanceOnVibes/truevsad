@@ -139,6 +139,10 @@ export default function FairMarkMethodPage() {
           optional extras are shown on your receipt so you see your real total, but they never count
           against the seller.
         </p>
+        <p>
+          Because FairMark includes that hold bag, an advert can follow the law and still show a gap. A gap
+          is not a finding that a seller broke the law: it tells you what you&apos;ll pay on top.
+        </p>
       </div>
 
       <p>

@@ -526,11 +526,12 @@ export function PlanBCard({ placeName, plan, hospitals, hospitalSource, register
               GOV.UK travel advice for {gov.name}{gov.updatedAt ? `, updated by the FCDO on ${dateLabel(gov.updatedAt.slice(0, 10))}` : ""}; our copy
               checked against it {dateLabel(gov.checkedAt.slice(0, 10))}.{" "}
               {stale ? "We couldn't check it recently: look at the GOV.UK page before you fly. " : ""}
-              Contains public sector information licensed under the{" "}
-              <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/">Open Government Licence v3.0</a>.
               <br />
             </>
           )}
+          Contains public sector information licensed under the{" "}
+          <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/">Open Government Licence v3.0</a>.
+          <br />
           <strong>What this card doesn&apos;t check:</strong> {(country ? PLAN_B_NOT_CHECKED : gov ? FCDO_NOT_CHECKED : PLAN_B_NOT_CHECKED).join(" ")}
         </div>
       </div>
