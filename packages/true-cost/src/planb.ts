@@ -360,12 +360,32 @@ export function islandAt(lat: number, lon: number): Island | undefined {
 
 /** Which Canary island a destination names, if any. */
 export function islandFor(destination: string | undefined | null): Island | undefined {
-  if (!destination) return undefined;
+  if (!destination || namesAnotherCountry(destination)) return undefined;
   return CANARY_ISLANDS.find((i) => i.places.some((p) => mentions(destination, p)));
 }
 
+/**
+ * Countries whose towns share names with Spanish ones (Valencia, Granada, La Palma, Barcelona…).
+ * When the last part of a destination names one of these, it is not Spain, whatever the town.
+ */
+const ELSEWHERE = [
+  "Argentina", "Bolivia", "Chile", "Colombia", "Costa Rica", "Cuba", "Dominican Republic", "Ecuador", "El Salvador",
+  "Guatemala", "Honduras", "Mexico", "México", "Nicaragua", "Panama", "Panamá", "Paraguay", "Peru", "Perú",
+  "Philippines", "Puerto Rico", "Trinidad", "Trinidad and Tobago", "Uruguay", "Venezuela", "USA", "United States",
+  "Canada", "Australia", "Belize", "Equatorial Guinea", "Portugal", "France", "Italy", "Andorra", "Morocco",
+] as const;
+
+/** Does the last part of the destination ("…, Venezuela") name a country other than Spain? */
+export function namesAnotherCountry(destination: string): boolean {
+  // "Spain" inside a foreign place name: Port of Spain is Trinidad's capital.
+  if (mentions(destination, "Port of Spain")) return true;
+  if (!destination.includes(",")) return false;
+  const tail = (destination.split(",").pop() ?? "").trim();
+  return ELSEWHERE.some((c) => mentions(tail, c));
+}
+
 export function countryFor(destination: string | undefined | null): PlanBCountry | undefined {
-  if (!destination) return undefined;
+  if (!destination || namesAnotherCountry(destination)) return undefined;
   return PLAN_B_COUNTRIES.find((c) => c.places.some((p) => mentions(destination, p)));
 }
 

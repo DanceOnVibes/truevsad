@@ -143,3 +143,28 @@ describe("specific beats generic", () => {
     expect(ids).toEqual(["g", "t"]);
   });
 });
+
+describe("Audit fixes, Nov 2026", () => {
+  it("'Kids go free': a per-person price is paid by the adults only", () => {
+    const r = calculateTrueCost({
+      party: { adults: 2, childAges: [7, 9] },
+      offer: { headlinePence: 49900, headlineBasis: "per_person", currency: "GBP", nights: 7, freeChildClaim: true },
+    });
+    expect(r.advertisedPence).toBe(49900 * 2);
+    expect(r.receipt.lines[0]!.working).toMatch(/2 paying × £499\.00/);
+  });
+  it("without the claim, everyone pays the per-person price", () => {
+    const r = calculateTrueCost({
+      party: { adults: 2, childAges: [7, 9] },
+      offer: { headlinePence: 49900, headlineBasis: "per_person", currency: "GBP", nights: 7 },
+    });
+    expect(r.advertisedPence).toBe(49900 * 4);
+  });
+  it("carries the advert's 'plus taxes and fees' to the result", () => {
+    const r = calculateTrueCost({
+      party: { adults: 2, childAges: [] },
+      offer: { headlinePence: 9900, headlineBasis: "per_person", currency: "GBP", nights: 7, excludesTaxesAndFees: true },
+    });
+    expect(r.advertExcludesFees).toBe(true);
+  });
+});

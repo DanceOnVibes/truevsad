@@ -331,6 +331,9 @@ main.home-page { max-width: none; padding: 8px 0 64px; }
 .paper-small-body { display: flex; flex-direction: column; gap: 8px; min-height: 230px; font-size: 0.9rem; }
 .paper-small-body .paper-total { font-size: 1.1rem; margin-top: 2px; padding-top: 8px; }
 .paper-small-body .paper-small { margin-top: 0; max-width: 60%; }
+/* Engine-priced examples have long labels: keep the stamp clear of the text. */
+.paper-small-body { padding-bottom: 112px; }
+.paper-small-body .paper-left { font-family: var(--font-mono); font-size: 0.85rem; }
 .paper-small-body .stamp { right: 14px; bottom: 16px; width: 104px; height: 104px; }
 .paper-small-body .stamp strong { font-size: 1.2rem; }
 .ink-card { background: #111311; color: #f4f1ea; border-radius: 22px; padding: 26px; display: flex; flex-direction: column; gap: 14px; }

@@ -41,9 +41,11 @@ export function calculateTrueCost(input: TrueCostInput): TrueCostResult {
     throw new Error("Nights must be a non-negative whole number.");
   }
 
-  const people = partySize(party);
+  // A per-person price is paid by the people who pay. When the advert says children go free, that's
+  // the adults only (the same reading the advert check uses); free children still get their extras.
+  const paying = offer.freeChildClaim ? party.adults : partySize(party);
   const advertisedPence =
-    offer.headlineBasis === "per_person" ? offer.headlinePence * people : offer.headlinePence;
+    offer.headlineBasis === "per_person" ? offer.headlinePence * paying : offer.headlinePence;
 
   const lines: CostLine[] = [];
 
@@ -59,7 +61,9 @@ export function calculateTrueCost(input: TrueCostInput): TrueCostResult {
       confidence: 0.9,
       working:
         offer.headlineBasis === "per_person"
-          ? `${people} × ${formatGBP(offer.headlinePence)}`
+          ? offer.freeChildClaim && party.childAges.length > 0
+            ? `${paying} paying × ${formatGBP(offer.headlinePence)} (children go free, the advert says)`
+            : `${paying} × ${formatGBP(offer.headlinePence)}`
           : undefined,
     });
   }
@@ -113,6 +117,7 @@ export function calculateTrueCost(input: TrueCostInput): TrueCostResult {
     notes,
     // A levy the deal already includes is skipped by selectRules, but the tick itself counts.
     taxCoverage: hasTaxCoverage(offer, rules),
+    advertExcludesFees: offer.excludesTaxesAndFees === true,
     standardBagPence,
     engineVersion: ENGINE_VERSION,
   };

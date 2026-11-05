@@ -131,10 +131,14 @@ const VERIFIED_LIST = (VERIFIED as { countries: VerifiedNumbers[] }).countries;
 
 /** Find the FCDO guide for a place found on the map ("…, Thailand"). Null if we have no copy. */
 export async function fcdoForPlace(displayName: string): Promise<FcdoCard | null> {
+  return fcdoForCountryName(countryFromDisplayName(displayName));
+}
+
+/** Find the FCDO guide for a country name ("Thailand", "United States", "Türkiye"). Null if none matches. */
+export async function fcdoForCountryName(country: string): Promise<FcdoCard | null> {
   const db = supabaseAdmin();
   if (!db) return null;
-  const country = countryFromDisplayName(displayName);
-  if (!country) return null;
+  if (!country || country.length > 60) return null;
   const { data: list } = await db.from("fcdo_advice").select("slug, name, synonyms");
   const slug = matchFcdoCountry(country, (list ?? []) as { slug: string; name: string; synonyms: string[] }[]);
   if (!slug) return null;

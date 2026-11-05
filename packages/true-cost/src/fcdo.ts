@@ -117,10 +117,12 @@ function withChildren(all: Section[], i: number): Section[] {
   return kids;
 }
 
-const SERVICE = /^([A-Za-z][A-Za-z ()'’,/&-]{1,48}?)\s*[:–—-]\s*(\d{2,6})((?:\s*(?:,|or|\/)\s*\d{2,6})*)/;
+const SERVICE = /^([A-Za-z][A-Za-z ()'’,/&-]{1,80}?)\s*[:–—-]\s*(\d{2,6})((?:\s*(?:,|or|\/)\s*\d{2,6})*)/;
+/** "Telephone 112 (ambulance, fire, police)": the FCDO sometimes leaves out the colon after "Telephone". */
+const TELEPHONE = /^(Telephone|Tel|Phone)\s+(\d{2,6})((?:\s*(?:,|or|\/)\s*\d{2,6})*)/i;
 
 /** Bump when the reader changes, so the daily job re-reads every country with the new version. */
-export const FCDO_PARSER_VERSION = 2;
+export const FCDO_PARSER_VERSION = 3; // 3: numbers in sentences, "Telephone 112" without a colon
 
 /**
  * "Ambulance: 1669" lines → numbers. Also "Ambulance, fire and police: 112", and "112 or 999" as two.
@@ -128,17 +130,23 @@ export const FCDO_PARSER_VERSION = 2;
  * A number the FCDO repeats further down (e.g. "Police: 191") is shown once, under its first name.
  *
  * All or nothing: if any line holds a number we can't take apart safely (a full international
- * number, or a heading with the numbers in bullet points below it), we return nothing, and the
+ * number, a heading with the numbers in bullet points below it, or a number inside a sentence such
+ * as "Dial 112 for all emergencies"), we return nothing, and the
  * card shows the FCDO's own text word for word instead of a list that could be incomplete.
  */
 export function numbersIn(text: string): FcdoNumber[] {
   const out: FcdoNumber[] = [];
   for (const raw of text.split("\n")) {
     const line = raw.replace(/^•\s*/, "").trim();
-    if (/\+\d/.test(line) || /^[A-Za-z][A-Za-z ()'’,/&-]{1,48}:\s*$/.test(line)) return [];
-    const m = SERVICE.exec(line);
-    if (!m) continue;
+    if (/\+\d/.test(line) || /^[A-Za-z][A-Za-z ()'’,/&-]{1,80}:\s*$/.test(line)) return [];
+    const m = SERVICE.exec(line) ?? TELEPHONE.exec(line);
+    // A number we didn't read ("Dial 112 for all emergencies") means the list would be incomplete.
+    if (!m) {
+      if (/\d{2,}/.test(line)) return [];
+      continue;
+    }
     const rest = line.slice(m[0].length).trim();
+    if (/\d{2,}/.test(rest)) return [];
     if (/^\(?\d/.test(rest)) return [];
     let service = m[1]!.trim();
     const brackets = /^\(([^)]{3,60})\)/.exec(rest);

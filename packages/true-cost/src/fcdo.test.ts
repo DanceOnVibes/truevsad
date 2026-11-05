@@ -188,3 +188,31 @@ describe("FCDO: numbers it must not half-read", () => {
     expect(numbersIn("Telephone: 112")).toEqual([]);
   });
 });
+
+describe("FCDO: a number inside a sentence", () => {
+  it("gives up rather than show a list that leaves it out", () => {
+    expect(numbersIn("Dial 112 for all emergencies.\nPolice: 110")).toEqual([]);
+    expect(numbersIn("Ambulance: 1669 (or 112 from a mobile)")).toEqual([]);
+  });
+  it("still reads clean lists, with words in brackets", () => {
+    expect(numbersIn("Telephone: 191 (ambulance, fire, police)\nThe Tourist Police have an app.\nTourist police: 1155")).toEqual([
+      { service: "Ambulance, fire, police", number: "191" },
+      { service: "Tourist police", number: "1155" },
+    ]);
+  });
+});
+
+describe("FCDO: real pages, Nov 2026", () => {
+  it("France: reads 'Telephone 112' without a colon, and the long deaf-access label", () => {
+    const france = "Telephone 112 (ambulance, fire, police)\nAmbulance: 15\nFire: 18\nPolice: 17\nDeaf and hard of hearing emergency number (SMS, chat, video and fax): 114";
+    expect(numbersIn(france).map((n) => n.number)).toEqual(["112", "15", "18", "17", "114"]);
+    expect(numbersIn(france)[0]!.service).toBe("Ambulance, fire, police");
+  });
+  it("USA: a full stop after the brackets is fine", () => {
+    expect(numbersIn("Telephone: 911 (ambulance, fire, police).")).toEqual([{ service: "Ambulance, fire, police", number: "911" }]);
+  });
+  it("Greece and Italy: a number inside a sentence means the FCDO's own text is shown", () => {
+    expect(numbersIn("Telephone: 112 (ambulance, fire, police)\nCalling 999 from a UK mobile in Greece will automatically transfer you to the Greek emergency services.")).toEqual([]);
+    expect(numbersIn("Ambulance: 118\nFire: 115\nPolice: 112\nYou can also download the 112 Where Are U app, the official European emergency number app.")).toEqual([]);
+  });
+});

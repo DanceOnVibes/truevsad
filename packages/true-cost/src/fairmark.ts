@@ -18,7 +18,7 @@ import { ADVISORY_CATEGORIES, HIDDEN_FEE_CATEGORIES, type CostCategory, type Cos
 
 export type FairMarkLevel = "gold" | "fair" | "higher" | "high" | "unavailable";
 
-export type FairMarkReason = "no_price" | "demo" | "low_confidence" | "no_tax_data";
+export type FairMarkReason = "no_price" | "demo" | "low_confidence" | "no_tax_data" | "advert_excludes_fees";
 
 export interface FairMark {
   level: FairMarkLevel;
@@ -60,6 +60,8 @@ const REASONS: Record<FairMarkReason, string> = {
   demo: "Some of the figures are placeholders, not real prices.",
   low_confidence: "Too many of the fees are rough estimates to give a fair verdict.",
   no_tax_data: "We don't have local tax figures for this destination yet, so we can't call it fair.",
+  advert_excludes_fees:
+    "The advert says taxes and fees are extra, and the seller can add more at checkout than we know about. Ask for the full price before you book.",
 };
 
 /**
@@ -94,6 +96,8 @@ export function fairMark(input: {
   usedDemoRules?: boolean;
   /** Pass taxCoverage from the engine result. Leaving it out skips the coverage check. */
   taxCoverage?: boolean;
+  /** The advert says taxes and fees are extra: no verdict, whatever we could add. */
+  advertExcludesFees?: boolean;
   /** Receipt lines, for the split and the biggest driver. Optional. */
   lines?: CostLine[];
   receipt?: { lines: CostLine[] };
@@ -127,6 +131,7 @@ export function fairMark(input: {
   if (usedDemoRules) return unavailable("demo");
   if (!(Number.isFinite(confidence) && confidence >= FAIRMARK_MIN_CONFIDENCE)) return unavailable("low_confidence");
   if (taxCoverage === false) return unavailable("no_tax_data");
+  if (input.advertExcludesFees) return unavailable("advert_excludes_fees");
 
   // With receipt lines we judge only what the advert hid. Without them (a bare total), the whole
   // difference is all we know.
