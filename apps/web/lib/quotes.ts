@@ -70,28 +70,59 @@ export function checkedOnFrom(note: string | null | undefined): string | undefin
   return Number.isNaN(d.getTime()) ? undefined : d.toISOString().slice(0, 10);
 }
 
+/** Thrown when today's fees can't be loaded: we say so rather than price with made-up figures. */
+export class FeeRulesUnavailable extends Error {
+  constructor() {
+    super("We couldn't load today's fees just now, so we can't price this deal yet. Please try again in a minute.");
+    this.name = "FeeRulesUnavailable";
+  }
+}
+
+/** The same rules serve every request for a minute: they change a few times a month at most. */
+let rulesCache: { at: number; day: string; rules: FeeRule[] } | null = null;
+const RULES_CACHE_MS = 60_000;
+
 /**
- * Active fee rules from the database. Falls back to DEMO_RULES (clearly flagged)
- * until real, sourced rules are added — or if the database can't be reached.
+ * Active fee rules from the database. DEMO_RULES (clearly flagged on every receipt) only when no
+ * database is configured at all, i.e. on a developer's computer. If the database is configured
+ * but can't answer (twice), this throws FeeRulesUnavailable: a family never gets demo figures.
  * The caller narrows them to the offer with selectRules().
  */
 export async function loadFeeRules(): Promise<FeeRule[]> {
   const db = supabaseAdmin();
-  if (!db) return DEMO_RULES;
+  if (!db) {
+    // The live site must never fall back to demo figures, even if its database settings go missing.
+    if (process.env.VERCEL_ENV === "production") throw new FeeRulesUnavailable();
+    return DEMO_RULES;
+  }
 
   const today = new Date().toISOString().slice(0, 10);
-  const { data, error } = await db
-    .from("fee_rule")
-    .select(
-      "id, category, label, unit, amount_pence, amount_bp, min_age, max_age, confidence, regions, supplier_name, covers, max_nights, months, exclusive_group, source_url, source_note",
-    )
-    .eq("is_active", true)
-    .lte("valid_from", today)
-    .or(`valid_to.is.null,valid_to.gte.${today}`);
+  if (rulesCache && rulesCache.day === today && Date.now() - rulesCache.at < RULES_CACHE_MS) return rulesCache.rules;
 
-  if (error || !data || data.length === 0) return DEMO_RULES;
+  let data: FeeRuleRow[] | null = null;
+  for (let attempt = 0; attempt < 2 && !data; attempt++) {
+    if (attempt) await new Promise((r) => setTimeout(r, 400));
+    const res = await db
+      .from("fee_rule")
+      .select(
+        "id, category, label, unit, amount_pence, amount_bp, min_age, max_age, confidence, regions, supplier_name, covers, max_nights, months, exclusive_group, source_url, source_note",
+      )
+      .eq("is_active", true)
+      .lte("valid_from", today)
+      .or(`valid_to.is.null,valid_to.gte.${today}`);
+    if (res.error) console.error("fee_rule read failed:", res.error.message);
+    else if (!res.data?.length) console.error("fee_rule read returned no active rules");
+    else data = res.data as FeeRuleRow[];
+  }
+  if (!data) throw new FeeRulesUnavailable();
 
-  return (data as FeeRuleRow[]).map((r) => ({
+  const rules = mapRules(data);
+  rulesCache = { at: Date.now(), day: today, rules };
+  return rules;
+}
+
+function mapRules(data: FeeRuleRow[]): FeeRule[] {
+  return data.map((r) => ({
     id: r.id,
     category: r.category,
     label: r.label,
@@ -615,9 +646,10 @@ export async function loadListedDeals(fairOnly: boolean): Promise<ListedDeal[]> 
       .eq("is_public", true)
       .order("created_at", { ascending: false })
       .limit(200),
-    loadFeeRules(),
+    loadFeeRules().catch(() => null),
     approvedNames(),
   ]);
+  if (!rules) return []; // can't price today: show nothing rather than old or made-up figures
   if (!data) return [];
   const known = await knownPlaces(rules);
 
@@ -740,7 +772,12 @@ export async function reindexFairMark({ deadlineMs = 240_000 } = {}): Promise<{ 
   const db = supabaseAdmin();
   if (!db) return { error: "Supabase isn't configured" };
   const started = Date.now();
-  const rules = await loadFeeRules();
+  let rules: FeeRule[];
+  try {
+    rules = await loadFeeRules();
+  } catch {
+    return { error: "Today's fee rules couldn't be loaded, so nothing was re-priced" };
+  }
   if (rules === DEMO_RULES) return { error: "Only demo fee rules could be loaded, so nothing was re-priced" };
   const known = await knownPlaces(rules);
   const since = new Date(Date.now() - LEADERBOARD_DAYS * 86_400_000).toISOString();

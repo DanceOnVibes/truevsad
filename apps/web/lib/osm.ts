@@ -17,6 +17,32 @@ const NOMINATIM = "https://nominatim.openstreetmap.org/search";
 const OVERPASS = "https://overpass-api.de/api/interpreter";
 const FRESH_DAYS = 30;
 
+/** Visit and Plan B pages may run for 45 seconds; we stop asking OpenStreetMap well before that. */
+const PAGE_BUDGET_MS = 36_000;
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Nominatim's usage policy allows one request a second from the whole site, not per server.
+ * Every server takes its turn through one shared counter in our database. If no turn comes
+ * up in time, the caller uses its backup instead of queueing a family's page.
+ */
+async function nominatimTurn(waitMs: number): Promise<boolean> {
+  const db = supabaseAdmin();
+  if (!db) return true; // a developer's computer: no shared counter, and only one person using it
+  const until = Date.now() + waitMs;
+  for (;;) {
+    const { data, error } = await db.rpc("hit_rate_limit", { p_bucket: "osm:nominatim", p_max: 1, p_window_seconds: 1 });
+    if (error) {
+      console.error("Nominatim turn check failed:", error.message);
+      return false; // can't be sure it's our turn, so don't ask Nominatim
+    }
+    if (data === true) return true;
+    if (Date.now() + 350 > until) return false;
+    await sleep(350);
+  }
+}
+
 /** OpenStreetMap tags for each signal. Order matters: Overpass answers in this order. */
 const SELECTORS: Record<PlaceSignal, string[]> = {
   playground: ['nwr["leisure"="playground"]'],
@@ -85,12 +111,13 @@ export async function lookupPlace(rawQuery: string, allowFetch: boolean): Promis
     }
   }
   if (!allowFetch) return { ok: false, reason: "unavailable" };
+  const deadline = Date.now() + PAGE_BUDGET_MS;
 
   const geo = await geocode(key);
   if (geo === "unavailable") return { ok: false, reason: "unavailable" };
   if (!geo) return { ok: false, reason: "not_found" };
 
-  const counts = await countAround(geo.lat, geo.lon);
+  const counts = await countAround(geo.lat, geo.lon, deadline);
   if (!counts) return { ok: false, reason: "unavailable" };
 
   const place: PlaceSnapshot = {
@@ -149,6 +176,7 @@ async function geocodePhoton(q: string): Promise<{ lat: number; lon: number; dis
 }
 
 async function geocodeNominatim(q: string): Promise<{ lat: number; lon: number; displayName: string } | null | "unavailable"> {
+  if (!(await nominatimTurn(2_500))) return "unavailable"; // busy: Photon answers instead
   const url = `${NOMINATIM}?${new URLSearchParams({ q, format: "jsonv2", limit: "1", "accept-language": "en" })}`;
   try {
     const res = await fetch(url, {
@@ -181,26 +209,18 @@ export function overpassQuery(lat: number, lon: number): string {
   return `[out:json][timeout:25];\n${blocks.join("\n")}`;
 }
 
-async function countAround(lat: number, lon: number): Promise<PlaceCounts | null> {
-  try {
-    const res = await fetch(OVERPASS, {
-      method: "POST",
-      headers: { "User-Agent": USER_AGENT, "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ data: overpassQuery(lat, lon) }),
-      signal: AbortSignal.timeout(28_000),
-    });
-    if (!res.ok) {
-      console.error("Overpass returned", res.status);
-      return null;
-    }
-    const json = (await res.json()) as { elements?: { type: string; tags?: { total?: string } }[] };
-    const counts = (json.elements ?? []).filter((e) => e.type === "count");
-    if (counts.length !== SIGNALS.length) return null;
-    return Object.fromEntries(SIGNALS.map((s, i) => [s, Number(counts[i]!.tags?.total ?? 0) || 0])) as unknown as PlaceCounts;
-  } catch (err) {
-    console.error("Overpass request failed", (err as Error).name);
-    return null;
-  }
+async function countAround(lat: number, lon: number, deadline: number): Promise<PlaceCounts | null> {
+  // The main server gets most of the time; a backup gets whatever is left before the deadline.
+  const json = await overpassJson<{ elements?: { type: string; tags?: { total?: string } }[] }>(
+    overpassQuery(lat, lon),
+    20_000,
+    OVERPASS_SERVERS.length,
+    deadline,
+  );
+  if (!json) return null;
+  const counts = (json.elements ?? []).filter((e) => e.type === "count");
+  if (counts.length !== SIGNALS.length) return null;
+  return Object.fromEntries(SIGNALS.map((s, i) => [s, Number(counts[i]!.tags?.total ?? 0) || 0])) as unknown as PlaceCounts;
 }
 
 function normaliseCounts(raw: unknown): PlaceCounts {
@@ -301,14 +321,21 @@ export function pickHospitals(elements: OverpassHospital[], lat: number, lon: nu
 }
 
 /** One Overpass query, trying the backup servers if the main one is busy. Null if all fail. */
-async function overpassJson<T>(query: string, perServerMs: number, maxServers = OVERPASS_SERVERS.length): Promise<T | null> {
+async function overpassJson<T>(
+  query: string,
+  perServerMs: number,
+  maxServers = OVERPASS_SERVERS.length,
+  deadline = Number.POSITIVE_INFINITY,
+): Promise<T | null> {
   for (const server of OVERPASS_SERVERS.slice(0, maxServers)) {
+    const ms = Math.min(perServerMs, deadline - Date.now());
+    if (ms < 3_000) break; // not enough time left for an answer: the page says "try again"
     try {
       const res = await fetch(server, {
         method: "POST",
         headers: { "User-Agent": USER_AGENT, "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({ data: query }),
-        signal: AbortSignal.timeout(perServerMs),
+        signal: AbortSignal.timeout(ms),
       });
       if (res.ok) return (await res.json()) as T;
       console.error("Overpass", new URL(server).hostname, "returned", res.status);
@@ -359,6 +386,7 @@ export function pickNominatimHospitals(list: NominatimPlace[], lat: number, lon:
 
 /** Hospitals within about 40 km, from Nominatim's search. Null if Nominatim doesn't answer. */
 async function nominatimHospitals(lat: number, lon: number): Promise<NearbyHospital[] | null> {
+  if (!(await nominatimTurn(3_000))) return null; // busy: the Overpass backup answers instead
   const dLat = 0.36; // about 40 km
   const dLon = 0.45;
   const url = `${NOMINATIM}?${new URLSearchParams({
@@ -413,6 +441,7 @@ export async function hospitalsFor(rawQuery: string, allowFetch: boolean): Promi
     }
   }
   if (!allowFetch) return { ok: false, reason: "unavailable" };
+  const deadline = Date.now() + PAGE_BUDGET_MS;
 
   const geo = await geocode(key);
   if (geo === "unavailable") return { ok: false, reason: "unavailable" };
@@ -421,10 +450,10 @@ export async function hospitalsFor(rawQuery: string, allowFetch: boolean): Promi
 
   // Nominatim first: it answers our servers reliably. Overpass (often too slow for cloud
   // servers) only as a backup, with a short wait so the page still loads in time.
-  await new Promise((r) => setTimeout(r, 1_100)); // Nominatim's limit: one request a second
+  // Nominatim's limit (one request a second, site-wide) is kept by nominatimTurn().
   let hospitals = await nominatimHospitals(geo.lat, geo.lon);
   if (hospitals === null) {
-    const json = await overpassJson<{ elements?: OverpassHospital[] }>(hospitalQuery(geo.lat, geo.lon), 7_000, 2);
+    const json = await overpassJson<{ elements?: OverpassHospital[] }>(hospitalQuery(geo.lat, geo.lon), 7_000, 2, deadline);
     hospitals = json ? pickHospitals(json.elements ?? [], geo.lat, geo.lon) : null;
   }
   const fetchedAt = new Date().toISOString();

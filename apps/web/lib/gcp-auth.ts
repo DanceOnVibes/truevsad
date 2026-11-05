@@ -41,7 +41,14 @@ function readKey(): ServiceAccountKey | null {
   }
 }
 
-/** Safe-to-show diagnostics. Never returns any part of the private key. */
+/** One word for the public health check: is the AI reader set up? Nothing about the key itself. */
+export function aiReaderStatus(): "ready" | "not_set_up" | "key_unreadable" {
+  const { raw } = rawKey();
+  if (!raw || !process.env.GOOGLE_CLOUD_PROJECT) return "not_set_up";
+  return readKey() ? "ready" : "key_unreadable";
+}
+
+/** Detailed diagnostics, only for a caller holding CRON_SECRET. Never any part of the private key. */
 export function gcpDiagnostics() {
   const { raw, format } = rawKey();
   let parses = false;
@@ -82,9 +89,23 @@ export function gcpConfigured(): boolean {
 const b64url = (input: Buffer | string) =>
   Buffer.from(input).toString("base64").replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
 
+/**
+ * A Google access token, or null if one can't be had right now. Never throws: a bad key, a slow
+ * or unreachable Google, or an odd answer all mean "no token", and the X-ray falls back to the
+ * manual form instead of showing the family an error.
+ */
 export async function getAccessToken(): Promise<string | null> {
   if (typeof window !== "undefined") throw new Error("getAccessToken() is server-only.");
   if (cached && cached.expiresAt > Date.now() + 60_000) return cached.token;
+  try {
+    return await fetchAccessToken();
+  } catch (err) {
+    console.error("Google token request failed:", (err as Error).name);
+    return null;
+  }
+}
+
+async function fetchAccessToken(): Promise<string | null> {
 
   const key = readKey();
   if (!key) return null;
@@ -118,7 +139,9 @@ export async function getAccessToken(): Promise<string | null> {
     console.error("Google token exchange failed:", res.status);
     return null;
   }
-  const data = (await res.json()) as { access_token: string; expires_in: number };
-  cached = { token: data.access_token, expiresAt: Date.now() + data.expires_in * 1000 };
+  const data = (await res.json()) as { access_token?: unknown; expires_in?: unknown };
+  if (typeof data.access_token !== "string" || !data.access_token) return null;
+  const seconds = Number(data.expires_in) > 0 ? Number(data.expires_in) : 3600;
+  cached = { token: data.access_token, expiresAt: Date.now() + seconds * 1000 };
   return data.access_token;
 }
