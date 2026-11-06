@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FAIRMARK_SCALE } from "@truevsad/true-cost";
 import { COMPANY, EMAILS } from "@/lib/company";
+import { SELLER_LANGUAGE_ALTERNATES, SellerLanguages } from "@/components/SellerLanguages";
 
 export const metadata: Metadata = {
   title: "For sellers — TrueVsAd",
   description:
     "Small hotels, guesthouses and holiday sellers whose prices are complete can join TrueVsAd as Fair Sellers. Joining is free; Gold sellers pay nothing.",
-  alternates: { languages: { en: "/sellers", es: "/sellers/es" } },
+  alternates: { languages: SELLER_LANGUAGE_ALTERNATES },
 };
 
 /**
@@ -19,11 +20,7 @@ const RATES = { gold: "Nothing", fair: "1% of bookings made through TrueVsAd" } 
 export default function SellersPage() {
   return (
     <main>
-      <p className="hint">
-        <Link href="/sellers/es" lang="es">
-          Leer en español
-        </Link>
-      </p>
+      <SellerLanguages current="en" />
       <h1>For sellers</h1>
       <p className="lead">
         TrueVsAd shows families what a holiday really costs. If your prices are already complete, we&apos;d like
@@ -185,7 +182,7 @@ export default function SellersPage() {
         <h2 style={{ marginTop: 0 }}>How to apply</h2>
         <p>
           Email <a href={`mailto:${EMAILS.partners}?subject=Fair%20Seller%20application`}>{EMAILS.partners}</a>{" "}
-          (in English or Spanish) with:
+          (in English, Spanish, French, Italian or Greek) with:
         </p>
         <ul>
           <li>your business name, country and registration number;</li>

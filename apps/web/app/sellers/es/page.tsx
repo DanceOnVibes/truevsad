@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FAIRMARK_SCALE } from "@truevsad/true-cost";
 import { COMPANY, EMAILS } from "@/lib/company";
+import { SELLER_LANGUAGE_ALTERNATES, SellerLanguages } from "@/components/SellerLanguages";
 
 export const metadata: Metadata = {
   title: "Para alojamientos y vendedores — TrueVsAd",
   description:
     "Hoteles pequeños, casas de huéspedes y vendedores de vacaciones con precios completos pueden unirse a TrueVsAd como Fair Sellers. Unirse es gratis; los vendedores Gold no pagan nada.",
-  alternates: { languages: { en: "/sellers", es: "/sellers/es" } },
+  alternates: { languages: SELLER_LANGUAGE_ALTERNATES },
 };
 
 /**
@@ -17,11 +18,7 @@ export const metadata: Metadata = {
 export default function SellersSpanishPage() {
   return (
     <main lang="es">
-      <p className="hint">
-        <Link href="/sellers" lang="en">
-          Read in English
-        </Link>
-      </p>
+      <SellerLanguages current="es" />
       <h1>Para alojamientos y vendedores</h1>
       <p className="lead">
         TrueVsAd muestra a las familias del Reino Unido lo que realmente cuestan unas vacaciones. Si sus precios ya son
@@ -200,7 +197,7 @@ export default function SellersSpanishPage() {
         <h2 style={{ marginTop: 0 }}>Cómo solicitarlo</h2>
         <p>
           Escriba a <a href={`mailto:${EMAILS.partners}?subject=Fair%20Seller%20application`}>{EMAILS.partners}</a>{" "}
-          (en inglés o en español) con:
+          (en inglés, español, francés, italiano o griego) con:
         </p>
         <ul>
           <li>el nombre de su empresa, el país y el número de registro;</li>
