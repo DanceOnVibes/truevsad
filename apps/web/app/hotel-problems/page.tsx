@@ -5,7 +5,7 @@ import { EMAILS } from "@/lib/company";
 export const metadata: Metadata = {
   title: "When the hotel isn't what you paid for — TrueVsAd",
   description:
-    "The most common problems between holidaymakers and hotels: the wrong room, dirty or broken rooms, surprise charges, closed facilities, being moved, and what to do about each.",
+    "The most common problems between holidaymakers and hotels: the wrong room, dirty or broken rooms, meals not as promised, surprise charges, closed facilities, being moved, and what to do about each.",
 };
 
 /** Checked on: update when the sources below are re-read. */
