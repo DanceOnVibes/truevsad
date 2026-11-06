@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { COMPANY, EMAILS } from "@/lib/company";
 
 export const metadata: Metadata = {
@@ -303,6 +304,15 @@ export default function PrivacyPage() {
           registered office (above) instead.
         </p>
 
+        <h2>If you apply as a seller</h2>
+        <p>
+          If a hotel or holiday company applies to become a <Link href="/sellers">Fair Seller</Link>, we keep the
+          business details it sends (names of contacts, business email and phone, registration and licence numbers)
+          and our checks on official registers. We use them to decide on the application and run the seller
+          agreement, and keep them while the seller is featured and for 12 months after, or 12 months after we reply
+          if it doesn&apos;t join. Our legal basis is taking steps towards, and carrying out, that agreement.
+        </p>
+
         <h2>Your rights</h2>
         <p>
           You can ask us for a copy of what we hold about you, to correct it, to delete it, to limit
@@ -321,7 +331,7 @@ export default function PrivacyPage() {
           <a href="https://ico.org.uk/make-a-complaint/" target="_blank" rel="noopener noreferrer">ico.org.uk/make-a-complaint</a>.
         </p>
 
-        <p className="hint">Last updated 5 November 2026.</p>
+        <p className="hint">Last updated 6 November 2026.</p>
       </div>
     </main>
   );

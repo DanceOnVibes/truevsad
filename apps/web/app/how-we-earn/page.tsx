@@ -54,6 +54,17 @@ export default function HowWeEarnPage() {
       </div>
 
       <div className="card">
+        <h2 style={{ marginTop: 0 }}>Featured sellers (not live yet)</h2>
+        <p>
+          When featured deals open, sellers who meet our <Link href="/sellers">Fair Seller standard</Link> can have
+          their deals featured, labelled &ldquo;Featured&rdquo;. Joining is free. FairMark Gold sellers pay us
+          nothing; Fair Price sellers pay 1% of bookings made through TrueVsAd. So we earn less when a seller gets
+          fairer, and paying never gets a seller featured. Each seller and its rate will be listed above on the day
+          it starts.
+        </p>
+      </div>
+
+      <div className="card">
         <h2 style={{ marginTop: 0 }}>What never changes</h2>
         <ul>
           <li>Nothing on TrueVsAd is ever ordered by what a seller pays us.</li>
