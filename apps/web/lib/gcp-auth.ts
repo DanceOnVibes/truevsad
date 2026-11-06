@@ -71,7 +71,7 @@ export function gcpDiagnostics() {
     projectSet: Boolean(process.env.GOOGLE_CLOUD_PROJECT),
     projectLooksValid: /^[a-z][a-z0-9-]{4,28}[a-z0-9]$/.test(process.env.GOOGLE_CLOUD_PROJECT ?? ""),
     projectLength: process.env.GOOGLE_CLOUD_PROJECT?.length ?? 0,
-    locationLooksValid: /^[a-z]+-[a-z]+\d$/.test(process.env.GOOGLE_CLOUD_LOCATION || "europe-west2"),
+    locationLooksValid: true, // fixed to London in extract-ai.ts; no setting can move it
     keySet: raw !== null,
     keyLength: process.env.GCP_SERVICE_ACCOUNT_KEY?.length ?? 0,
     keyFormat: format,

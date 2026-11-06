@@ -12,7 +12,7 @@ export default function AboutPage() {
     <main>
       <h1>About TrueVsAd</h1>
       <p className="lead">
-        The advertised price is never the price a family pays. TrueVsAd shows the difference before you book, with a
+        The advertised price is rarely the price a family pays. TrueVsAd shows the difference before you book, with a
         source for every pound.
       </p>
 
@@ -65,6 +65,12 @@ export default function AboutPage() {
           </li>
           <li>
             Holiday sellers: <a href={`mailto:${EMAILS.partners}`}>{EMAILS.partners}</a>
+          </li>
+          <li>
+            Your data (see a copy, correct or delete it): <a href={`mailto:${EMAILS.privacy}`}>{EMAILS.privacy}</a>
+          </li>
+          <li>
+            A security problem on the site: <a href={`mailto:${EMAILS.security}`}>{EMAILS.security}</a>
           </li>
         </ul>
         <p className="hint">

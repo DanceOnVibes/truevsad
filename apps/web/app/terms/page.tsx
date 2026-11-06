@@ -116,7 +116,10 @@ export default function TermsPage() {
           ; it isn&apos;t endorsed by the FCDO. Map data is ©{" "}
           <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>
           , available under the Open Database Licence. Exchange rates are the European Central Bank&apos;s reference
-          rates, which are for information only. Each receipt and card names and links its other sources.
+          rates, which are for information only. Council suggestions come from postcodes.io, built on the ONS
+          Postcode Directory: contains OS data © Crown copyright and database right; contains Royal Mail data © Royal
+          Mail copyright and database right; source: Office for National Statistics, licensed under the Open
+          Government Licence v3.0. Each receipt and card names and links its other sources.
         </p>
 
         <h2>Changes and law</h2>
@@ -125,8 +128,11 @@ export default function TermsPage() {
           and Wales. If you live elsewhere in the UK, you can also use your local courts.
         </p>
         <p>
-          Questions: <a href={`mailto:${EMAILS.hello}`}>{EMAILS.hello}</a>. Your data: see our{" "}
-          <Link href="/privacy">privacy page</Link>.
+          Questions: <a href={`mailto:${EMAILS.hello}`}>{EMAILS.hello}</a>. A wrong figure or a receipt to
+          report: <a href={`mailto:${EMAILS.corrections}`}>{EMAILS.corrections}</a>. Holiday sellers:{" "}
+          <a href={`mailto:${EMAILS.partners}`}>{EMAILS.partners}</a>. Your data:{" "}
+          <a href={`mailto:${EMAILS.privacy}`}>{EMAILS.privacy}</a> and our <Link href="/privacy">privacy page</Link>.
+          Security problems: <a href={`mailto:${EMAILS.security}`}>{EMAILS.security}</a>.
         </p>
         <p className="hint">Last changed 5 November 2026.</p>
       </div>

@@ -59,7 +59,7 @@ export default async function Home() {
               <span className="t-go">to go.</span>
             </h1>
             <p className="lead hero-lead">
-              The advertised price is never the price your family pays. Paste any holiday deal and see the true cost for
+              The advertised price is rarely the price your family pays. Paste any holiday deal and see the true cost for
               your exact party: bags, seats, tourist taxes and travel documents, each with its source. Every receipt says
               exactly what it hasn&apos;t checked yet. A verdict on the price, never on the place.
             </p>
@@ -241,7 +241,7 @@ export default async function Home() {
             <span className="tool-n">04</span>
             <span className="tool-name">FairMark</span>
             <span>
-              Which holiday prices are honest? See the fairest sellers this month, and deals whose adverts left out{" "}
+              Which holiday prices are complete? See the fairest sellers this month, and deals whose adverts left out{" "}
               {FAIRMARK_SCALE.fair}% or less.
             </span>
           </Link>

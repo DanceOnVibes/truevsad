@@ -27,13 +27,16 @@ export default function PrivacyPage() {
         <p>
           Questions about your data: <a href={`mailto:${EMAILS.privacy}`}>{EMAILS.privacy}</a>
         </p>
+        <p>
+          If you think your data or the site isn&apos;t safe (a leak or a security hole), tell us at{" "}
+          <a href={`mailto:${EMAILS.security}`}>{EMAILS.security}</a>.
+        </p>
 
         <h2>What we store when you X-ray a deal</h2>
         <ul>
           <li>Number of adults and the <strong>ages</strong> of any children (never dates of birth).</li>
           <li>The deal details you confirm: price, nights, travel date or month (if you give it), destination, seller and airline.</li>
           <li>How many hold bags you&apos;re taking, if you tell us.</li>
-          <li>The link to the deal, if you paste one. We never open it ourselves.</li>
           <li>The price breakdown we worked out.</li>
         </ul>
         <p>
@@ -41,6 +44,10 @@ export default function PrivacyPage() {
           payment details, and your postcode is not stored with the receipt. If you give the first half
           (e.g. SE11), we use it at that moment to find your council and keep only its letters (SE) in
           anonymous statistics. We never take payment.
+        </p>
+        <p>
+          If you paste a link to the deal, we read only the words in its address (not anything after a
+          &ldquo;?&rdquo;) to help fill in the form. We never open the link, and we don&apos;t keep it.
         </p>
 
         <h2>Reading your deal</h2>
@@ -63,9 +70,10 @@ export default function PrivacyPage() {
         <h2>Visit before you book</h2>
         <p>
           When you check a place, we send only the place name you typed to OpenStreetMap&apos;s free
-          place search (Nominatim) and to public Overpass map servers run by independent volunteers,
-          to find it and count what&apos;s nearby. If they&apos;re busy, the same place name goes to a
-          backup that uses the same map data: Photon (run by komoot) or another public Overpass server. We keep that result, which has nothing about you in it, so the next
+          place search (Nominatim) to find it, then only its map position to public Overpass map
+          servers run by independent volunteers, to count what&apos;s nearby. If they&apos;re busy, the
+          same place name or position goes to a backup that uses the same map data: Photon (run by
+          komoot) or another public Overpass server. We keep that result, which has nothing about you in it, so the next
           person doesn&apos;t have to wait.
           The map on that page loads from openstreetmap.org in your browser, so OpenStreetMap sees
           your IP address, as with any website. The Street View and Google Maps links open Google
@@ -162,12 +170,6 @@ export default function PrivacyPage() {
                 <td>With the receipt</td>
               </tr>
               <tr>
-                <td>Deal link</td>
-                <td>So you can find the deal again</td>
-                <td>Kept as written; we never open it</td>
-                <td>With the receipt</td>
-              </tr>
-              <tr>
                 <td>Exchange rate used</td>
                 <td>Showing how a euro or dollar price became pounds</td>
                 <td>Original price, rate and date</td>
@@ -232,9 +234,10 @@ export default function PrivacyPage() {
 
         <h2>Sharing a receipt</h2>
         <p>
-          When you press Share, anyone with the link can see the receipt: the prices, the place (never
-          the hotel or anything else you typed), nights, how many adults and children, and each fee
-          line with its working. The shared page never shows your postcode, children&apos;s exact ages
+          When you press Share, anyone with the link can see the receipt: the prices and FairMark, the
+          place (never the hotel or anything else you typed), the seller only once we&apos;ve checked its
+          name, nights, how many adults and children, the date it was priced, each fee line with its
+          working, the cabin-bag rules of a known airline, and who to contact if something goes wrong. The shared page never shows your postcode, children&apos;s exact ages
           or the deal link, though a fee line can show how many people are in an age band (for
           example &ldquo;3 people aged 16+&rdquo;). Shared pages are hidden from search engines.
         </p>
@@ -265,10 +268,12 @@ export default function PrivacyPage() {
             Vercel (our website), with our servers in London. Like any web host it keeps short-lived
             logs of requests, which include your IP address and the page address. A page address can
             include a place name, postcode district, number of children or travel date you entered
-            (never a deal you paste on the homepage, which we pass to the next page inside your browser).
+            A deal you paste on the homepage is normally passed to the next page inside your browser, so it
+            isn&apos;t in those logs; if your browser blocks storage or JavaScript, it travels in the page
+            address instead, and so can be.
           </li>
           <li>Google Cloud (reading deals), in London.</li>
-          <li>Cloudflare (our domain and email forwarding) and Microsoft (our mailbox), if you email us.</li>
+          <li>Cloudflare (our domain and email forwarding), if you email us.</li>
         </ul>
         <p>
           Each works for us under a data processing agreement and may only use your data to provide
@@ -280,15 +285,22 @@ export default function PrivacyPage() {
         </p>
         <p>
           The place-name and postcode services above (OpenStreetMap, Photon, postcodes.io) and the
-          exchange-rate service only ever receive a place name, a postcode district or a currency
-          code from our server, never anything about you.
+          exchange-rate service only ever receive a place name, a map position, a postcode district or a
+          currency code from our server, never anything about you.
         </p>
 
         <h2>If you email us</h2>
         <p>
           Your email reaches us through Cloudflare&apos;s email forwarding into our Microsoft
-          mailbox. We use it only to reply to you, and delete it within 12 months of the matter being
-          closed.
+          Outlook.com mailbox. We use it only to reply to you, and delete it within 12 months of the
+          matter being closed. Outlook.com is a Microsoft consumer service: Microsoft runs it under its
+          own terms and{" "}
+          <a href="https://privacy.microsoft.com/en-gb/privacystatement" target="_blank" rel="noopener noreferrer">
+            privacy statement
+          </a>
+          , not under a data processing agreement with us, so it is responsible for how it handles
+          messages in that mailbox. If you&apos;d rather not use email, you can write to our
+          registered office (above) instead.
         </p>
 
         <h2>Your rights</h2>

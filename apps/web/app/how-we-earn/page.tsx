@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { COMPANY } from "@/lib/company";
+import { COMPANY, EMAILS } from "@/lib/company";
 
 export const metadata: Metadata = {
   title: "How we earn — TrueVsAd",
@@ -79,6 +79,10 @@ export default function HowWeEarnPage() {
             <strong>FairFam</strong> lists holiday sellers&apos; own search pages in alphabetical order.
           </li>
         </ul>
+        <p>
+          Holiday sellers who&apos;d like to work with us:{" "}
+          <a href={`mailto:${EMAILS.partners}`}>{EMAILS.partners}</a>. Nothing a seller pays changes what we show.
+        </p>
         <p>
           <strong>What we cover:</strong> we don&apos;t search the market for deals. We check the deals you
           bring, and FairMark covers only the sellers whose deals families have checked here.

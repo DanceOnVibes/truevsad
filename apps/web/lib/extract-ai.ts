@@ -45,6 +45,12 @@ export interface AiInput {
  * Newest first. If London doesn't offer a model (404), the next one is tried.
  * Override with GEMINI_MODELS="model-a,model-b" in Vercel without a code change.
  */
+/**
+ * The privacy page promises the AI reader runs in London. Fixed here, not read from a setting,
+ * so no dashboard change can quietly move deals to another region.
+ */
+const AI_REGION = "europe-west2";
+
 const DEFAULT_MODELS = ["gemini-3.5-flash", "gemini-2.5-flash"];
 
 const SCHEMA = {
@@ -113,7 +119,7 @@ export async function extractWithAi(input: AiInput): Promise<DraftOffer | null> 
   if (!token) return null;
 
   const project = process.env.GOOGLE_CLOUD_PROJECT!;
-  const location = process.env.GOOGLE_CLOUD_LOCATION || "europe-west2";
+  const location = AI_REGION;
   const models = (process.env.GEMINI_MODELS ?? "").split(",").map((s) => s.trim()).filter(Boolean);
 
   const parts: unknown[] = [];
@@ -231,7 +237,7 @@ export async function probeModels(): Promise<{ token: boolean; models: Record<st
   out.token = Boolean(token);
   if (!token) return out;
   const project = process.env.GOOGLE_CLOUD_PROJECT!;
-  const location = process.env.GOOGLE_CLOUD_LOCATION || "europe-west2";
+  const location = AI_REGION;
   const models = (process.env.GEMINI_MODELS ?? "").split(",").map((s) => s.trim()).filter(Boolean);
   for (const model of models.length ? models : DEFAULT_MODELS) {
     const url =

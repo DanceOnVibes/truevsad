@@ -32,7 +32,7 @@ export function FairMarkDetail({ fm }: { fm: FairMark }) {
         </p>
       )}
       <p className="hint">
-        <a href="/fairmark/method">How FairMark works</a> · Fair means honest, not necessarily cheap.
+        <a href="/fairmark/method">How FairMark works</a> · Fair means nearly complete, not necessarily cheap.
       </p>
     </>
   );

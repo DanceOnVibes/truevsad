@@ -394,6 +394,8 @@ main.home-page { max-width: none; padding: 8px 0 64px; }
 .receipt-body .gap-go { color: var(--go); }
 .receipt-body .gap-check { color: var(--check); }
 .receipt-body .gap-stop, .receipt-body .gap-none { color: var(--stop); }
+/* Your total includes your own extras, so it isn't coloured as a verdict on the seller. */
+.receipt-body .gap-plain { color: var(--fg); }
 .receipt-body h3 { font-family: var(--font-display); margin: 18px 0 6px; padding-top: 12px; border-top: 1.5px dashed #c9c4b9; }
 .receipt-body table.receipt td { border-bottom: 1px dashed #e4dfd4; }
 .receipt-body table.receipt .working { font-size: 0.74rem; }
