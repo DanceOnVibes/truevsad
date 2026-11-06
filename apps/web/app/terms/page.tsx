@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "The short rules for using TrueVsAd: what our prices and verdicts are, what they aren't, and how to challenge them.",
 };
 
-/** Keep this page TRUE to what the site does, in plain words. Last changed: 5 November 2026. */
+/** Keep this page TRUE to what the site does, in plain words. Last changed: 6 November 2026. */
 export default function TermsPage() {
   return (
     <main>
@@ -83,6 +83,13 @@ export default function TermsPage() {
           </li>
         </ul>
 
+        <h2>Hotels and holiday sellers</h2>
+        <p>
+          Sellers who want their deals featured join through our <Link href="/sellers">Fair Seller standard</Link> and
+          a separate seller agreement. These terms don&apos;t make anyone a featured seller, and featured deals
+          aren&apos;t live yet.
+        </p>
+
         <h2>Reporting a receipt or a figure</h2>
         <p>
           If a receipt looks fake, unlawful or harmful, or a figure looks wrong, email{" "}
@@ -134,7 +141,7 @@ export default function TermsPage() {
           <a href={`mailto:${EMAILS.privacy}`}>{EMAILS.privacy}</a> and our <Link href="/privacy">privacy page</Link>.
           Security problems: <a href={`mailto:${EMAILS.security}`}>{EMAILS.security}</a>.
         </p>
-        <p className="hint">Last changed 5 November 2026.</p>
+        <p className="hint">Last changed 6 November 2026.</p>
       </div>
     </main>
   );
