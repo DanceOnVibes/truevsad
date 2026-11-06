@@ -328,7 +328,8 @@ export function ReceiptView(props: ReceiptViewProps) {
         <p className="hint">
           {help.askSeller ? "Not sure if it's a package? Ask the seller before you book. " : ""}
           Not added to your true price, and it never changes the FairMark. General information, not legal advice;
-          checked {checkedLabel(HELP_CHECKED_ON)}.
+          checked {checkedLabel(HELP_CHECKED_ON)}.{" "}
+          <a href="/hotel-problems">Wrong room, dirty room or a surprise bill? What to do →</a>
         </p>
         {planB && planBPlace && (
           <>
