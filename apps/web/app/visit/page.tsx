@@ -5,6 +5,7 @@ import { LENSES, looksUnderMapped, planBFor, scorePlace, type Light } from "@tru
 import { lookupPlace, placeLinks, type PlaceLookup } from "@/lib/osm";
 import { allowHeaders } from "@/lib/rate-limit";
 import { HolidayScene } from "@/components/HolidayScene";
+import { festivalsIn, SAME_COMPANY } from "@/lib/festivals";
 
 export const runtime = "nodejs";
 export const preferredRegion = "lhr1";
@@ -39,6 +40,7 @@ export default async function VisitPage({ searchParams }: { searchParams: Search
   const scores = place ? scorePlace(place.counts) : [];
   const links = place ? placeLinks(place.lat, place.lon) : null;
   const planB = place ? planBFor(q) ?? planBFor(place.displayName) : undefined;
+  const festivals = place ? festivalsIn(q, place.displayName) : [];
 
   return (
     <main>
@@ -129,6 +131,23 @@ export default async function VisitPage({ searchParams }: { searchParams: Search
               <p className="hint">
                 A fact, not a score: it doesn&apos;t change the ratings above. Our advice: carry some cash and make a Plan B card.
               </p>
+            </div>
+          )}
+          {festivals.length > 0 && (
+            <div className="card">
+              <h2 style={{ marginTop: 0 }}>Festivals here</h2>
+              <ul>
+                {festivals.map((f) => (
+                  <li key={f.key}>
+                    <a href={f.page} target="_blank" rel="noopener noreferrer">
+                      {f.name}
+                    </a>{" "}
+                    on DanceOnVibes: line-up, dates and the official ticket site.{" "}
+                    <Link href={`/xray?festival=${f.key}`}>Check a {f.name} trip deal →</Link>
+                  </li>
+                ))}
+              </ul>
+              <p className="hint">{SAME_COMPANY}</p>
             </div>
           )}
           {planB && (

@@ -7,6 +7,7 @@ import { ReceiptView } from "@/components/ReceiptView";
 import { FairSharePanel } from "@/components/FairSharePanel";
 import { ChildCostsNote } from "@/components/ChildCostsNote";
 import { HolidayScene } from "@/components/HolidayScene";
+import { festivalByKey, SAME_COMPANY, type Festival } from "@/lib/festivals";
 
 const CURRENCIES = { GBP: "£", EUR: "€", USD: "$" } as const;
 /** One tap instead of a guess: the airline decides the bag and seat fees. */
@@ -63,6 +64,15 @@ export default function XrayPage() {
   const flag = (field: string) => (check.includes(field) ? "check-me" : undefined);
   /** Details carried over from FairFam: the family's own party wins over the advert's. */
   const [fromFairFam, setFromFairFam] = useState(false);
+  /** Arrived from a festival link (DanceOnVibes or our Visit page): only the festival's town is used. */
+  const [festival, setFestival] = useState<Festival | undefined>(undefined);
+
+  useEffect(() => {
+    const f = festivalByKey(new URLSearchParams(window.location.search).get("festival"));
+    if (!f) return;
+    setFestival(f);
+    setDestination(`${f.city}, ${f.country}`);
+  }, []);
 
   useEffect(() => {
     // Pasted on the homepage: handed over in this tab (or, without JavaScript, as ?deal=…).
@@ -169,6 +179,7 @@ export default function XrayPage() {
       if (d.nights) setNights(String(d.nights));
       if (d.departDate) setDepartDate(d.departDate);
       if (d.destination) setDestination(d.destination);
+      else if (festival) setDestination(`${festival.city}, ${festival.country}`);
       if (d.supplierName) changeSupplier(d.supplierName);
       const knownAirline = AIRLINES.find((a) =>
         [d.airline, d.supplierName].some((x) => typeof x === "string" && x.toLowerCase().includes(a.toLowerCase())),
@@ -310,6 +321,14 @@ export default function XrayPage() {
           {fromFairFam && (
             <p className="hint">
               Your party, travel date and nights from FairFam are filled in for the next step.
+            </p>
+          )}
+          {festival && (
+            <p className="hint">
+              Going to {festival.name} in {festival.city}? Paste the hotel, flight or package deal you found, and
+              we&apos;ll show what it really costs. Check the festival&apos;s dates on{" "}
+              <a href={festival.page} target="_blank" rel="noopener noreferrer">its DanceOnVibes page</a>.{" "}
+              {SAME_COMPANY}
             </p>
           )}
 

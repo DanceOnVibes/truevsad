@@ -59,6 +59,10 @@ export default function HowWeEarnPage() {
           <li>Nothing on TrueVsAd is ever ordered by what a seller pays us.</li>
           <li>FairMark, the Fair Price badge and the ✓ on the sellers&apos; leaderboard can&apos;t be bought.</li>
           <li>Paid links will always be labelled.</li>
+          <li>
+            Links to DanceOnVibes, a festival guide run by our own company, are labelled as ours wherever they
+            appear, and earn us nothing.
+          </li>
           <li>We never take payment for a holiday, and we never sell anything about you.</li>
         </ul>
       </div>
