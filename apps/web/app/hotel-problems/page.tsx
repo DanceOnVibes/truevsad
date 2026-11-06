@@ -39,6 +39,18 @@ const UPSETS: Upset[] = [
       "A room that's dirty or unsafe isn't the service you paid for. On a package you can claim a price reduction or compensation; on a credit card, Section 75 can help.",
   },
   {
+    title: "Meals aren't what was promised",
+    looksLike:
+      "Half board, full board or all-inclusive that doesn't match what you paid for: meals missing, restaurants closed, drinks limited, or a supplement for something listed as included. Food you simply didn't like is different: what counts is the gap between what was promised and what you got.",
+    atHotel: [
+      "Keep your booking showing the board basis, and photograph the menu, the notice or the bill for anything charged that should have been included.",
+      "Ask the hotel, or the rep on a package, to put it right, and note what they offer.",
+      "If anyone gets ill, see a doctor, keep the medical notes, and tell the hotel and the rep in writing.",
+    ],
+    rights:
+      "Meals you paid for are part of the contract. On a package, missing meals or restaurants can mean a price reduction, and charges for included items should be refunded.",
+  },
+  {
     title: "Charges you weren't told about",
     looksLike:
       "A tourist tax, \"resort\" or cleaning fee asked for at the desk, a deposit you didn't expect, or extras on the bill you never chose.",
@@ -131,7 +143,7 @@ export default function HotelProblemsPage() {
         </ul>
       </div>
 
-      <h2>The seven most common problems</h2>
+      <h2>The eight most common problems</h2>
       {UPSETS.map((u) => (
         <div className="card" key={u.title}>
           <h3 style={{ marginTop: 0 }}>{u.title}</h3>
@@ -210,8 +222,9 @@ export default function HotelProblemsPage() {
           </li>
           <li>
             <strong>Our <Link href="/sellers">Fair Seller standard</Link></strong> asks featured hotels to name the
-            exact room type, show photos of that room, list every extra with its price, and say what isn&apos;t
-            included. A mismatch reported by families counts as a strike.
+            exact room type, show photos of that room, say exactly what each meal includes, list every extra with
+            its price, and say what isn&apos;t included. A small breakfast that&apos;s described honestly meets the
+            standard; a promise that isn&apos;t kept doesn&apos;t. A mismatch reported by families counts as a strike.
           </li>
           <li>
             <strong>We don&apos;t rate hotels&apos; cleanliness or location,</strong> and we don&apos;t post
