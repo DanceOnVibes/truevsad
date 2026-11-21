@@ -214,7 +214,9 @@ export default function XrayPage() {
       if (d.perPersonPence) ac.perPersonPence = d.perPersonPence;
       if (d.totalPence) ac.totalPence = d.totalPence;
       if (d.adults) ac.adults = d.adults;
-      if (d.adults && Array.isArray(d.childAges)) ac.children = d.childAges.length;
+      // An advert that states its adults ("based on 2 adults sharing") and names no children was
+      // priced with none: the reader drops an empty list, so count it as 0 here.
+      if (d.adults) ac.children = Array.isArray(d.childAges) ? d.childAges.length : 0;
       setAdvertCheck(Object.keys(ac).length ? ac : undefined);
       // Your party from FairFam wins; the advert's own party is still checked against it.
       if (!fromFairFam && d.adults) setAdults(String(d.adults));
