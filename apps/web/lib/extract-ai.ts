@@ -200,7 +200,10 @@ const SCHEMA = {
     totalPrice: { type: "NUMBER", description: "The total price for everyone exactly as shown, if one is shown." },
     taxesQuote: { type: "STRING", description: "If excludesTaxesAndFees is true: the exact words from the advert that say so, copied character for character." },
     freeChildQuote: { type: "STRING", description: "If freeChildClaim is true: the exact words from the advert that say so, copied character for character." },
-    departureAirport: { type: "STRING", description: "UK departure airport IATA code if shown, e.g. LGW." },
+    departureAirport: {
+      type: "STRING",
+      description: "UK departure airport as its 3-letter IATA code, if the advert names it: Gatwick is LGW, Luton LTN, Manchester MAN, Heathrow LHR.",
+    },
     adults: { type: "INTEGER", description: "Number of adults the price is for, only if stated." },
     childAges: { type: "ARRAY", items: { type: "INTEGER" }, description: "Ages of children the price is for, only if stated. Never dates of birth." },
     includes: {
