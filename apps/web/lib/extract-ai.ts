@@ -94,10 +94,10 @@ type GeminiNode = {
 };
 
 /**
- * Claude's structured output takes strict JSON Schema, with limits: at most 16 fields that can be
- * null (anyOf) and 24 optional ones. So no nulls: a field the advert doesn't show is simply left
- * out, as with Gemini. Yes/no fields and lists are always given (false, or an empty list), which
- * keeps the optional count low (13). clean() re-checks everything either way.
+ * Claude's structured output takes strict JSON Schema, compiled into a grammar. Null unions are
+ * capped at 16, and each optional field roughly doubles the grammar: with 13 optional fields every
+ * read timed out. So every field is required, and "not shown" is "" for words and 0 for numbers
+ * (see CLAUDE_EMPTY). clean() already drops both: no price, night or adult count can be 0.
  */
 function toClaudeSchema(node: GeminiNode): Record<string, unknown> {
   const base: Record<string, unknown> = { type: node.type.toLowerCase() };
@@ -108,13 +108,14 @@ function toClaudeSchema(node: GeminiNode): Record<string, unknown> {
     const props: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(node.properties)) props[k] = toClaudeSchema(v);
     base.properties = props;
-    base.required = Object.entries(node.properties)
-      .filter(([k, v]) => node.required?.includes(k) || v.type === "BOOLEAN" || v.type === "ARRAY")
-      .map(([k]) => k);
+    base.required = Object.keys(node.properties);
     base.additionalProperties = false;
   }
   return base;
 }
+
+const CLAUDE_EMPTY = `
+- Every field must be given. If the advert doesn't show it, use "" for text, 0 for numbers, false for yes/no and [] for lists. Never guess a value to fill a field.`;
 
 const CLAUDE_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
 
@@ -129,6 +130,7 @@ async function extractWithHaiku(input: AiInput, deadline: number): Promise<Draft
   if (input.linkWords) content.push({ type: "text", text: `Link words (from the deal's web address): ${input.linkWords}` });
   if (!content.length) return null;
 
+  const started = Date.now();
   let res: Response;
   try {
     res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -141,7 +143,7 @@ async function extractWithHaiku(input: AiInput, deadline: number): Promise<Draft
         // Copying facts out of an advert needs no thinking. With Haiku 5.5's default thinking on,
         // every read ran past 15 seconds; off, at low effort, is the fast setting Anthropic gives.
         thinking: { type: "disabled" },
-        system: INSTRUCTIONS,
+        system: INSTRUCTIONS + CLAUDE_EMPTY,
         messages: [{ role: "user", content }],
         // Structured output: the answer is JSON in exactly our schema. (Haiku 5.5 takes no temperature.)
         output_config: {
@@ -176,7 +178,7 @@ async function extractWithHaiku(input: AiInput, deadline: number): Promise<Draft
     console.warn(`AI reader: ${ANTHROPIC_MODEL} gave no readable answer (stop: ${data.stop_reason ?? "none"}), trying the backup`);
     return null;
   }
-  console.log(`AI reader: used ${ANTHROPIC_MODEL} (inference ${data.usage?.inference_geo ?? "unknown"})`);
+  console.log(`AI reader: used ${ANTHROPIC_MODEL} (inference ${data.usage?.inference_geo ?? "unknown"}) in ${Date.now() - started} ms`);
   return draft;
 }
 
