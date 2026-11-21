@@ -136,13 +136,18 @@ async function extractWithHaiku(input: AiInput, deadline: number): Promise<Draft
       headers: { "x-api-key": key, "anthropic-version": "2026-10-21", "content-type": "application/json" },
       body: JSON.stringify({
         model: ANTHROPIC_MODEL,
-        // Haiku 5.5 thinks adaptively by default; room for that plus the answer. Billed on use.
-        max_tokens: 4096,
+        max_tokens: 2048,
         inference_geo: ANTHROPIC_GEO,
+        // Copying facts out of an advert needs no thinking. With Haiku 5.5's default thinking on,
+        // every read ran past 15 seconds; off, at low effort, is the fast setting Anthropic gives.
+        thinking: { type: "disabled" },
         system: INSTRUCTIONS,
         messages: [{ role: "user", content }],
         // Structured output: the answer is JSON in exactly our schema. (Haiku 5.5 takes no temperature.)
-        output_config: { format: { type: "json_schema", schema: toClaudeSchema(SCHEMA as unknown as GeminiNode) } },
+        output_config: {
+          effort: "low",
+          format: { type: "json_schema", schema: toClaudeSchema(SCHEMA as unknown as GeminiNode) },
+        },
       }),
       signal: AbortSignal.timeout(Math.min(ANTHROPIC_TURN_MS, Math.max(1_000, deadline - Date.now()))),
     });
