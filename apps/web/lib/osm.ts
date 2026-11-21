@@ -16,6 +16,15 @@ const USER_AGENT = "TrueVsAd/0.1 (+https://truevsad.co.uk; hello@truevsad.co.uk)
 const NOMINATIM = "https://nominatim.openstreetmap.org/search";
 const OVERPASS = "https://overpass-api.de/api/interpreter";
 const FRESH_DAYS = 30;
+/** Saved counts are deleted after 90 days (purge_old_data); until then an old one beats an error. */
+const KEEP_DAYS = 90;
+/** The nightly job re-counts a popular resort once its count is this old. */
+const REFRESH_AFTER_DAYS = 25;
+/** Two searches this close (e.g. "Costa Adeje" and "Costa Adeje, Tenerife") share one count. */
+const NEAR_M = 600;
+/** How long one map server gets: a family's page can't wait long, the nightly job can. */
+const LIVE_SERVER_MS = 20_000;
+const CRON_SERVER_MS = 75_000;
 
 /** Visit and Plan B pages may run for 45 seconds; we stop asking OpenStreetMap well before that. */
 const PAGE_BUDGET_MS = 36_000;
@@ -88,58 +97,115 @@ export async function lookupPlace(rawQuery: string, allowFetch: boolean): Promis
   const key = placeKey(rawQuery);
   if (key.length < 2) return { ok: false, reason: "invalid" };
 
-  const db = supabaseAdmin();
-  if (db) {
-    const { data } = await db
-      .from("place_snapshot")
-      .select("display_name, lat, lon, counts, fetched_at")
-      .eq("query_key", key)
-      .maybeSingle();
-    if (data && Date.now() - Date.parse(data.fetched_at as string) < FRESH_DAYS * 86_400_000) {
-      return {
-        ok: true,
-        cached: true,
-        place: {
-          query: key,
-          displayName: data.display_name as string,
-          lat: Number(data.lat),
-          lon: Number(data.lon),
-          counts: normaliseCounts(data.counts),
-          fetchedAt: data.fetched_at as string,
-        },
-      };
-    }
-  }
+  const saved = await savedByKey(key);
+  if (saved && ageDays(saved.fetchedAt) < FRESH_DAYS) return { ok: true, cached: true, place: saved };
   if (!allowFetch) return { ok: false, reason: "unavailable" };
   const deadline = Date.now() + PAGE_BUDGET_MS;
 
   const geo = await geocode(key);
-  if (geo === "unavailable") return { ok: false, reason: "unavailable" };
-  if (!geo) return { ok: false, reason: "not_found" };
+  if (geo === "unavailable") return saved ? { ok: true, cached: true, place: saved } : { ok: false, reason: "unavailable" };
+  if (!geo) return saved ? { ok: true, cached: true, place: saved } : { ok: false, reason: "not_found" };
 
-  const counts = await countAround(geo.lat, geo.lon, deadline);
-  if (!counts) return { ok: false, reason: "unavailable" };
-
-  const place: PlaceSnapshot = {
-    query: key,
-    displayName: geo.displayName,
-    lat: geo.lat,
-    lon: geo.lon,
-    counts,
-    fetchedAt: new Date().toISOString(),
-  };
-  if (db) {
-    const { error } = await db.from("place_snapshot").upsert({
-      query_key: key,
-      display_name: place.displayName.slice(0, 300),
-      lat: place.lat,
-      lon: place.lon,
-      counts,
-      fetched_at: place.fetchedAt,
-    });
-    if (error) console.error("place_snapshot save failed:", error.message);
+  // The same spot saved under another name ("costa adeje" vs "costa adeje, tenerife", or a place
+  // the nightly job checked): use that count instead of asking the busy map servers again.
+  const near = await savedNear(geo.lat, geo.lon, FRESH_DAYS);
+  if (near) {
+    await saveSnapshot({ ...near, query: key });
+    return { ok: true, cached: true, place: near };
   }
+
+  const counts = await countAround(geo.lat, geo.lon, deadline, LIVE_SERVER_MS);
+  if (!counts) {
+    // The map servers are busy. An older saved count (it shows its date) beats an error.
+    const older = saved ?? (await savedNear(geo.lat, geo.lon, KEEP_DAYS));
+    return older ? { ok: true, cached: true, place: older } : { ok: false, reason: "unavailable" };
+  }
+  const place: PlaceSnapshot = { query: key, displayName: geo.displayName, lat: geo.lat, lon: geo.lon, counts, fetchedAt: new Date().toISOString() };
+  await saveSnapshot(place);
   return { ok: true, cached: false, place };
+}
+
+/**
+ * The nightly job (api/cron/places): count a popular resort ahead of time, with far more patience
+ * than a family's page can have, so the page answers from the saved count.
+ */
+export async function refreshPlace(rawQuery: string, deadline: number): Promise<"fresh" | "saved" | "not_found" | "unavailable"> {
+  const key = placeKey(rawQuery);
+  const saved = await savedByKey(key);
+  if (saved && ageDays(saved.fetchedAt) < REFRESH_AFTER_DAYS) return "fresh";
+  const geo = await geocode(key);
+  if (geo === "unavailable") return "unavailable";
+  if (!geo) return "not_found";
+  const counts = await countAround(geo.lat, geo.lon, deadline, CRON_SERVER_MS);
+  if (!counts) return "unavailable";
+  await saveSnapshot({ query: key, displayName: geo.displayName, lat: geo.lat, lon: geo.lon, counts, fetchedAt: new Date().toISOString() });
+  return "saved";
+}
+
+const ageDays = (iso: string) => (Date.now() - Date.parse(iso)) / 86_400_000;
+
+function rowToSnapshot(query: string, d: Record<string, unknown>): PlaceSnapshot {
+  return {
+    query,
+    displayName: d.display_name as string,
+    lat: Number(d.lat),
+    lon: Number(d.lon),
+    counts: normaliseCounts(d.counts),
+    fetchedAt: d.fetched_at as string,
+  };
+}
+
+async function savedByKey(key: string): Promise<PlaceSnapshot | null> {
+  const db = supabaseAdmin();
+  if (!db) return null;
+  const { data } = await db.from("place_snapshot").select("display_name, lat, lon, counts, fetched_at").eq("query_key", key).maybeSingle();
+  return data ? rowToSnapshot(key, data) : null;
+}
+
+/** The newest saved count within NEAR_M of this spot, no older than maxDays. */
+async function savedNear(lat: number, lon: number, maxDays: number): Promise<PlaceSnapshot | null> {
+  const db = supabaseAdmin();
+  if (!db) return null;
+  const dLat = NEAR_M / 111_320;
+  const dLon = dLat / Math.max(0.2, Math.cos((lat * Math.PI) / 180));
+  const { data, error } = await db
+    .from("place_snapshot")
+    .select("query_key, display_name, lat, lon, counts, fetched_at")
+    .gte("lat", lat - dLat)
+    .lte("lat", lat + dLat)
+    .gte("lon", lon - dLon)
+    .lte("lon", lon + dLon)
+    .gte("fetched_at", new Date(Date.now() - maxDays * 86_400_000).toISOString())
+    .order("fetched_at", { ascending: false })
+    .limit(10);
+  if (error || !data) return null;
+  const hit = data
+    .map((d) => ({ d, m: metresBetween(lat, lon, Number(d.lat), Number(d.lon)) }))
+    .filter((x) => x.m <= NEAR_M)
+    .sort((a, b) => a.m - b.m)[0];
+  return hit ? rowToSnapshot(hit.d.query_key as string, hit.d) : null;
+}
+
+async function saveSnapshot(p: PlaceSnapshot): Promise<void> {
+  const db = supabaseAdmin();
+  if (!db) return;
+  const { error } = await db.from("place_snapshot").upsert({
+    query_key: p.query,
+    display_name: p.displayName.slice(0, 300),
+    lat: p.lat,
+    lon: p.lon,
+    counts: p.counts,
+    fetched_at: p.fetchedAt,
+  });
+  if (error) console.error("place_snapshot save failed:", error.message);
+}
+
+function metresBetween(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const r = 6_371_000;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+  return 2 * r * Math.asin(Math.sqrt(a));
 }
 
 /**
@@ -200,20 +266,20 @@ async function geocodeNominatim(q: string): Promise<{ lat: number; lon: number; 
 }
 
 /** One Overpass request that returns one count per signal, in SIGNALS order. */
-export function overpassQuery(lat: number, lon: number): string {
+export function overpassQuery(lat: number, lon: number, serverTimeoutS = 25): string {
   const at = `${lat.toFixed(5)},${lon.toFixed(5)}`;
   const blocks = SIGNALS.map((s) => {
     const r = PLACE_SIGNALS[s].radiusM;
     return `(${SELECTORS[s].map((sel) => `${sel}(around:${r},${at});`).join("")});out count;`;
   });
-  return `[out:json][timeout:25];\n${blocks.join("\n")}`;
+  return `[out:json][timeout:${serverTimeoutS}];\n${blocks.join("\n")}`;
 }
 
-async function countAround(lat: number, lon: number, deadline: number): Promise<PlaceCounts | null> {
+async function countAround(lat: number, lon: number, deadline: number, perServerMs: number): Promise<PlaceCounts | null> {
   // The main server gets most of the time; a backup gets whatever is left before the deadline.
   const json = await overpassJson<{ elements?: { type: string; tags?: { total?: string } }[] }>(
-    overpassQuery(lat, lon),
-    20_000,
+    overpassQuery(lat, lon, Math.max(25, Math.floor(perServerMs / 1000) - 5)),
+    perServerMs,
     OVERPASS_SERVERS.length,
     deadline,
   );
