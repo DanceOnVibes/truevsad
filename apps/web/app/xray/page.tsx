@@ -35,6 +35,8 @@ async function shrinkImage(file: File): Promise<{ mimeType: string; base64: stri
 export default function XrayPage() {
   const [step, setStep] = useState<Step>("paste");
   const [busy, setBusy] = useState(false);
+  /** A deal typed on the homepage is read straight away: the homepage button already said "X-ray it". */
+  const [autoRead, setAutoRead] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState<string[]>([]);
 
@@ -89,7 +91,10 @@ export default function XrayPage() {
     if (params.has("deal")) window.history.replaceState(null, "", window.location.pathname);
     if (pasted) {
       if (/^https?:\/\/\S+$/i.test(pasted)) setUrl(pasted.slice(0, 2000));
-      else setText(pasted.slice(0, 5000));
+      else {
+        setText(pasted.slice(0, 5000));
+        setAutoRead(true);
+      }
     }
   }, []);
 
@@ -158,6 +163,15 @@ export default function XrayPage() {
     if (!res.ok) throw new Error(data.error ?? "Something went wrong.");
     return data;
   }
+
+  useEffect(() => {
+    if (!autoRead || !text || step !== "paste") return;
+    setAutoRead(false);
+    document.getElementById("xray-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    void onExtract();
+    // onExtract reads the latest text; it runs once per hand-over.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRead, text, step]);
 
   async function onExtract() {
     setBusy(true);
@@ -308,7 +322,7 @@ export default function XrayPage() {
       {error && <p className="error">{error}</p>}
 
       {step === "paste" && (
-        <div className="card">
+        <div className="card" id="xray-form">
           <label htmlFor="url">Link to the deal</label>
           <input
             id="url"

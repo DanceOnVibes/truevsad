@@ -76,7 +76,7 @@ supabase db push
 - [x] Fee rules scoped to destination + supplier; CSV template + `pnpm import-rules`
 - [x] "What's included" step: package inclusions (bags, transfers, seats) are never charged twice
 - [x] AI reader: Gemini on Google Cloud Agent Platform in London (text + screenshots), manual fallback, £10/month spend cap
-- [x] London (europe-west2) serves `gemini-3.5-flash` (health probe 200); `gemini-2.5-flash` is not offered there (404)
+- [x] London (europe-west2) serves `gemini-3.5-flash` (health probe 200); `gemini-2.5-flash` was retired on Vertex on 20 Oct 2026; backups are `gemini-3.8-flash` and `gemini-3.5-flash-lite`
 - [x] "Plus taxes and fees" adverts flagged (AI + text check) and warned on the receipt, including shared ones
 - [x] Place words read from the deal link's address (never opened) so the AI fills in town and country
 - [x] First real, sourced fee rules (Balearics, Catalonia, Greece, ESTA, Ryanair/easyJet/typical hold bags) — checked against official/secondary sources 31 Oct 2026
