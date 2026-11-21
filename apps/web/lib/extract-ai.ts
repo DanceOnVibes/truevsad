@@ -51,7 +51,13 @@ export interface AiInput {
  */
 const AI_REGION = "europe-west2";
 
-const DEFAULT_MODELS = ["gemini-3.5-flash", "gemini-2.5-flash"];
+/**
+ * Tried in order; a model that isn't offered in London (404) is skipped. Check Google's model
+ * lifecycle page when changing these: gemini-2.5-flash was retired on 20 October 2026.
+ * gemini-3.5-flash: retires May 2027 or later. gemini-3.8-flash: September 2027 or later.
+ * gemini-3.5-flash-lite: Google's named cheaper replacement for 2.5 Flash.
+ */
+const DEFAULT_MODELS = ["gemini-3.5-flash", "gemini-3.8-flash", "gemini-3.5-flash-lite"];
 
 const SCHEMA = {
   type: "OBJECT",
