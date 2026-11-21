@@ -12,9 +12,10 @@ export const maxDuration = 300;
 const STOP_BEFORE_END_MS = 90_000;
 
 /**
- * Hourly (vercel.json): count popular resorts for Visit before you book ahead of time. Places
- * counted in the last 25 days are skipped, so once the list is saved most runs do nothing.
- * One place at a time, a pause between, to stay light on the free map servers.
+ * Hourly from 01:11 to 06:11 UTC, when Europe is asleep (vercel.json): count popular resorts for
+ * Visit before you book ahead of time. Places counted in the last 25 days are skipped, so once the
+ * list is saved most runs do nothing. One place at a time, a pause between: the public Overpass
+ * servers are run by volunteers and have been at capacity for months (Nov 2026), so we stay light.
  */
 export async function GET(req: Request) {
   const refused = cronRefusal(req);
