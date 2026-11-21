@@ -79,7 +79,13 @@ export default async function PlanBPage({ searchParams }: { searchParams: Search
     console.error("FCDO lookup failed", (err as Error).message);
     if (!plan && found && /^(spain|españa|espana)$/i.test(mapCountry)) plan = planBFor(found.displayName);
   }
-  const placeName = plan?.island ?? q.split(",")[0]?.trim() ?? "";
+  // The card's heading names the town the family typed, with its island ("Costa Adeje, Tenerife"),
+  // so it matches the hospital distances below it. A town the map couldn't find isn't repeated.
+  const typedTown = q.split(",")[0]?.trim() ?? "";
+  const placeName =
+    plan?.island && typedTown && !usedIsland && typedTown.toLowerCase() !== plan.island.toLowerCase()
+      ? `${typedTown}, ${plan.island}`
+      : (plan?.island ?? typedTown);
   // On an island, only hospitals on the same island: a 40 km circle can reach across the sea
   // (Corralejo, Fuerteventura is 40 km from Lanzarote), and a family can't drive there.
   const onIsland = found ? islandAt(found.lat, found.lon)?.name : undefined;
