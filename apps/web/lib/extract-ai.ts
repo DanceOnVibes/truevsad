@@ -84,28 +84,35 @@ export function anthropicConfigured(): boolean {
   return Boolean(process.env.ANTHROPIC_API_KEY?.trim());
 }
 
-type GeminiNode = { type: string; description?: string; enum?: readonly string[]; items?: GeminiNode; properties?: Record<string, GeminiNode> };
+type GeminiNode = {
+  type: string;
+  description?: string;
+  enum?: readonly string[];
+  items?: GeminiNode;
+  properties?: Record<string, GeminiNode>;
+  required?: readonly string[];
+};
 
 /**
- * Claude's structured output takes strict JSON Schema: every object lists all its fields as required
- * and allows nothing extra. A field the advert doesn't show comes back as null, which clean() drops.
+ * Claude's structured output takes strict JSON Schema, with limits: at most 16 fields that can be
+ * null (anyOf) and 24 optional ones. So no nulls: a field the advert doesn't show is simply left
+ * out, as with Gemini. Yes/no fields and lists are always given (false, or an empty list), which
+ * keeps the optional count low (13). clean() re-checks everything either way.
  */
-function toClaudeSchema(node: GeminiNode, top = true): Record<string, unknown> {
+function toClaudeSchema(node: GeminiNode): Record<string, unknown> {
   const base: Record<string, unknown> = { type: node.type.toLowerCase() };
+  if (node.description) base.description = node.description;
   if (node.enum) base.enum = [...node.enum];
-  if (node.items) base.items = toClaudeSchema(node.items, false);
+  if (node.items) base.items = toClaudeSchema(node.items);
   if (node.properties) {
     const props: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(node.properties)) {
-      const inner = toClaudeSchema(v, false);
-      delete inner.description; // said once, on the field itself
-      props[k] = { anyOf: [inner, { type: "null" }], ...(v.description ? { description: v.description } : {}) };
-    }
+    for (const [k, v] of Object.entries(node.properties)) props[k] = toClaudeSchema(v);
     base.properties = props;
-    base.required = Object.keys(node.properties);
+    base.required = Object.entries(node.properties)
+      .filter(([k, v]) => node.required?.includes(k) || v.type === "BOOLEAN" || v.type === "ARRAY")
+      .map(([k]) => k);
     base.additionalProperties = false;
   }
-  if (!top && node.description && !node.properties) base.description = node.description;
   return base;
 }
 
@@ -352,7 +359,7 @@ function clean(json: string): DraftOffer | null {
     ? r.childAges.filter((a): a is number => Number.isInteger(a) && a >= 0 && a <= 17).slice(0, 9)
     : undefined;
   const includes = Array.isArray(r.includes)
-    ? [...new Set(r.includes.filter((x): x is Inclusion => INCLUSIONS.includes(x as Inclusion)))]
+    ? [...new Set(r.includes.map((x) => String(x).toLowerCase()).filter((x): x is Inclusion => INCLUSIONS.includes(x as Inclusion)))]
     : undefined;
   const money = (v: unknown) => {
     const n = num(v);
@@ -363,7 +370,7 @@ function clean(json: string): DraftOffer | null {
 
   return {
     headlinePence: price !== undefined && price > 0 && price < 1_000_000 ? Math.round(price * 100) : undefined,
-    headlineBasis: r.headlineBasis === "total" ? "total" : "per_person",
+    headlineBasis: String(r.headlineBasis).toLowerCase() === "total" ? "total" : "per_person",
     currency: currency && /^[A-Z]{3}$/.test(currency) ? currency : "GBP",
     nights: int(r.nights, 1, 60),
     destination: str(r.destination),
