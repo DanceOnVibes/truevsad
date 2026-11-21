@@ -41,6 +41,11 @@ const AIRPORT_BY_CODE: Record<string, string> = {
 
 export default function XrayPage() {
   const [step, setStep] = useState<Step>("paste");
+  // Keyboard and screen-reader users: when the view changes, move focus to it so it's announced.
+  useEffect(() => {
+    if (step === "paste") return;
+    document.getElementById(step === "confirm" ? "xray-confirm" : "xray-receipt")?.focus();
+  }, [step]);
   const [busy, setBusy] = useState(false);
   /** A deal typed on the homepage is read straight away: the homepage button already said "X-ray it". */
   const [autoRead, setAutoRead] = useState(false);
@@ -385,7 +390,7 @@ export default function XrayPage() {
 
       {step === "confirm" && (
         <div className="card">
-          <h2 style={{ marginTop: 0 }}>Check the details</h2>
+          <h2 id="xray-confirm" tabIndex={-1} style={{ marginTop: 0, outline: "none" }}>Check the details</h2>
           {notes.map((n) => (
             <p key={n} className="hint">• {n}</p>
           ))}
@@ -593,7 +598,7 @@ export default function XrayPage() {
       )}
 
       {step === "receipt" && result && (
-        <div className="card receipt-card">
+        <div className="card receipt-card" id="xray-receipt" role="region" aria-label="Your true price receipt" tabIndex={-1} style={{ outline: "none" }}>
           <ReceiptView
             {...result}
             lines={result.receipt.lines}

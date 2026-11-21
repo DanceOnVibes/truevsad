@@ -207,6 +207,12 @@ describe("receipt scope", () => {
     expect(c.counted.some((s) => s.includes("4-star"))).toBe(true);
     expect([...c.counted, ...c.notChecked].some((s) => /assum|estimat|guess/i.test(s))).toBe(false);
   });
+  it("names flight tickets unless the deal is a package", () => {
+    const empty = { receipt: { lines: [], subtotals: {} as never } };
+    expect(receiptScope({ includes: [] }, empty).notChecked.some((s) => s.startsWith("Flight tickets"))).toBe(true);
+    expect(receiptScope({ includes: [], bookingType: "separate" }, empty).notChecked.some((s) => s.startsWith("Flight tickets"))).toBe(true);
+    expect(receiptScope({ includes: [], bookingType: "package" }, empty).notChecked.some((s) => s.startsWith("Flight tickets"))).toBe(false);
+  });
   it("doesn't list transfers when the deal includes them", () => {
     const c = receiptScope({ includes: ["transfers"] }, { receipt: { lines: [], subtotals: {} as never } });
     expect(c.notChecked.some((s) => s.includes("Transfers"))).toBe(false);

@@ -14,7 +14,7 @@ export interface ReceiptScope {
 }
 
 export function receiptScope(
-  offer: Pick<Offer, "includes">,
+  offer: Pick<Offer, "includes"> & { bookingType?: "package" | "separate" | null },
   result: Pick<TrueCostResult, "receipt">,
 ): ReceiptScope {
   const lines = result.receipt.lines;
@@ -39,6 +39,10 @@ export function receiptScope(
     counted.push("FairMark counts one hold bag per booking as standard, the same for every seller. Your own bag number, seats and other extras are in your total but not in the seller's FairMark.");
 
   const notChecked: string[] = [];
+  // Only a package always includes the flights. A hotel-only advert's total has no flight tickets
+  // in it, even when airline bag and seat fees are added, so say so.
+  if (offer.bookingType !== "package")
+    notChecked.push("Flight tickets, if the advertised price doesn't include them. Bags and seats above are what airlines add on top of a ticket.");
   if (!includes.includes("transfers") && !added(/transfer/i)) notChecked.push("Transfers between the resort airport and your stay.");
   notChecked.push("Getting to and from the UK airport (parking, train or fuel).");
   notChecked.push("Meals beyond the board basis, spending money and travel insurance.");

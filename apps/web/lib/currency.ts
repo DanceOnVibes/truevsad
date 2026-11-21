@@ -58,7 +58,9 @@ export function conversionNote(c: Conversion): string {
   });
   return (
     `Advertised as ${formatMoney(c.amountMinor, c.from)}. Converted to pounds at ` +
-    `${currencySymbol(c.from)}1 = £${c.rate.toFixed(4)}, the European Central Bank rate for ${day}. ` +
+    // The ECB publishes 5 decimals (0.83735); show it as published so €1,450 × rate gives the
+    // pounds on the receipt exactly.
+    `${currencySymbol(c.from)}1 = £${Number(c.rate.toFixed(5))}, the European Central Bank rate for ${day}. ` +
     `Your card or bank may use a different rate.`
   );
 }
