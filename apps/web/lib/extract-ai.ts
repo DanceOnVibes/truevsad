@@ -134,31 +134,41 @@ export async function extractWithAi(input: AiInput): Promise<DraftOffer | null> 
   if (input.linkWords) parts.push({ text: `Link words (from the deal's web address): ${input.linkWords}` });
   if (!input.text && !input.image) return null; // link words alone are not enough to read a deal
 
-  const body = JSON.stringify({
-    systemInstruction: { parts: [{ text: INSTRUCTIONS }] },
-    contents: [{ role: "user", parts }],
-    generationConfig: {
-      temperature: 0,
-      responseMimeType: "application/json",
-      responseSchema: SCHEMA,
-      // Newer Gemini models think before answering, and that thinking counts towards this limit.
-      // At 1,024 the answer was cut off mid-way and couldn't be read. We only pay for tokens used.
-      maxOutputTokens: 8192,
-    },
-  });
+  // Reading a deal is simple: low thinking is faster and cheaper. If a model rejects the setting
+  // (400), we ask the same model once more without it.
+  const bodyFor = (lowThinking: boolean) =>
+    JSON.stringify({
+      systemInstruction: { parts: [{ text: INSTRUCTIONS }] },
+      contents: [{ role: "user", parts }],
+      generationConfig: {
+        temperature: 0,
+        responseMimeType: "application/json",
+        responseSchema: SCHEMA,
+        // Newer Gemini models think before answering, and that thinking counts towards this limit.
+        // At 1,024 the answer was cut off mid-way and couldn't be read. We only pay for tokens used.
+        maxOutputTokens: 8192,
+        ...(lowThinking ? { thinkingConfig: { thinkingLevel: "LOW" } } : {}),
+      },
+    });
 
   for (const model of models.length ? models : DEFAULT_MODELS) {
     const url =
       `https://${location}-aiplatform.googleapis.com/v1/projects/${project}` +
       `/locations/${location}/publishers/google/models/${model}:generateContent`;
-    let res: Response;
-    try {
-      res = await fetch(url, {
+    const ask = (lowThinking: boolean) =>
+      fetch(url, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body,
+        body: bodyFor(lowThinking),
         signal: AbortSignal.timeout(25_000),
       });
+    let res: Response;
+    try {
+      res = await ask(true);
+      if (res.status === 400) {
+        console.warn(`AI reader: ${model} rejected low thinking, asking without it`);
+        res = await ask(false);
+      }
     } catch (err) {
       console.error(`AI reader: ${model} request failed`, (err as Error).name);
       return null;
