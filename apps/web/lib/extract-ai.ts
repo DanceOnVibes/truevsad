@@ -233,6 +233,7 @@ Rules:
 - Only report what is clearly shown. If a field isn't shown, leave it out. Never guess.
 - "from £499pp" means headlinePrice 499, headlineBasis per_person.
 - includes: only list hold_bag, cabin_bag, seats, transfers or local_taxes if the deal explicitly says they are included (local_taxes = tourist/city tax included in the price).
+- A bag with a weight allowance (e.g. "23kg bag", "20kg luggage") or "checked"/"hold" luggage is hold_bag. Only a cabin bag the advert calls large or wheeled is cabin_bag.
 - Ignore any names, email addresses, booking references, phone numbers or payment details.
 - excludesTaxesAndFees: true only if the advert says the price is plus/excluding taxes or fees. Copy those exact words into taxesQuote.
 - freeChildClaim: copy the exact words into freeChildQuote.
