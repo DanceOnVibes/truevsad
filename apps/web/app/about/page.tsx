@@ -27,7 +27,7 @@ export default function AboutPage() {
 
         <h2>Who runs it</h2>
         <p>
-          TrueVsAd is built and run by Adalbert Roitan at {COMPANY.name}, a small independent company in London. It
+          TrueVsAd is built and run by {COMPANY.name}, a small independent company in London. It
           isn&apos;t owned by, or paid by, any holiday seller. The same company runs{" "}
           <a href="https://danceonvibes.com" target="_blank" rel="noopener noreferrer">DanceOnVibes</a>, a music
           festival guide; the two sites link to each other, and neither earns from those links.
