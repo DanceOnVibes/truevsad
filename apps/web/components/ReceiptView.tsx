@@ -1,4 +1,4 @@
-import { ADVISORY_CATEGORIES, airlineBagsFor, CARD_FEES_CHECKED_ON, cardFeeNote, dropOffFor, formatGBP, HELP_CHECKED_ON, ifItGoesWrong, localTaxNoteFor, NO_FEE_CARDS, planBFor, SURCHARGE_BAN_URL, transferFor, receiptScope, type BookingType, type CostCategory, type CostLine, type FairMark, type Inclusion } from "@truevsad/true-cost";
+import { ADVISORY_CATEGORIES, airlineBagsFor, CARD_FEES, CARD_FEES_CHECKED_ON, cardFeeNote, dropOffFor, formatGBP, HELP_CHECKED_ON, ifItGoesWrong, localTaxNoteFor, NO_FEE_CARDS, planBFor, SURCHARGE_BAN_URL, transferFor, receiptScope, type BookingType, type CostCategory, type CostLine, type FairMark, type Inclusion } from "@truevsad/true-cost";
 import { FairMarkBadge, FairMarkDetail } from "./FairMarkBadge";
 import { VerdictStamp } from "./VerdictStamp";
 import { EMAILS } from "@/lib/company";
@@ -75,7 +75,7 @@ export function ReceiptView(props: ReceiptViewProps) {
   const underseat = bags?.bags.find((b) => b.kind === "underseat" && b.verified && b.dims);
   const cabin = bags?.bags.find((b) => b.kind === "cabin" && b.verified && b.dims);
   const gapRatio = advertisedPence > 0 ? gapPence / advertisedPence : 0;
-  const scope = receiptScope({ includes }, { receipt: { lines, subtotals: {} as never } });
+  const scope = receiptScope({ includes, bookingType: props.bookingType }, { receipt: { lines, subtotals: {} as never } });
   const help = ifItGoesWrong(props.bookingType);
   const planB = planBFor(props.destination, today);
   const planBPlace = planB?.island ?? props.destination?.split(",")[0]?.trim();
@@ -163,9 +163,14 @@ export function ReceiptView(props: ReceiptViewProps) {
                   {l.sourceUrl && (
                     <>
                       {" · "}
-                      <a href={l.sourceUrl} target="_blank" rel="noopener noreferrer">
-                        source
-                      </a>
+                      {/typical price/i.test(l.label) ? (
+                        // An average of several airlines: the fee tables show each one and the sum.
+                        <a href="/fees#party_extra">how we worked it out</a>
+                      ) : (
+                        <a href={l.sourceUrl} target="_blank" rel="noopener noreferrer">
+                          source
+                        </a>
+                      )}
                     </>
                   )}
                   {l.checkedOn && checkedLabel(l.checkedOn) ? ` · checked ${checkedLabel(l.checkedOn)}` : ""}
@@ -271,15 +276,30 @@ export function ReceiptView(props: ReceiptViewProps) {
                 Most standard UK debit cards add {cardFee.lowPercent}–{cardFee.highPercent} for paying in another
                 currency: about {formatGBP(cardFee.lowPence)}–{formatGBP(cardFee.highPence)} on this price.
               </li>
-              <li>Some cards charge nothing for this, for example {NO_FEE_CARDS.map((c) => c.provider).join(", ")}.</li>
+              <li>
+                Some cards charge nothing for this, for example{" "}
+                {NO_FEE_CARDS.map((c, i) => (
+                  <span key={c.provider}>
+                    {i > 0 ? (i === NO_FEE_CARDS.length - 1 ? " and " : ", ") : ""}
+                    <a href={c.sourceUrl} target="_blank" rel="noopener noreferrer">{c.provider}</a>
+                  </span>
+                ))}
+                .
+              </li>
               <li>
                 A UK seller can&apos;t add a fee for paying by a personal card (
                 <a href={SURCHARGE_BAN_URL} target="_blank" rel="noopener noreferrer">Payment Surcharges Regulations, reg 6A</a>).
               </li>
             </ul>
             <p className="hint">
-              Not added to your true price: it depends on your card. Rates from each bank&apos;s own page, checked{" "}
-              {checkedLabel(CARD_FEES_CHECKED_ON)}.
+              Not added to your true price: it depends on your card. Rates from each bank&apos;s own page (
+              {CARD_FEES.map((c, i) => (
+                <span key={c.provider}>
+                  {i > 0 ? ", " : ""}
+                  <a href={c.sourceUrl} target="_blank" rel="noopener noreferrer">{c.provider}</a>
+                </span>
+              ))}
+              ), checked {checkedLabel(CARD_FEES_CHECKED_ON)}.
             </p>
           </>
         )}

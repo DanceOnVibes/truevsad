@@ -78,7 +78,7 @@ export default async function FeesPage() {
         const list = rules.filter((r) => r.category === category);
         if (list.length === 0) return null;
         return (
-          <div className="card" key={category}>
+          <div className="card" key={category} id={category}>
             <h2 style={{ marginTop: 0 }}>{title}</h2>
             {category === "party_extra" && (
               <p className="hint">
