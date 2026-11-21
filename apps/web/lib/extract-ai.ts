@@ -200,7 +200,10 @@ const SCHEMA = {
     totalPrice: { type: "NUMBER", description: "The total price for everyone exactly as shown, if one is shown." },
     taxesQuote: { type: "STRING", description: "If excludesTaxesAndFees is true: the exact words from the advert that say so, copied character for character." },
     freeChildQuote: { type: "STRING", description: "If freeChildClaim is true: the exact words from the advert that say so, copied character for character." },
-    departureAirport: { type: "STRING", description: "UK departure airport IATA code if shown, e.g. LGW." },
+    departureAirport: {
+      type: "STRING",
+      description: "UK departure airport as its 3-letter IATA code, if the advert names it: Gatwick is LGW, Luton LTN, Manchester MAN, Heathrow LHR.",
+    },
     adults: { type: "INTEGER", description: "Number of adults the price is for, only if stated." },
     childAges: { type: "ARRAY", items: { type: "INTEGER" }, description: "Ages of children the price is for, only if stated. Never dates of birth." },
     includes: {
@@ -230,6 +233,7 @@ Rules:
 - Only report what is clearly shown. If a field isn't shown, leave it out. Never guess.
 - "from £499pp" means headlinePrice 499, headlineBasis per_person.
 - includes: only list hold_bag, cabin_bag, seats, transfers or local_taxes if the deal explicitly says they are included (local_taxes = tourist/city tax included in the price).
+- A bag with a weight allowance (e.g. "23kg bag", "20kg luggage") or "checked"/"hold" luggage is hold_bag. Only a cabin bag the advert calls large or wheeled is cabin_bag.
 - Ignore any names, email addresses, booking references, phone numbers or payment details.
 - excludesTaxesAndFees: true only if the advert says the price is plus/excluding taxes or fees. Copy those exact words into taxesQuote.
 - freeChildClaim: copy the exact words into freeChildQuote.

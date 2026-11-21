@@ -32,6 +32,13 @@ async function shrinkImage(file: File): Promise<{ mimeType: string; base64: stri
   return { mimeType: "image/jpeg", base64: dataUrl.split(",")[1]! };
 }
 
+/** The AI reader gives the UK airport as its code; the form lists airports by name. */
+const AIRPORT_BY_CODE: Record<string, string> = {
+  LHR: "Heathrow", LGW: "Gatwick", MAN: "Manchester", STN: "Stansted", LTN: "Luton", BHX: "Birmingham",
+  BRS: "Bristol", EMA: "East Midlands", LBA: "Leeds Bradford", LPL: "Liverpool", NCL: "Newcastle",
+  EDI: "Edinburgh", GLA: "Glasgow",
+};
+
 export default function XrayPage() {
   const [step, setStep] = useState<Step>("paste");
   const [busy, setBusy] = useState(false);
@@ -192,6 +199,8 @@ export default function XrayPage() {
       setFreeChild(d.freeChildClaim === true);
       if (d.nights) setNights(String(d.nights));
       if (d.departDate) setDepartDate(d.departDate);
+      const airportName = typeof d.departureAirport === "string" ? AIRPORT_BY_CODE[d.departureAirport] : undefined;
+      if (airportName && AIRPORT_DROPOFF.some((a) => a.airport === airportName)) setDepartAirport(airportName);
       if (d.destination) setDestination(d.destination);
       else if (festival) setDestination(`${festival.city}, ${festival.country}`);
       if (d.supplierName) changeSupplier(d.supplierName);
