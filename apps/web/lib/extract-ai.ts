@@ -52,16 +52,16 @@ export interface AiInput {
 const AI_REGION = "europe-west2";
 
 /**
- * Tried in order; a model that isn't offered in London (404) is skipped. Check Google's model
- * lifecycle page when changing these: gemini-2.5-flash was retired on 20 October 2026.
- * gemini-3.5-flash-lite: Google's named lighter replacement for 2.5 Flash; first, because reading a
- * deal is a simple job and it answers fastest. gemini-3.5-flash: May 2027 or later.
- * gemini-3.8-flash: September 2027 or later.
+ * Tried in order; a model that isn't offered in London (404) is skipped. Checked 21 Nov 2026:
+ * London (europe-west2) offers gemini-3.5-flash only (retires May 2027 or later); 3.5-flash-lite
+ * and 3.8-flash return 404 there. gemini-2.5-flash was retired on 20 October 2026.
+ * gemini-3.5-flash is listed twice on purpose: some of its replies are slow, and a second try
+ * usually comes back quickly.
  */
-const DEFAULT_MODELS = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.8-flash"];
+const DEFAULT_MODELS = ["gemini-3.5-flash", "gemini-3.5-flash"];
 
-/** Each model gets a short turn; a slow one is skipped, not waited for. A family never waits longer than the total. */
-const TURN_MS = 12_000;
+/** Each try gets a short turn; a slow one is dropped, not waited for. A family never waits longer than the total. */
+const TURN_MS = 13_000;
 const TOTAL_MS = 30_000;
 
 const SCHEMA = {
