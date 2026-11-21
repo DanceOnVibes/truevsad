@@ -1,5 +1,5 @@
 /**
-^ * Resorts UK families book most, counted ahead of time overnight by the job (api/cron/places) so
+ * Resorts UK families book most, counted ahead of time overnight by the job (api/cron/places) so
  * Visit before you book answers from a saved count instead of waiting on busy map servers.
  * A family's search within 600 m of one of these uses the same count, whatever name they type.
  * Add places freely: each costs one map lookup a month.
