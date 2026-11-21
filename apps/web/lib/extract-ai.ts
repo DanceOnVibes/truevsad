@@ -135,7 +135,9 @@ export async function extractWithAi(input: AiInput): Promise<DraftOffer | null> 
       temperature: 0,
       responseMimeType: "application/json",
       responseSchema: SCHEMA,
-      maxOutputTokens: 1024,
+      // Newer Gemini models think before answering, and that thinking counts towards this limit.
+      // At 1,024 the answer was cut off mid-way and couldn't be read. We only pay for tokens used.
+      maxOutputTokens: 8192,
     },
   });
 
@@ -156,8 +158,9 @@ export async function extractWithAi(input: AiInput): Promise<DraftOffer | null> 
       return null;
     }
 
-    if (res.status === 404) {
-      console.warn(`AI reader: ${model} not available in ${location}, trying next`);
+    if (res.status === 404 || res.status === 400) {
+      // 404: model not offered in this region. 400: the model rejected the request. Try the next one.
+      console.warn(`AI reader: ${model} returned ${res.status} in ${location}, trying next`);
       continue;
     }
     if (!res.ok) {
@@ -166,13 +169,22 @@ export async function extractWithAi(input: AiInput): Promise<DraftOffer | null> 
       return null;
     }
 
-    const data = (await res.json()) as {
-      candidates?: { content?: { parts?: { text?: string }[] } }[];
+    const data = (await res.json().catch(() => ({}))) as {
+      candidates?: { finishReason?: string; content?: { parts?: { text?: string; thought?: boolean }[] } }[];
     };
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) return null;
+    const candidate = data.candidates?.[0];
+    // The answer is every text part that isn't the model's own thinking.
+    const text = (candidate?.content?.parts ?? [])
+      .filter((p) => !p.thought && typeof p.text === "string")
+      .map((p) => p.text)
+      .join("");
+    const draft = text ? clean(text) : null;
+    if (!draft) {
+      console.warn(`AI reader: ${model} gave no readable answer (finish: ${candidate?.finishReason ?? "none"}), trying next`);
+      continue;
+    }
     console.log(`AI reader: used ${model} in ${location}`);
-    return clean(text);
+    return draft;
   }
   return null;
 }

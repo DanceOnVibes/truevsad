@@ -213,7 +213,8 @@ function naiveExtract(text: string): DraftOffer {
   const price = text.match(/([£€$])\s?([\d,]+(?:\.\d{1,2})?)/);
   const currency = price?.[1] === "€" ? "EUR" : price?.[1] === "$" ? "USD" : "GBP";
   const nights = text.match(/(\d{1,2})\s*nights?/i);
-  const perPerson = /\b(pp|p\.p\.|per person)\b/i.test(text);
+  // "£689pp", "£689 pp", "689 p.p." and "per person": "pp" often sits straight after the number.
+  const perPerson = /(?:\d\s*|\b)(?:pp|p\.p\.?)(?![a-z])|\bper\s+person\b|\bper\s+adult\b/i.test(text);
   const excludes = EXCLUDES_FEES.test(text);
   const freeChild = FREE_CHILD.test(text);
 
