@@ -75,6 +75,11 @@ const ANTHROPIC_MODEL = "claude-haiku-5-5";
 const ANTHROPIC_GEO = "us";
 const ANTHROPIC_TURN_MS = 15_000;
 
+/**
+ * ANTHROPIC_API_KEY lives in Vercel (Production and Preview). A changed key only reaches new
+ * deployments, and Vercel skips commits that don't touch this app, so redeploy after changing it.
+ * Console keys can expire: if the log says "401", make a new key and replace it in Vercel.
+ */
 export function anthropicConfigured(): boolean {
   return Boolean(process.env.ANTHROPIC_API_KEY?.trim());
 }
