@@ -44,7 +44,7 @@ export default function AboutPage() {
 
         <h2>How we use AI, openly</h2>
         <p>
-          Deal X-ray can read a deal from your text or screenshot with Google&apos;s Gemini, run in London; you check
+          Deal X-ray can read a deal from your text or screenshot with Anthropic&apos;s Claude Haiku (processed in the US), with Google&apos;s Gemini in London as a backup; you check
           every field before anything is priced, and the prices themselves come from our own engine, not from AI. The
           holiday scenes around the site are AI images made on HeyJess.art, and are credited where they appear.
         </p>

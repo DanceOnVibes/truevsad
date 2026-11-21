@@ -53,18 +53,20 @@ export default function PrivacyPage() {
 
         <h2>Reading your deal</h2>
         <p>
-          When you paste deal text or a screenshot, it is sent to Google Cloud (Gemini on Agent
-          Platform, run in London) only to pull out the deal details: price, nights, destination,
-          seller and what&apos;s included. We don&apos;t keep the text or the screenshot — only the
+          When you paste deal text or a screenshot, it is sent to Anthropic (its Claude Haiku AI,
+          processed only in the United States) only to pull out the deal details: price, nights,
+          destination, seller and what&apos;s included. If Anthropic doesn&apos;t answer in time, the
+          same text goes instead to Google Cloud (Gemini, run in London). We don&apos;t keep the text or the screenshot — only the
           details you confirm on the next screen are saved. Please crop out names and booking
           references before uploading a screenshot. If you paste a link, we also pass on the place
           words from its address (e.g. &ldquo;spain tarragona&rdquo;) to help read the destination;
           we still never open the link.
         </p>
         <p>
-          Google doesn&apos;t use what you send to train its AI. To answer quickly it may hold it in
-          memory, in the UK, for up to 24 hours, and under its cloud terms it may log requests to
-          detect abuse. The price itself is worked out by our own engine, never by AI, and nothing
+          Neither Anthropic nor Google uses what you send to train its AI. Anthropic doesn&apos;t keep
+          it after answering, unless its automatic safety checks flag a request, which it may then
+          keep for up to 2 years. Google may hold it in memory, in the UK, for up to 24 hours to
+          answer quickly, and under its cloud terms may log requests to detect abuse. The price itself is worked out by our own engine, never by AI, and nothing
           about you is decided automatically.
         </p>
 
@@ -273,13 +275,16 @@ export default function PrivacyPage() {
             isn&apos;t in those logs; if your browser blocks storage or JavaScript, it travels in the page
             address instead, and so can be.
           </li>
-          <li>Google Cloud (reading deals), in London.</li>
+          <li>Anthropic (reading deals with its Claude AI), in the United States.</li>
+          <li>Google Cloud (reading deals when Anthropic doesn&apos;t answer in time), in London.</li>
           <li>Cloudflare (our domain and email forwarding), if you email us.</li>
         </ul>
         <p>
           Each works for us under a data processing agreement and may only use your data to provide
-          their service to us. They are US companies, so staff abroad could in rare cases access it;
-          that&apos;s covered by the UK&apos;s US data bridge or the UK&apos;s standard contract clauses.
+          their service to us. They are US companies, so staff abroad could in rare cases access it,
+          and deals sent to Anthropic are processed in the US. That&apos;s covered by the UK&apos;s US
+          data bridge or, for Anthropic, which isn&apos;t part of the data bridge, by the standard contract
+          clauses with the UK&apos;s addendum in its data processing agreement.
           We never sell your data or share it with anyone else, unless the law requires it.
           When we delete data it can stay in our database provider&apos;s backups for a short time,
           until they roll over.
@@ -331,7 +336,7 @@ export default function PrivacyPage() {
           <a href="https://ico.org.uk/make-a-complaint/" target="_blank" rel="noopener noreferrer">ico.org.uk/make-a-complaint</a>.
         </p>
 
-        <p className="hint">Last updated 6 November 2026.</p>
+        <p className="hint">Last updated 21 November 2026.</p>
       </div>
     </main>
   );
