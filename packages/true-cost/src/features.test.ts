@@ -393,6 +393,16 @@ describe("seats: only what a family must pay to sit together", () => {
     const r = calculateTrueCost({ party: family, offer, rules: [seat("Aer Lingus")] });
     expect(r.trueCostPence).toBe(200000 + 2 * 1400);
   });
+  it("general (typical) seat price is never charged on a Jet2 deal, by airline or holiday brand", () => {
+    const jet2 = calculateTrueCost({ party: family, offer: { ...offer, airline: "Jet2" }, rules: [seat(undefined)] });
+    expect(jet2.trueCostPence).toBe(200000);
+    const brand = calculateTrueCost({ party: family, offer: { ...offer, supplierName: "Jet2holidays" }, rules: [seat(undefined)] });
+    expect(brand.trueCostPence).toBe(200000);
+  });
+  it("general seat price still applies when the deal's airline charges or is unknown", () => {
+    const r = calculateTrueCost({ party: family, offer: { ...offer, airline: "Aer Lingus" }, rules: [seat(undefined)] });
+    expect(r.trueCostPence).toBe(200000 + 2 * 1400);
+  });
   it("airline policy unknown: per adult, as before", () => {
     const r = calculateTrueCost({ party: family, offer, rules: [seat(undefined)] });
     expect(r.trueCostPence).toBe(200000 + 2 * 1400);

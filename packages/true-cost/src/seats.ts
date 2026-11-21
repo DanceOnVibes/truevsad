@@ -102,12 +102,14 @@ export function familySeatingFor(name: string | undefined): AirlineSeating | und
 
 /**
  * Units for a "seats" rule (covers: "seats"), or null when nothing is counted.
- * The rule's supplierName is the airline whose seat price it is.
+ * The rule's supplierName is the airline whose seat price it is. A general rule (no airline) still
+ * follows the deal's own airline policy: a typical seat price is never charged on an airline that
+ * seats children with an adult for free.
  */
-export function seatUnits(rule: FeeRule, party: Party): { units: number; label: string } | null {
+export function seatUnits(rule: FeeRule, party: Party, dealAirline?: string): { units: number; label: string } | null {
   const under12 = childrenInBand(party, 0, 11);
   if (under12 === 0) return null; // adults (and teens) can sit apart for free: a preference, not a cost
-  const policy = familySeatingFor(rule.supplierName)?.policy;
+  const policy = familySeatingFor(rule.supplierName ?? dealAirline)?.policy;
   if (policy === "free") return null;
   if (policy === "one_adult") return { units: 1, label: "1 parent's family seat so the children can sit with them" };
   const n = party.adults;

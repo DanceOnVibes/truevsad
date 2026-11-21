@@ -73,7 +73,7 @@ export function calculateTrueCost(input: TrueCostInput): TrueCostResult {
   // 2–6. Rule-driven lines (party extras, levies, entry docs, door-to-door, payment/FX).
   let stale = false;
   for (const rule of rules) {
-    const line = applyRule(rule, party, offer.nights, supplierSubtotal);
+    const line = applyRule(rule, party, offer.nights, supplierSubtotal, offer.airline ?? offer.supplierName);
     if (!line || line.amountPence === 0) continue;
     if (ADVISORY_CATEGORIES.includes(line.category)) line.advisory = true;
     if (rule.checkedOn) {
@@ -166,6 +166,7 @@ function applyRule(
   party: Party,
   nights: number,
   supplierSubtotal: Pence,
+  dealAirline?: string,
 ): CostLine | null {
   if (rule.amount.kind === "percent") {
     const amount = roundPence((supplierSubtotal * rule.amount.basisPoints) / 10_000);
@@ -183,7 +184,7 @@ function applyRule(
 
   // Hold bags are advisory: the family's own number, or one per two people (a couple often shares).
   // Seats: only what the airline makes a family pay to sit together (see seats.ts).
-  const seat = rule.covers === "seats" ? seatUnits(rule, party) : undefined;
+  const seat = rule.covers === "seats" ? seatUnits(rule, party, dealAirline) : undefined;
   if (seat === null) return null;
   const { units, label } =
     seat ?? (rule.covers === "hold_bag" && rule.unit === "per_person" ? bagUnits(rule, party) : unitsFor(rule, party, nights));
