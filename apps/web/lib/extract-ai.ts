@@ -54,10 +54,15 @@ const AI_REGION = "europe-west2";
 /**
  * Tried in order; a model that isn't offered in London (404) is skipped. Check Google's model
  * lifecycle page when changing these: gemini-2.5-flash was retired on 20 October 2026.
- * gemini-3.5-flash: retires May 2027 or later. gemini-3.8-flash: September 2027 or later.
- * gemini-3.5-flash-lite: Google's named cheaper replacement for 2.5 Flash.
+ * gemini-3.5-flash-lite: Google's named lighter replacement for 2.5 Flash; first, because reading a
+ * deal is a simple job and it answers fastest. gemini-3.5-flash: May 2027 or later.
+ * gemini-3.8-flash: September 2027 or later.
  */
-const DEFAULT_MODELS = ["gemini-3.5-flash", "gemini-3.8-flash", "gemini-3.5-flash-lite"];
+const DEFAULT_MODELS = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.8-flash"];
+
+/** Each model gets a short turn; a slow one is skipped, not waited for. A family never waits longer than the total. */
+const TURN_MS = 12_000;
+const TOTAL_MS = 30_000;
 
 const SCHEMA = {
   type: "OBJECT",
@@ -151,7 +156,12 @@ export async function extractWithAi(input: AiInput): Promise<DraftOffer | null> 
       },
     });
 
+  const deadline = Date.now() + TOTAL_MS;
   for (const model of models.length ? models : DEFAULT_MODELS) {
+    if (deadline - Date.now() < 3_000) {
+      console.warn("AI reader: out of time before trying", model);
+      break;
+    }
     const url =
       `https://${location}-aiplatform.googleapis.com/v1/projects/${project}` +
       `/locations/${location}/publishers/google/models/${model}:generateContent`;
@@ -160,7 +170,7 @@ export async function extractWithAi(input: AiInput): Promise<DraftOffer | null> 
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: bodyFor(lowThinking),
-        signal: AbortSignal.timeout(25_000),
+        signal: AbortSignal.timeout(Math.min(TURN_MS, Math.max(1_000, deadline - Date.now()))),
       });
     let res: Response;
     try {
@@ -170,8 +180,9 @@ export async function extractWithAi(input: AiInput): Promise<DraftOffer | null> 
         res = await ask(false);
       }
     } catch (err) {
-      console.error(`AI reader: ${model} request failed`, (err as Error).name);
-      return null;
+      // Usually a timeout: this model is slow right now, so give the next one a turn.
+      console.warn(`AI reader: ${model} request failed (${(err as Error).name}), trying next`);
+      continue;
     }
 
     if (res.status === 404 || res.status === 400) {
