@@ -81,6 +81,15 @@ export type PlaceLookup =
   | { ok: true; place: PlaceSnapshot; cached: boolean }
   | { ok: false; reason: "not_found" | "unavailable" | "invalid" };
 
+/**
+ * Saved counts and hospitals are stored under GEO_VERSION + key. Bump it when the way we find a
+ * place changes, so places found the old way are looked up again (old rows are purged at 90 days).
+ * g2 (22 Nov 2026): "Alcúdia, Mallorca" had been found as a street in California.
+ */
+const GEO_VERSION = "g2:";
+const stored = (key: string) => GEO_VERSION + key;
+const unstored = (k: string) => (k.startsWith(GEO_VERSION) ? k.slice(GEO_VERSION.length) : k.replace(/^g\d+:/, ""));
+
 /** "  Salou,  SPAIN " → "salou, spain" — the cache key. */
 export function placeKey(q: string): string {
   return q
@@ -136,6 +145,11 @@ export async function refreshPlace(rawQuery: string, deadline: number): Promise<
   const geo = await geocode(key);
   if (geo === "unavailable") return "unavailable";
   if (!geo) return "not_found";
+  const near = await savedNear(geo.lat, geo.lon, REFRESH_AFTER_DAYS);
+  if (near) {
+    await saveSnapshot({ ...near, query: key });
+    return "fresh";
+  }
   const counts = await countAround(geo.lat, geo.lon, deadline, CRON_SERVER_MS);
   if (!counts) return "unavailable";
   await saveSnapshot({ query: key, displayName: geo.displayName, lat: geo.lat, lon: geo.lon, counts, fetchedAt: new Date().toISOString() });
@@ -158,7 +172,7 @@ function rowToSnapshot(query: string, d: Record<string, unknown>): PlaceSnapshot
 async function savedByKey(key: string): Promise<PlaceSnapshot | null> {
   const db = supabaseAdmin();
   if (!db) return null;
-  const { data } = await db.from("place_snapshot").select("display_name, lat, lon, counts, fetched_at").eq("query_key", key).maybeSingle();
+  const { data } = await db.from("place_snapshot").select("display_name, lat, lon, counts, fetched_at").eq("query_key", stored(key)).maybeSingle();
   return data ? rowToSnapshot(key, data) : null;
 }
 
@@ -183,14 +197,14 @@ async function savedNear(lat: number, lon: number, maxDays: number): Promise<Pla
     .map((d) => ({ d, m: metresBetween(lat, lon, Number(d.lat), Number(d.lon)) }))
     .filter((x) => x.m <= NEAR_M)
     .sort((a, b) => a.m - b.m)[0];
-  return hit ? rowToSnapshot(hit.d.query_key as string, hit.d) : null;
+  return hit ? rowToSnapshot(unstored(hit.d.query_key as string), hit.d) : null;
 }
 
 async function saveSnapshot(p: PlaceSnapshot): Promise<void> {
   const db = supabaseAdmin();
   if (!db) return;
   const { error } = await db.from("place_snapshot").upsert({
-    query_key: p.query,
+    query_key: stored(p.query),
     display_name: p.displayName.slice(0, 300),
     lat: p.lat,
     lon: p.lon,
@@ -208,42 +222,74 @@ function metresBetween(lat1: number, lon1: number, lat2: number, lon2: number): 
   return 2 * r * Math.asin(Math.sqrt(a));
 }
 
+type Geo = { lat: number; lon: number; displayName: string };
+type Candidate = Geo & { isPlace: boolean };
+
+/** A town, village, resort area or island, rather than a street, shop or hotel that shares its name. */
+const PLACE_CLASSES = new Set(["place", "boundary"]);
+/** "Town, island" should land within this distance of the island or region typed after the comma. */
+const CONTEXT_KM = 150;
+
+const fold = (t: string) => t.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+
 /**
  * Find a place: OpenStreetMap's Nominatim first, then Photon (komoot's search over the same
  * OpenStreetMap data) only if Nominatim doesn't answer. "Not found" from Nominatim is final.
+ *
+ * Nominatim's first answer can be a street, shop or hotel that merely carries the name: "Alcúdia,
+ * Mallorca" was a street in a California estate called Mallorca, "Puerto Rico, Gran Canaria" was in
+ * the Caribbean. Plan B then built a card for the wrong country. So a "town, region" search must
+ * end on a town, village or area that lies within 150 km of the region typed; if no answer does,
+ * we say "not found" (the page asks for the region or country) rather than guess.
  */
-async function geocode(q: string): Promise<{ lat: number; lon: number; displayName: string } | null | "unavailable"> {
+async function geocode(q: string): Promise<Geo | null | "unavailable"> {
   const main = await geocodeNominatim(q);
   if (main !== "unavailable") return main;
   return geocodePhoton(q);
 }
 
-async function geocodePhoton(q: string): Promise<{ lat: number; lon: number; displayName: string } | null | "unavailable"> {
-  const url = `https://photon.komoot.io/api/?${new URLSearchParams({ q, limit: "1", lang: "en" })}`;
-  try {
-    const res = await fetch(url, { headers: { "User-Agent": USER_AGENT }, signal: AbortSignal.timeout(8_000) });
-    if (!res.ok) {
-      console.error("Photon returned", res.status);
-      return "unavailable";
-    }
-    const json = (await res.json()) as {
-      features?: { geometry?: { coordinates?: [number, number] }; properties?: Record<string, string | undefined> }[];
-    };
-    const f = json.features?.[0];
-    const [lon, lat] = f?.geometry?.coordinates ?? [];
-    if (!f || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
-    const p = f.properties ?? {};
-    const displayName = [p.name, p.city, p.county, p.state, p.country].filter((x, i, a) => x && a.indexOf(x) === i).join(", ") || q;
-    return { lat: lat as number, lon: lon as number, displayName };
-  } catch (err) {
-    console.error("Photon request failed", (err as Error).name);
-    return "unavailable";
+async function geocodeNominatim(q: string): Promise<Geo | null | "unavailable"> {
+  const first = await nominatimSearch(q, 5);
+  if (first === "unavailable") return "unavailable";
+  const parts = q.split(",").map((p) => p.trim()).filter(Boolean);
+  if (parts.length < 2) {
+    // A single name: prefer a town or area over a street with the same name.
+    const pick = first.find((c) => c.isPlace) ?? first[0];
+    return pick ? strip(pick) : null;
   }
+  const town = parts[0]!;
+  const context = parts.slice(1).join(", ");
+  const contextWords = fold(context).split(/[\s,]+/).filter((w) => w.length > 2);
+  const top = first[0];
+  // The usual case, answered at once: a town or area whose address names the region typed.
+  if (top?.isPlace && contextWords.every((w) => fold(top.displayName).includes(w))) return strip(top);
+
+  // Otherwise place the region, then take the nearest town or area of that name around it.
+  const ctx = await nominatimSearch(context, 1);
+  // Can't check the region now: trust only a town or area, never a street or shop.
+  if (ctx === "unavailable") return top?.isPlace ? strip(top) : "unavailable";
+  const anchor = ctx[0];
+  if (!anchor) return top?.isPlace ? strip(top) : null;
+  const country = lastPart(anchor.displayName);
+  // A country typed after the comma ("İçmeler, Turkey") is matched by country, since a big
+  // country's centre can be far from its resorts; an island or region by distance.
+  const contextIsCountry = !anchor.displayName.includes(",");
+  const more = await nominatimSearch(town, 10);
+  const more2 = !contextIsCountry && country ? await nominatimSearch(`${town}, ${country}`, 10) : [];
+  const pool = [...first, ...(more === "unavailable" ? [] : more), ...(more2 === "unavailable" ? [] : more2)];
+  const near = pool
+    .map((c) => ({ c, km: metresBetween(anchor.lat, anchor.lon, c.lat, c.lon) / 1000 }))
+    .filter((x) => (contextIsCountry ? lastPart(x.c.displayName) === country : x.km <= CONTEXT_KM))
+    .sort((a, b) => Number(b.c.isPlace) - Number(a.c.isPlace) || a.km - b.km);
+  return near[0] ? strip(near[0].c) : null;
 }
 
-async function geocodeNominatim(q: string): Promise<{ lat: number; lon: number; displayName: string } | null | "unavailable"> {
+const lastPart = (displayName: string) => displayName.split(",").pop()?.trim() ?? "";
+const strip = (c: Candidate): Geo => ({ lat: c.lat, lon: c.lon, displayName: c.displayName });
+
+async function nominatimSearch(q: string, limit: number): Promise<Candidate[] | "unavailable"> {
   if (!(await nominatimTurn(2_500))) return "unavailable"; // busy: Photon answers instead
-  const url = `${NOMINATIM}?${new URLSearchParams({ q, format: "jsonv2", limit: "1", "accept-language": "en" })}`;
+  const url = `${NOMINATIM}?${new URLSearchParams({ q, format: "jsonv2", limit: String(limit), "accept-language": "en" })}`;
   try {
     const res = await fetch(url, {
       headers: { "User-Agent": USER_AGENT, Referer: "https://truevsad.co.uk/" },
@@ -253,14 +299,42 @@ async function geocodeNominatim(q: string): Promise<{ lat: number; lon: number; 
       console.error("Nominatim returned", res.status);
       return "unavailable";
     }
-    const list = (await res.json()) as { lat?: string; lon?: string; display_name?: string }[];
-    const hit = list[0];
-    const lat = Number(hit?.lat);
-    const lon = Number(hit?.lon);
-    if (!hit || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
-    return { lat, lon, displayName: String(hit.display_name ?? q) };
+    const list = (await res.json()) as { lat?: string; lon?: string; display_name?: string; category?: string }[];
+    return list
+      .map((h) => ({
+        lat: Number(h.lat),
+        lon: Number(h.lon),
+        displayName: String(h.display_name ?? q),
+        isPlace: PLACE_CLASSES.has(String(h.category)),
+      }))
+      .filter((c) => Number.isFinite(c.lat) && Number.isFinite(c.lon));
   } catch (err) {
     console.error("Nominatim request failed", (err as Error).name);
+    return "unavailable";
+  }
+}
+
+async function geocodePhoton(q: string): Promise<Geo | null | "unavailable"> {
+  const url = `https://photon.komoot.io/api/?${new URLSearchParams({ q, limit: "5", lang: "en" })}`;
+  try {
+    const res = await fetch(url, { headers: { "User-Agent": USER_AGENT }, signal: AbortSignal.timeout(8_000) });
+    if (!res.ok) {
+      console.error("Photon returned", res.status);
+      return "unavailable";
+    }
+    const json = (await res.json()) as {
+      features?: { geometry?: { coordinates?: [number, number] }; properties?: Record<string, string | undefined> }[];
+    };
+    // Only a town, village or area: Photon has no region check, so a street of the same name is
+    // never trusted here (Plan B must not land in the wrong country).
+    const f = json.features?.find((x) => PLACE_CLASSES.has(String(x.properties?.osm_key)));
+    const [lon, lat] = f?.geometry?.coordinates ?? [];
+    if (!f || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    const p = f.properties ?? {};
+    const displayName = [p.name, p.city, p.county, p.state, p.country].filter((x, i, a) => x && a.indexOf(x) === i).join(", ") || q;
+    return { lat: lat as number, lon: lon as number, displayName };
+  } catch (err) {
+    console.error("Photon request failed", (err as Error).name);
     return "unavailable";
   }
 }
@@ -495,7 +569,7 @@ export async function hospitalsFor(rawQuery: string, allowFetch: boolean): Promi
     const { data } = await db
       .from("hospital_snapshot")
       .select("display_name, lat, lon, hospitals, fetched_at")
-      .eq("query_key", key)
+      .eq("query_key", stored(key))
       .maybeSingle();
     if (data && Date.now() - Date.parse(data.fetched_at as string) < FRESH_DAYS * 86_400_000) {
       return {
@@ -527,7 +601,7 @@ export async function hospitalsFor(rawQuery: string, allowFetch: boolean): Promi
 
   if (db) {
     const { error } = await db.from("hospital_snapshot").upsert({
-      query_key: key,
+      query_key: stored(key),
       display_name: place.displayName.slice(0, 300),
       lat: place.lat,
       lon: place.lon,
