@@ -507,7 +507,7 @@ export function HolidayScene({
             <span key={l.say} className="scene-sub" style={{ animationDelay: `${(i * 20) / lines.length}s`, animationName: lines.length === 2 ? "tv-sub-2" : undefined }}>
               {l.say} <small>{l.where}</small>
             </span>
-          ))}
+          )).flatMap((el, i) => (i ? [" ", el] : [el]))}
         </span>
       </div>
     </figure>
