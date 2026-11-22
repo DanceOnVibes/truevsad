@@ -176,6 +176,43 @@ export default function QuestionsPage() {
       </div>
 
       <div className="card">
+        <h2 style={{ marginTop: 0 }}>Sellers and FairMark</h2>
+
+        <h3>Is a high gap saying the seller broke the law?</h3>
+        <p>
+          No. Since April 2025, UK law has required advertised prices to include every fee a customer must pay.
+          FairMark also counts one hold bag, which the law treats as optional but almost every family needs, so an
+          advert can follow the law and still show a gap. A gap tells you what you&apos;ll pay on top.{" "}
+          <Link href="/fairmark/method">The law behind it</Link>
+        </p>
+
+        <h3>Can a seller pay for a better rating?</h3>
+        <p>
+          No. FairMark, the Fair Price badge and the ✓ on the sellers&apos; leaderboard can&apos;t be bought, and
+          paying never gets a seller featured or moves anything up.
+        </p>
+
+        <h3>Can you change a seller&apos;s FairMark?</h3>
+        <p>
+          No. Our engine works it out with a public method, never by hand, so we can&apos;t move a seller up or
+          down. If a fee behind it is wrong, we correct the fee for everyone.
+        </p>
+
+        <h3>Why would Fair Price sellers pay, and Gold sellers not?</h3>
+        <p>
+          On purpose: the fairest sellers should pay least. If featured deals open, a Gold seller pays nothing and
+          a Fair Price seller 1% of bookings made through us, so we earn less when a seller gets fairer.{" "}
+          <Link href="/sellers">For sellers</Link>
+        </p>
+
+        <h3>How can a seller, or a family, challenge a figure?</h3>
+        <p>
+          Email <a href={`mailto:${EMAILS.corrections}`}>{EMAILS.corrections}</a>. We reply within 14 days, and if a
+          fee is wrong we correct it for everyone. Every receipt shows where each fee comes from.
+        </p>
+      </div>
+
+      <div className="card">
         <h2 style={{ marginTop: 0 }}>Your data</h2>
 
         <h3>What do you keep about me?</h3>
@@ -186,10 +223,11 @@ export default function QuestionsPage() {
           no cookies and use no tracking or advertising. <Link href="/privacy">Everything we keep, and for how long</Link>
         </p>
 
-        <h3>Do you keep my screenshot?</h3>
+        <h3>What happens to the links and screenshots I paste?</h3>
         <p>
-          No. It&apos;s read once to fill in the form, then not kept. Please crop out names and booking references
-          first. <Link href="/privacy">Who reads it, and where</Link>
+          From a link, we read only the words in its address: we never open it, and we don&apos;t keep it. A
+          screenshot or pasted text is read once to fill in the form, then not kept. Please crop out names and
+          booking references first. <Link href="/privacy">Who reads it, and where</Link>
         </p>
 
         <h3>Can I see or delete what you hold?</h3>
