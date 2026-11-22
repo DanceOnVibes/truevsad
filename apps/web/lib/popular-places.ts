@@ -59,7 +59,7 @@ export const POPULAR_PLACES: readonly string[] = [
   "Paphos, Cyprus",
   // Turkey
   "Marmaris, Turkey",
-  "İçmeler, Turkey",
+  "İçmeler, Marmaris",
   "Bodrum, Turkey",
   "Side, Turkey",
   "Alanya, Turkey",
