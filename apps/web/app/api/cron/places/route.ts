@@ -12,7 +12,7 @@ export const maxDuration = 300;
 const STOP_BEFORE_END_MS = 90_000;
 
 /**
- * Hourly from 01:11 to 06:11 UTC, when Europe is asleep (vercel.json): count popular resorts for
+ * Hourly from 00:11 to 07:11 UTC, when Europe is asleep (vercel.json): count popular resorts for
  * Visit before you book ahead of time. Places counted in the last 25 days are skipped, so once the
  * list is saved most runs do nothing. One place at a time, a pause between: the public Overpass
  * servers are run by volunteers and have been at capacity for months (Nov 2026), so we stay light.
@@ -22,7 +22,10 @@ export async function GET(req: Request) {
   if (refused) return refused;
   const end = Date.now() + 280_000;
   const result: Record<string, string[]> = { saved: [], fresh: [], not_found: [], unavailable: [], not_reached: [] };
-  for (const place of POPULAR_PLACES) {
+  // A random order each run, so one place the map servers keep failing on can't use up every
+  // night's time while the rest wait behind it (seen 22 Nov: two runs stuck on the same two).
+  const order = [...POPULAR_PLACES].sort(() => Math.random() - 0.5);
+  for (const place of order) {
     if (end - Date.now() < STOP_BEFORE_END_MS) {
       result.not_reached!.push(place);
       continue;
