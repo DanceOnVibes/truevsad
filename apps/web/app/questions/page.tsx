@@ -6,7 +6,7 @@ import { COMPANY, EMAILS } from "@/lib/company";
 export const metadata: Metadata = {
   title: "Questions — TrueVsAd",
   description:
-    "Common questions about TrueVsAd: what the Deal X-ray adds, what SAFE, CHECK and STOP mean, how FairMark works, what we keep about you and how we earn.",
+    "Common questions about TrueVsAd: what the Deal X-ray adds, what SAFE, CHECK and STOP mean, how FairMark works, Plan B for emergencies abroad, what we keep about you and how we earn.",
 };
 
 /**
@@ -120,6 +120,62 @@ export default function QuestionsPage() {
       </div>
 
       <div className="card">
+        <h2 style={{ marginTop: 0 }}>Plan B: if something goes wrong on the trip</h2>
+
+        <h3>What is Plan B?</h3>
+        <p>
+          One free page for your trip that works with no signal once you&apos;ve saved or printed it: 112 and the
+          other emergency numbers, what to do in a wildfire, flood, storm, earthquake or power cut, the nearest
+          hospitals, UK help, and your family&apos;s meeting point. <Link href="/plan-b">Make your Plan B card</Link>
+        </p>
+
+        <h3>Why would I need it?</h3>
+        <p>
+          When something goes wrong abroad, the signal often goes with it, and card machines, cash machines, lifts
+          and traffic lights need power. A page saved on your phone or printed still works, in a language you read,
+          when there&apos;s no time to search.
+        </p>
+
+        <h3>Which hospitals does it show?</h3>
+        <p>
+          In Spain, the nearest ones from Spain&apos;s official hospital register, and on an island only that
+          island&apos;s. Elsewhere they come from the map, which can be out of date. Not every hospital has an
+          emergency department, so the card says where that&apos;s confirmed and, where it isn&apos;t, to call 112
+          and ask your hotel.
+        </p>
+
+        <h3>Does it work outside Spain?</h3>
+        <p>
+          Yes. Our deepest checks cover Spain for now. For other countries, the emergency numbers, travel warnings
+          and natural hazards come straight from GOV.UK&apos;s travel advice.
+        </p>
+
+        <h3>Can I make cards for my children?</h3>
+        <p>
+          Yes. Child cards carry no names: just where you&apos;re staying, the meeting point and a parent&apos;s
+          phone.
+        </p>
+
+        <h3>What happens to the family details I type?</h3>
+        <p>
+          Nothing leaves your phone except the place name. What you type goes on the card only: we never receive it,
+          and if you close the page without saving or printing, it&apos;s gone.
+        </p>
+
+        <h3>How do I keep it for the trip?</h3>
+        <p>
+          Press &ldquo;Print or save as PDF&rdquo; or &ldquo;Save an offline copy&rdquo; on the card, and keep it on
+          your phone or in your bag.
+        </p>
+
+        <h3>What doesn&apos;t it do?</h3>
+        <p>
+          It doesn&apos;t show live news, weather or outages, and it doesn&apos;t rate how likely a disaster is
+          where you&apos;re going. In an emergency, call 112 and follow the local authorities.
+        </p>
+      </div>
+
+      <div className="card">
         <h2 style={{ marginTop: 0 }}>Your data</h2>
 
         <h3>What do you keep about me?</h3>
@@ -158,10 +214,6 @@ export default function QuestionsPage() {
           <li>
             <Link href="/visit">Visit before you book</Link>: what&apos;s near a resort, counted from
             OpenStreetMap. A guide, not a promise: walk the area on Street View too.
-          </li>
-          <li>
-            <Link href="/plan-b">Plan B</Link>: one page with 112, the nearest hospitals and UK help, that works
-            with no signal.
           </li>
         </ul>
       </div>
