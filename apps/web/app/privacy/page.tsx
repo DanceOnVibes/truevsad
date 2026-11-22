@@ -278,6 +278,7 @@ export default function PrivacyPage() {
           <li>Anthropic (reading deals with its Claude AI), in the United States.</li>
           <li>Google Cloud (reading deals when Anthropic doesn&apos;t answer in time), in London.</li>
           <li>Cloudflare (our domain and email forwarding), if you email us.</li>
+          <li>Google Workspace (our company email), if you email us.</li>
         </ul>
         <p>
           Each works for us under a data processing agreement and may only use your data to provide
@@ -297,16 +298,10 @@ export default function PrivacyPage() {
 
         <h2>If you email us</h2>
         <p>
-          Your email reaches us through Cloudflare&apos;s email forwarding into our Microsoft
-          Outlook.com mailbox. We use it only to reply to you, and delete it within 12 months of the
-          matter being closed. Outlook.com is a Microsoft consumer service: Microsoft runs it under its
-          own terms and{" "}
-          <a href="https://privacy.microsoft.com/en-gb/privacystatement" target="_blank" rel="noopener noreferrer">
-            privacy statement
-          </a>
-          , not under a data processing agreement with us, so it is responsible for how it handles
-          messages in that mailbox. If you&apos;d rather not use email, you can write to our
-          registered office (above) instead.
+          Your email reaches us through Cloudflare&apos;s email forwarding into our company mailbox on
+          Google Workspace, which Google runs for us under a data processing agreement. We use it only to
+          reply to you, and delete it within 12 months of the matter being closed. If you&apos;d rather not
+          use email, you can write to our registered office (above) instead.
         </p>
 
         <h2>If you apply as a seller</h2>
@@ -336,7 +331,7 @@ export default function PrivacyPage() {
           <a href="https://ico.org.uk/make-a-complaint/" target="_blank" rel="noopener noreferrer">ico.org.uk/make-a-complaint</a>.
         </p>
 
-        <p className="hint">Last updated 21 November 2026.</p>
+        <p className="hint">Last updated 22 November 2026.</p>
       </div>
     </main>
   );

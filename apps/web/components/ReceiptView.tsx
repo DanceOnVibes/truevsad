@@ -247,7 +247,7 @@ export function ReceiptView(props: ReceiptViewProps) {
             </ul>
             <p className="hint">
               Sizes include wheels and handles unless the airline says otherwise.{" "}
-              <a href="/cabin-bags">Check your bag →</a>
+              <a href="/cabin-bags">Will my bag fit? →</a>
             </p>
           </>
         )}
