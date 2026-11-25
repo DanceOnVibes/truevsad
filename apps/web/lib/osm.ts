@@ -231,6 +231,8 @@ const PLACE_CLASSES = new Set(["place", "boundary"]);
 const CONTEXT_KM = 150;
 
 const fold = (t: string) => t.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+/** Letters and digits only, so "Sharm el-Sheikh" matches "Sharm El Sheikh". */
+const words = (t: string) => fold(t).replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 
 /**
  * Find a place: OpenStreetMap's Nominatim first, then Photon (komoot's search over the same
@@ -254,15 +256,19 @@ async function geocodeNominatim(q: string): Promise<Geo | null | "unavailable"> 
   const parts = q.split(",").map((p) => p.trim()).filter(Boolean);
   if (parts.length < 2) {
     // A single name: prefer a town or area over a street with the same name.
-    const pick = first.find((c) => c.isPlace) ?? first[0];
+    const named = (c: Candidate) => words(c.displayName).includes(words(q));
+    const pick = first.find((c) => c.isPlace && named(c)) ?? first.find((c) => c.isPlace) ?? first[0];
     return pick ? strip(pick) : null;
   }
   const town = parts[0]!;
   const context = parts.slice(1).join(", ");
   const contextWords = fold(context).split(/[\s,]+/).filter((w) => w.length > 2);
+  // The result must carry the town's own name: "Alanya, Turkey" once came back as Antalya city,
+  // 115 km away, because both are towns in Turkey (seen 23 Nov 2026).
+  const named = (c: Candidate) => words(c.displayName).includes(words(town));
   const top = first[0];
-  // The usual case, answered at once: a town or area whose address names the region typed.
-  if (top?.isPlace && contextWords.every((w) => fold(top.displayName).includes(w))) return strip(top);
+  // The usual case, answered at once: a town or area with the typed name whose address names the region.
+  if (top?.isPlace && named(top) && contextWords.every((w) => fold(top.displayName).includes(w))) return strip(top);
 
   // Otherwise place the region, then take the nearest town or area of that name around it.
   const ctx = await nominatimSearch(context, 1);
@@ -280,7 +286,7 @@ async function geocodeNominatim(q: string): Promise<Geo | null | "unavailable"> 
   const near = pool
     .map((c) => ({ c, km: metresBetween(anchor.lat, anchor.lon, c.lat, c.lon) / 1000 }))
     .filter((x) => (contextIsCountry ? lastPart(x.c.displayName) === country : x.km <= CONTEXT_KM))
-    .sort((a, b) => Number(b.c.isPlace) - Number(a.c.isPlace) || a.km - b.km);
+    .sort((a, b) => Number(named(b.c)) - Number(named(a.c)) || Number(b.c.isPlace) - Number(a.c.isPlace) || a.km - b.km);
   return near[0] ? strip(near[0].c) : null;
 }
 
