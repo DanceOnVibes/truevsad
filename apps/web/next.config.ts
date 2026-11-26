@@ -2,17 +2,17 @@ import type { NextConfig } from "next";
 
 /**
  * Content-Security-Policy: the browser may only load scripts, styles, fonts and data from
- * truevsad.co.uk itself (plus OpenStreetMap's map frame on Visit), and the site can't be framed. Everything we use is same-origin (fonts
+ * truevsad.co.uk itself (plus OpenStreetMap's map frame on Visit, and Cloudflare's cookie-free visit counter), and the site can't be framed. Everything we use is same-origin (fonts
  * are self-hosted by next/font). Inline scripts stay allowed because Next.js needs them; a
  * per-request nonce would make every page dynamic and slower. Dev mode also needs eval.
  */
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "production" ? "" : " 'unsafe-eval'"}`,
+  `script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com${process.env.NODE_ENV === "production" ? "" : " 'unsafe-eval'"}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self'",
-  "connect-src 'self'",
+  "connect-src 'self' https://cloudflareinsights.com",
   // Visit before you book shows OpenStreetMap's own map in a frame.
   "frame-src https://www.openstreetmap.org",
   "frame-ancestors 'none'",

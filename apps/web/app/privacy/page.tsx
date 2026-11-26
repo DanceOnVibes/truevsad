@@ -256,7 +256,12 @@ export default function PrivacyPage() {
 
         <h2>Cookies and tracking</h2>
         <p>
-          We don&apos;t set any cookies, and we don&apos;t use tracking pixels, analytics or advertising.
+          We don&apos;t set any cookies, and we don&apos;t use tracking pixels or advertising. To see how
+          many people use the site, we use Cloudflare Web Analytics, which sets no cookies, stores
+          nothing on your device and doesn&apos;t follow you to other sites. It counts which pages are
+          visited (the address without anything after a &ldquo;?&rdquo;, so never a place you looked
+          up), the site that sent you, and your browser and device type. Cloudflare drops your IP
+          address at its nearest data centre and doesn&apos;t keep it.
           The only things we put in your browser are short hand-over notes: the deal you paste on
           the homepage, and your party, date and nights when you go from FairFam to Deal X-ray, so the
           next page can fill them in. They stay in that tab and are deleted as soon as the page opens. A Plan B card you save is a file on your own
@@ -277,7 +282,7 @@ export default function PrivacyPage() {
           </li>
           <li>Anthropic (reading deals with its Claude AI), in the United States.</li>
           <li>Google Cloud (reading deals when Anthropic doesn&apos;t answer in time), in London.</li>
-          <li>Cloudflare (our domain and email forwarding), if you email us.</li>
+          <li>Cloudflare (our domain, our visit counts, and email forwarding if you email us).</li>
           <li>Google Workspace (our company email), if you email us.</li>
         </ul>
         <p>
@@ -331,7 +336,7 @@ export default function PrivacyPage() {
           <a href="https://ico.org.uk/make-a-complaint/" target="_blank" rel="noopener noreferrer">ico.org.uk/make-a-complaint</a>.
         </p>
 
-        <p className="hint">Last updated 22 November 2026.</p>
+        <p className="hint">Last updated 26 November 2026.</p>
       </div>
     </main>
   );

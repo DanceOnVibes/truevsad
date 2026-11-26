@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Script from "next/script";
 import { IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
 import { COMPANY, EMAILS } from "@/lib/company";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -43,6 +44,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             no. {COMPANY.number} · {COMPANY.address}
           </div>
         </footer>
+        {/* Visit counts, live site only: no cookies, nothing stored on the device, no query strings
+            (so no place names), and Cloudflare drops the IP address. Described on the privacy page. */}
+        {process.env.VERCEL_ENV === "production" && (
+          <Script
+            src="https://static.cloudflareinsights.com/beacon.min.js"
+            data-cf-beacon='{"token": "47b45145534641ffba0d5c19cc5bb652"}'
+            strategy="afterInteractive"
+          />
+        )}
       </body>
     </html>
   );
