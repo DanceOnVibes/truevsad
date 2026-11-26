@@ -220,7 +220,7 @@ export default function QuestionsPage() {
           With your receipt: the deal details you confirm and your party&apos;s ages. We never ask for names, email
           addresses, passport or payment details. A receipt you don&apos;t share is deleted after 30 days; a shared
           one after 12 months. We also keep anonymous price statistics that can&apos;t be linked back to you. We set
-          no cookies and use no tracking or advertising. <Link href="/privacy">Everything we keep, and for how long</Link>
+          no cookies and use no advertising, and we count visits with cookie-free analytics that doesn&apos;t follow you to other sites. <Link href="/privacy">Everything we keep, and for how long</Link>
         </p>
 
         <h3>What happens to the links and screenshots I paste?</h3>
