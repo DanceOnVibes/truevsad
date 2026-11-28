@@ -50,6 +50,13 @@ describe("Tickets: grounds", () => {
     expect(ticketVerdict([], "moving")).toBe("none");
   });
 
+  it("offers the camera-only ground just for posted camera parking tickets", () => {
+    expect(reasonsFor("camera_parking").map((r) => r.id)).toContain("camera_not_allowed");
+    expect(reasonsFor("street").map((r) => r.id)).not.toContain("camera_not_allowed");
+    expect(reasonsFor("moving").map((r) => r.id)).not.toContain("camera_not_allowed");
+    expect(ticketVerdict(["camera_not_allowed"], "camera_parking")).toBe("grounds");
+  });
+
   it("ignores a parking reason ticked on a moving traffic ticket", () => {
     expect(ticketVerdict(["grace"], "moving")).toBe("none");
   });

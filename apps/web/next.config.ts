@@ -31,6 +31,9 @@ const securityHeaders = [
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
 ];
 
+const MAIN_HOST = "truevsad.co.uk";
+const CARS_HOST = "cars.truevsad.co.uk";
+
 const nextConfig: NextConfig = {
   // The engine ships as TypeScript source inside the mono-repo.
   transpilePackages: ["@truevsad/true-cost"],
@@ -40,6 +43,25 @@ const nextConfig: NextConfig = {
       { source: "/:path*", headers: securityHeaders },
       // Shared receipts are for the people they're sent to: never indexed, even if linked from the board.
       { source: "/r/:slug*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
+    ];
+  },
+  // Cars lives at cars.truevsad.co.uk, served by this same app from app/cars. The main site's
+  // old /tickets link (already shared in a local group) moves there for good.
+  async rewrites() {
+    return {
+      beforeFiles: [
+        { source: "/", has: [{ type: "host", value: CARS_HOST }], destination: "/cars" },
+        { source: "/tickets", has: [{ type: "host", value: CARS_HOST }], destination: "/cars/tickets" },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
+  async redirects() {
+    return [
+      { source: "/tickets", has: [{ type: "host", value: MAIN_HOST }], destination: `https://${CARS_HOST}/tickets`, permanent: true },
+      { source: "/cars", has: [{ type: "host", value: MAIN_HOST }], destination: `https://${CARS_HOST}/`, permanent: true },
+      { source: "/cars/:path*", has: [{ type: "host", value: MAIN_HOST }], destination: `https://${CARS_HOST}/:path*`, permanent: true },
     ];
   },
 };
