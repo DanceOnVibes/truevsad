@@ -36,6 +36,16 @@ export default function TicketsPage() {
       <TicketChecker />
 
       <div className="card">
+        <h2 style={{ marginTop: 0 }}>Ticket from a private car park?</h2>
+        <p>
+          Supermarket, hospital and retail park tickets come from private companies, not the council. They&apos;re
+          &ldquo;parking charges&rdquo;, not penalty charge notices, and the rules and appeal routes above don&apos;t
+          apply to them. The government plans a new Private Parking Code of Practice for these companies, and
+          we&apos;ll cover it once it&apos;s in force.
+        </p>
+      </div>
+
+      <div className="card">
         <h2 style={{ marginTop: 0 }}>Lambeth&apos;s charges</h2>
         <table className="receipt">
           <tbody>

@@ -17,6 +17,11 @@ export const TICKET_SOURCES = {
       "Civil Enforcement of Parking Contraventions (England) Representations and Appeals Regulations 2007, regulation 4",
     url: "https://www.legislation.gov.uk/uksi/2007/3482/part/2/made",
   },
+  cameraRegs: {
+    label:
+      "Civil Enforcement of Road Traffic Contraventions (Approved Devices, Charging Guidelines and General Provisions) (England) Regulations 2022, regulations 9 and 11",
+    url: "https://www.legislation.gov.uk/uksi/2022/71/made",
+  },
   movingAct: {
     label: "London Local Authorities and Transport for London Act 2003, Schedule 1, paragraph 1",
     url: "https://www.legislation.gov.uk/ukla/2003/3/schedule/1/enacted",
@@ -168,6 +173,19 @@ const PARKING_REASONS: readonly TicketReason[] = [
   },
 ];
 
+/** Only for parking tickets that came by post from a camera. */
+const CAMERA_REASON: TicketReason = {
+  id: "camera_not_allowed",
+  ask: "It's a camera ticket for parking somewhere other than a bus lane, a bus stop or stand, school entrance zig-zags, a red route or a mandatory cycle lane",
+  ground: "The council wasn't allowed to issue this ticket by camera",
+  why: "Since 31 May 2022, councils in England can only use a camera to enforce parking in those places. Anywhere else, a parking ticket has to be fixed to the car or handed to the driver. This doesn't apply if a parking officer started to issue the ticket and was stopped, for example because the car drove away: that notice can be posted too, and it should say so.",
+  evidence: [
+    "The notice itself: it should say whether a camera or a parking officer saw the car",
+    "Photos showing the spot isn't a bus lane, bus stop or stand, school zig-zags, red route or mandatory cycle lane",
+  ],
+  source: TICKET_SOURCES.cameraRegs,
+};
+
 const MOVING_REASONS: readonly TicketReason[] = [
   {
     id: "signs",
@@ -226,7 +244,8 @@ export const DISCRETION_REASON: TicketReason = {
 };
 
 export function reasonsFor(kind: TicketKind): readonly TicketReason[] {
-  return kind === "moving" ? MOVING_REASONS : PARKING_REASONS;
+  if (kind === "moving") return MOVING_REASONS;
+  return kind === "camera_parking" ? [CAMERA_REASON, ...PARKING_REASONS] : PARKING_REASONS;
 }
 
 export type TicketStep = { title: string; detail: string; by?: string; source: TicketSource };
